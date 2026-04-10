@@ -33,7 +33,7 @@ const randomMessage = motivationalMessages[Math.floor(Math.random() * motivation
                     class="w-12 h-12 rounded-2xl flex items-center justify-center mr-4 flex-shrink-0 animate-bounce"
                     :class="correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white'"
                 >
-                    <i :class="correct ? 'fas fa-star' : 'fas fa-lightbulb'"></i>
+                    <i :class="correct ? 'fa-solid fa-star' : 'fa-solid fa-lightbulb'"></i>
                 </div>
                 <div>
                     <h3 
@@ -54,7 +54,7 @@ const randomMessage = motivationalMessages[Math.floor(Math.random() * motivation
                 :class="correct ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-red-600 text-white hover:bg-red-700'"
             >
                 Siguiente
-                <i class="fas fa-arrow-right ml-3"></i>
+                <i class="fa-solid fa-arrow-right ml-3"></i>
             </button>
         </div>
 

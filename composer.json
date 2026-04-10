@@ -6,7 +6,7 @@
     "license": "proprietary",
     "require": {
         "php": "^8.3",
-        "anthropic-php/client": "^1.0",
+        "anthropic-ai/sdk": "^0.1",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^11.0",
         "laravel/horizon": "^5.0",

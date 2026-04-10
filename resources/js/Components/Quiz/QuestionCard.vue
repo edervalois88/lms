@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 
 const props = defineProps({
     question: Object,
@@ -56,18 +56,6 @@ watch(() => props.question?.id, () => {
 
 // Progress circle calculations
 const strokeDasharray = 283; // 2 * PI * r (r=45)
-const timeFraction = computed(() => {
-    const rawFraction = timeLeft.value / props.timeLimit;
-    return rawFraction - (1 / props.timeLimit) * (1 - rawFraction);
-});
-const strokeDashoffset = computed(() => {
-    return (timeFraction.value * strokeDasharray).toFixed(0) + 'px';
-});
-</script>
-
-<script>
-// Helper for computed in script setup
-import { computed } from 'vue';
 </script>
 
 <template>
@@ -150,8 +138,8 @@ import { computed } from 'vue';
 
                         <!-- Icon State -->
                         <div v-if="disabled" class="ml-auto">
-                            <i v-if="index === question.correct_index" class="fas fa-check-circle text-green-500 text-xl"></i>
-                            <i v-else-if="index === selectedIndex" class="fas fa-times-circle text-red-500 text-xl"></i>
+                            <i v-if="index === question.correct_index" class="fa-solid fa-circle-check text-green-500 text-xl"></i>
+                            <i v-else-if="index === selectedIndex" class="fa-solid fa-circle-xmark text-red-500 text-xl"></i>
                         </div>
                     </button>
                 </div>

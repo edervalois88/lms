@@ -45,18 +45,9 @@ class ProgressCalculatorService
     {
         $mastery = $this->getSubjectMastery($user);
         
-        // Pesos reales UNAM Área 1 (Ingenierías)
-        $weights = [
-            'Matemáticas' => 26,
-            'Física' => 24,
-            'Química' => 10,
-            'Biología' => 10,
-            'Historia Universal' => 10,
-            'Historia de México' => 10,
-            'Español' => 14,
-            'Literatura' => 8,
-            'Geografía' => 8,
-        ];
+        // Pesos reales UNAM Área 1 (Ejemplo, debería ser dinámico por área)
+        $area = $user->major?->area_id ?? 1;
+        $weights = $this->getWeightsForArea($area);
 
         $projectedScore = 0;
         foreach ($mastery as $m) {
@@ -68,8 +59,28 @@ class ProgressCalculatorService
             'projected_score' => round($projectedScore),
             'min_score' => round($projectedScore * 0.9),
             'max_score' => min(120, round($projectedScore * 1.1)),
-            'confidence' => 'Media'
+            'confidence' => 'Media',
+            'gap_to_goal' => $user->major ? ($user->major->min_score - round($projectedScore)) : null,
+            'goal_name' => $user->major?->name ?? 'No definida'
         ];
+    }
+
+    private function getWeightsForArea(int $area): array
+    {
+        // Distribución real de aciertos por área en UNAM
+        return match($area) {
+            1 => [ // Físico-Matemáticas
+                'Matemáticas' => 26, 'Física' => 24, 'Español' => 18, 'Literatura' => 10, 
+                'Química' => 10, 'Biología' => 10, 'Historia Universal' => 10, 'Historia de México' => 10, 'Geografía' => 2
+            ],
+            2 => [ // Biológicas y Salud
+                'Biología' => 22, 'Química' => 22, 'Matemáticas' => 22, 'Física' => 18, 
+                'Español' => 18, 'Literatura' => 10, 'Historia Universal' => 10, 'Historia de México' => 10, 'Geografía' => 8
+            ],
+            default => [ // Genérico simplificado
+                'Matemáticas' => 20, 'Español' => 20, 'Física' => 10, 'Química' => 10, 'Biología' => 10, 'Literatura' => 10, 'Historia Universal' => 10, 'Historia de México' => 10, 'Geografía' => 10
+            ]
+        };
     }
 
     public function getWeeklyStats(User $user): array

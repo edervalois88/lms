@@ -6,6 +6,7 @@ use App\Enums\ExamStatus;
 use App\Enums\ExamType;
 use App\Enums\SubjectArea;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Assessment\SubmitExamRequest;
 use App\Models\Exam;
 use App\Models\ExamAnswer;
 use App\Models\Question;
@@ -61,7 +62,7 @@ class SimulatorController extends Controller
         // Obtener materias del área
         $subjects = Subject::whereJsonContains('exam_areas', $exam->exam_area)->pluck('id');
         
-        // Obtener preguntas aleatorias balanceadas (simplificado)
+        // Obtener preguntas aleatorias balanceadas
         $questions = Question::whereHas('topic', function($q) use ($subjects) {
                 $q->whereIn('subject_id', $subjects);
             })
@@ -69,7 +70,6 @@ class SimulatorController extends Controller
             ->limit($exam->total_questions)
             ->get();
 
-        // Si no hay suficientes preguntas en la BD, generamos algunas de respaldo (fallback mock)
         if ($questions->count() < $exam->total_questions) {
             $questions = $this->getFallbackQuestions($exam->total_questions);
         }
@@ -80,19 +80,37 @@ class SimulatorController extends Controller
         ]);
     }
 
-    public function submit(Exam $exam, Request $request): RedirectResponse
+    public function submit(Exam $exam, SubmitExamRequest $request): RedirectResponse
     {
         abort_if($exam->user_id !== auth()->id(), 403);
 
         $submittedAnswers = $request->input('answers', []);
         
         DB::transaction(function () use ($exam, $submittedAnswers) {
+            $correctCount = 0;
+            
+            // Cargar preguntas para verificar en batch
+            $questionIds = collect($submittedAnswers)->pluck('question_id')->toArray();
+            $questions = Question::whereIn('id', $questionIds)->get()->keyBy('id');
+
             foreach ($submittedAnswers as $answerData) {
+                $question = $questions->get($answerData['question_id']);
+                
+                // Recalcular is_correct en el servidor (Seguridad)
+                $isCorrect = false;
+                if ($question) {
+                    $correctOption = $question->correct_answer;
+                    $selectedOption = $question->options[$answerData['selected_index']] ?? null;
+                    $isCorrect = ($selectedOption === $correctOption);
+                }
+
+                if ($isCorrect) $correctCount++;
+
                 ExamAnswer::create([
                     'exam_id' => $exam->id,
                     'question_id' => $answerData['question_id'],
-                    'selected_answer' => $answerData['selected_index'], // O el texto de la opción
-                    'is_correct' => $answerData['is_correct'],
+                    'user_answer' => $answerData['selected_index'],
+                    'is_correct' => $isCorrect,
                     'time_spent_seconds' => $answerData['time_spent'] ?? 0,
                 ]);
             }
@@ -100,7 +118,7 @@ class SimulatorController extends Controller
             $exam->update([
                 'status' => ExamStatus::Completed,
                 'completed_at' => now(),
-                'score' => collect($submittedAnswers)->where('is_correct', true)->count(),
+                'score' => $correctCount,
             ]);
         });
 
@@ -109,11 +127,17 @@ class SimulatorController extends Controller
 
     public function results(Exam $exam): Response
     {
-        abort_if($exam->user_id !== auth()->id(), 403);
-
+        $user = auth()->user()->load('major');
         $total      = $exam->total_questions;
         $correct    = $exam->score;
         $percentage = $total > 0 ? round(($correct / $total) * 100) : 0;
+
+        $aiService = app(\App\Services\AI\ClaudeService::class);
+        $suggestions = [];
+        
+        if ($user->major && $correct < $user->major->min_score) {
+            $suggestions = $aiService->suggestAlternatives($user->major->name, $user->major->min_score, $correct);
+        }
 
         $message = match(true) {
             $percentage >= 80 => '¡Excelente! Estás listo para el examen real.',
@@ -128,12 +152,13 @@ class SimulatorController extends Controller
             'total'      => $total,
             'percentage' => $percentage,
             'message'    => $message,
+            'goal'       => $user->major,
+            'ai_suggestions' => $suggestions
         ]);
     }
 
     private function getFallbackQuestions(int $count)
     {
-        // Esto solo se activa si la DB está vacía, para que el flujo no se rompa
         return collect(range(1, $count))->map(function($i) {
             return [
                 'id' => $i,

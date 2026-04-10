@@ -12,6 +12,7 @@ const currentQuestionIndex = ref(0);
 const answers = ref({});
 const timeLeft = ref(props.exam.time_limit_minutes * 60);
 const timerInterval = ref(null);
+const questionStartTime = ref(Date.now());
 
 const currentQuestion = computed(() => props.questions[currentQuestionIndex.value]);
 
@@ -23,6 +24,7 @@ const formattedTime = computed(() => {
 });
 
 const startTimer = () => {
+    clearInterval(timerInterval.value);
     timerInterval.value = setInterval(() => {
         if (timeLeft.value > 0) {
             timeLeft.value--;
@@ -34,24 +36,28 @@ const startTimer = () => {
 
 const selectAnswer = (index) => {
     const isCorrect = currentQuestion.value.options[index] === currentQuestion.value.correct_answer;
+    const now = Date.now();
+    const timeSpent = Math.floor((now - questionStartTime.value) / 1000);
     
     answers.value[currentQuestionIndex.value] = {
         question_id: currentQuestion.value.id,
         selected_index: index,
         is_correct: isCorrect,
-        time_spent: 0 // Podríamos medir el tiempo por pregunta aquí
+        time_spent: timeSpent
     };
 };
 
 const nextQuestion = () => {
     if (currentQuestionIndex.value < props.questions.length - 1) {
         currentQuestionIndex.value++;
+        questionStartTime.value = Date.now();
     }
 };
 
 const prevQuestion = () => {
     if (currentQuestionIndex.value > 0) {
         currentQuestionIndex.value--;
+        questionStartTime.value = Date.now();
     }
 };
 
@@ -110,7 +116,7 @@ onUnmounted(() => {
                     <button 
                         v-for="(q, index) in questions" 
                         :key="index"
-                        @click="currentQuestionIndex = index"
+                        @click="currentQuestionIndex = index; questionStartTime = Date.now();"
                         class="w-10 h-10 rounded-lg text-xs font-bold transition-all border-2"
                         :class="[
                             currentQuestionIndex === index ? 'border-orange-500 bg-orange-50 text-orange-600' : 

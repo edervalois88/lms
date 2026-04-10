@@ -11,6 +11,23 @@ class ClaudeService
     public const PROFILE_ANALYSIS_PROMPT = 'Analiza el siguiente historial de desempeño académico y proyecta el resultado en el examen UNAM: {data}. Retorna un JSON con mastery por materia, áreas críticas, fortalezas, proyección de puntaje, plan de estudio y mensaje motivacional.';
     public const ANSWER_EXPLANATION_PROMPT = 'Explica de forma pedagógica por qué la opción seleccionada es incorrecta y por qué la correcta es la acertada para la pregunta: "{question}". Opciones: {options}. Correcta: {correct}. Seleccionada: {selected}.';
     public const WEEKLY_RECOMMENDATION_PROMPT = 'Basado en las estadísticas de la semana: {stats}, genera una recomendación de estudio breve y accionable para un estudiante que aspira a la UNAM.';
+    public const ALTERNATIVE_CAREERS_PROMPT = 'Basado en que el estudiante aspira a "{target_major}" (Puntaje meta: {target_score}) pero su proyección actual es de {current_score} aciertos, sugiere 3 carreras alternativas de la misma área que tengan un puntaje de corte menor pero afinidad académica relevante. Retorna un JSON con un array de objetos (name, reason).';
+
+    public function suggestAlternatives(string $majorName, int $targetScore, int $currentScore): array
+    {
+        $prompt = str_replace(
+            ['{target_major}', '{target_score}', '{current_score}'],
+            [$majorName, $targetScore, $currentScore],
+            self::ALTERNATIVE_CAREERS_PROMPT
+        );
+
+        $response = $this->callClaude($prompt, "Sugiere alternativas.");
+
+        return json_decode($response, true) ?? [
+            ['name' => 'Carrera similar en FES', 'reason' => 'Suele tener puntajes de corte más accesibles conservando el mismo plan de estudios.'],
+            ['name' => 'Licenciatura de Area afin', 'reason' => 'Comparte tronco común y permite cambio interno posteriormente.']
+        ];
+    }
 
     public function generateQuestion(string $subject, string $topic, int $difficulty): array
     {

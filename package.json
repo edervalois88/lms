@@ -13,6 +13,7 @@
         "@inertiajs/vue3": "^2.0",
         "@vueuse/core": "^10.0",
         "chart.js": "^4.4",
+        "motion": "^12.38.0",
         "pinia": "^2.1",
         "vue": "^3.4",
         "vue-chartjs": "^5.3"

@@ -69,7 +69,7 @@ const exitQuiz = () => {
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center">
                     <Link :href="route('quiz.index')" class="text-gray-400 hover:text-gray-600 mr-4">
-                        <i class="fas fa-chevron-left text-xl"></i>
+                        <i class="fa-solid fa-chevron-left text-xl"></i>
                     </Link>
                     <div>
                         <h1 class="text-xl font-bold text-gray-900">{{ subject.name }}</h1>
@@ -95,7 +95,7 @@ const exitQuiz = () => {
                 <div v-if="!activeTopic" class="animate-fade-in">
                     <div class="text-center mb-12">
                         <div class="inline-flex p-4 rounded-2xl mb-4" :style="{ backgroundColor: subject.color + '20', color: subject.color }">
-                            <i :class="`fas fa-${subject.icon} text-4xl`"></i>
+                            <i :class="`fa-solid fa-${subject.icon} text-4xl`"></i>
                         </div>
                         <h2 class="text-3xl font-extrabold text-gray-900">¿Qué desea repasar hoy?</h2>
                         <p class="text-gray-500 mt-2">Selecciona un tema para generar preguntas personalizadas.</p>
@@ -112,17 +112,17 @@ const exitQuiz = () => {
                                 <h3 class="font-bold text-lg text-gray-900 group-hover:text-orange-600 transition-colors">{{ topic.name }}</h3>
                                 <div class="flex items-center mt-2 text-sm text-gray-400 font-medium">
                                     <span class="mr-3 flex items-center">
-                                        <i class="fas fa-layer-group mr-1.5 text-xs"></i>
+                                        <i class="fa-solid fa-layer-group mr-1.5 text-xs"></i>
                                         Nivel {{ topic.difficulty_base || 3 }}
                                     </span>
                                     <span class="flex items-center">
-                                        <i class="fas fa-question-circle mr-1.5 text-xs"></i>
+                                        <i class="fa-solid fa-circle-question mr-1.5 text-xs"></i>
                                         {{ topic.questions_count || 10 }}+ preguntas
                                     </span>
                                 </div>
                             </div>
                             <div class="ml-4 w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-orange-50 group-hover:text-orange-600 transition-all">
-                                <i class="fas fa-play text-xs"></i>
+                                <i class="fa-solid fa-play text-xs"></i>
                             </div>
                         </button>
                     </div>
