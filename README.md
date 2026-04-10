@@ -77,4 +77,4 @@ NexusEdu follows a service-oriented architecture within the Laravel framework:
 - **`App\Http\Middleware`**: Custom logic for onboarding flow and streak tracking.
 
 ---
-Developed by [Eder Valois](https://github.com/edervalois88) with ❤️ and AI.
+Developed by [Eder Valois](https://github.com/edervalois88).
