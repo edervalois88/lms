@@ -1,0 +1,187 @@
+<script setup>
+import { Head } from '@inertiajs/vue3';
+import { computed } from 'vue';
+
+const props = defineProps({
+    mastery: Array,
+    exams_history: Array
+});
+
+// Calculate aggregate stats
+const totalQuestions = computed(() => {
+    return props.mastery.reduce((acc, m) => acc + (m.total_attempts || 0), 0);
+});
+
+const avgAccuracy = computed(() => {
+    const totalCorrect = props.mastery.reduce((acc, m) => acc + (m.correct_attempts || 0), 0);
+    return totalQuestions.value > 0 ? Math.round((totalCorrect / totalQuestions.value) * 100) : 0;
+});
+
+const streak = computed(() => {
+    // In a real app, this would come from the User prop or a specific stat
+    return 15; 
+});
+
+const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('es-MX', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    });
+};
+</script>
+
+<template>
+    <Head title="Mi Progreso - NexusEdu" />
+
+    <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            
+            <header class="mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                <div>
+                    <h1 class="text-4xl font-black text-gray-900 mb-2">Mi <span class="text-orange-600">Progreso</span></h1>
+                    <p class="text-lg text-gray-500">Visualiza tu evolución y prepárate para el éxito.</p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="bg-white px-6 py-4 rounded-3xl shadow-sm border border-gray-100 flex items-center">
+                        <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mr-4">
+                            <i class="fa-solid fa-fire"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Racha</p>
+                            <p class="text-xl font-black text-gray-900">{{ streak }} días</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Total Preguntas</p>
+                    <h3 class="text-4xl font-black text-gray-900">{{ totalQuestions }}</h3>
+                    <div class="mt-4 flex items-center text-green-500 text-sm font-bold">
+                        <i class="fa-solid fa-arrow-up mr-2"></i>
+                        <span>+12% esta semana</span>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Precisión Media</p>
+                    <h3 class="text-4xl font-black text-gray-900">{{ avgAccuracy }}%</h3>
+                    <div class="mt-4 w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div class="bg-orange-500 h-full" :style="{ width: avgAccuracy + '%' }"></div>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Nivel Global</p>
+                    <h3 class="text-4xl font-black text-gray-900">Avanzado</h3>
+                    <p class="mt-4 text-gray-500 text-sm italic">"Estás por encima del 85% de los aspirantes"</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Mastery by Subject -->
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="text-2xl font-black text-gray-900 mb-8 flex items-center">
+                        <i class="fa-solid fa-chart-line mr-3 text-orange-600"></i>
+                        Dominio por Materia
+                    </h2>
+
+                    <div v-if="mastery.length === 0" class="py-12 text-center">
+                        <i class="fa-solid fa-ghost text-4xl text-gray-200 mb-4 block"></i>
+                        <p class="text-gray-400">Aún no tienes datos suficientes. ¡Comienza un quiz!</p>
+                    </div>
+
+                    <div v-else class="space-y-8">
+                        <div v-for="item in mastery" :key="item.id" class="group">
+                            <div class="flex justify-between items-end mb-3">
+                                <div>
+                                    <h4 class="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
+                                        {{ item.topic?.subject?.name || 'Materia' }}
+                                    </h4>
+                                    <p class="text-xs text-gray-400">{{ item.topic?.name }}</p>
+                                </div>
+                                <span class="text-lg font-black" :style="{ color: item.topic?.subject?.color || '#F97316' }">
+                                    {{ Math.round((item.mastery_score || 0) * 10) }}%
+                                </span>
+                            </div>
+                            <div class="w-full bg-gray-50 h-3 rounded-full overflow-hidden border border-gray-100">
+                                <div 
+                                    class="h-full transition-all duration-1000 ease-out shadow-inner"
+                                    :style="{ 
+                                        width: (item.mastery_score || 0) * 10 + '%',
+                                        backgroundColor: item.topic?.subject?.color || '#F97316'
+                                    }"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exam History -->
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="text-2xl font-black text-gray-900 mb-8 flex items-center">
+                        <i class="fa-solid fa-history mr-3 text-orange-600"></i>
+                        Historial de Exámenes
+                    </h2>
+
+                    <div v-if="exams_history.length === 0" class="py-12 text-center">
+                        <p class="text-gray-400 italic">No has realizado simulacros todavía.</p>
+                    </div>
+
+                    <div v-else class="overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50">
+                                    <th class="pb-4">Fecha</th>
+                                    <th class="pb-4">Tipo</th>
+                                    <th class="pb-4">Resultado</th>
+                                    <th class="pb-4"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr v-for="exam in exams_history" :key="exam.id" class="group">
+                                    <td class="py-5 font-medium text-gray-600">{{ formatDate(exam.created_at) }}</td>
+                                    <td class="py-5">
+                                        <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold uppercase">
+                                            {{ exam.type }}
+                                        </span>
+                                    </td>
+                                    <td class="py-5">
+                                        <span class="font-black text-gray-900">{{ exam.score || '85' }}/120</span>
+                                    </td>
+                                    <td class="py-5 text-right">
+                                        <button class="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-orange-50 hover:text-orange-600 transition-all">
+                                            <i class="fa-solid fa-eye text-xs"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Promotion / CTA -->
+            <div class="mt-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-3xl p-10 text-white flex flex-col md:flex-row items-center justify-between shadow-2xl overflow-hidden relative">
+                <div class="relative z-10 text-center md:text-left mb-8 md:mb-0">
+                    <h2 class="text-3xl font-black mb-2">¿Listo para el siguiente nivel?</h2>
+                    <p class="text-orange-100 text-lg">Inicia un simulacro completo y proyecta tu puntaje real UNAM.</p>
+                </div>
+                <button class="relative z-10 bg-white text-orange-600 px-10 py-4 rounded-2xl font-black text-lg hover:bg-orange-50 transition-colors shadow-lg shadow-black/10">
+                    Iniciar Simulacro
+                </button>
+                <!-- Abstract decorations -->
+                <div class="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-64 h-64 bg-black/10 rounded-full blur-3xl"></div>
+            </div>
+
+        </div>
+    </div>
+</template>
+
+<style scoped>
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+</style>
