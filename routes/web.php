@@ -69,3 +69,5 @@ Route::get('/debug-nexus', function () {
         return "<h1>❌ Error de Laravel</h1><p>" . $e->getMessage() . "</p>";
     }
 });
+
+require __DIR__.'/auth.php';
