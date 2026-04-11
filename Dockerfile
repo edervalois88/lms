@@ -55,7 +55,7 @@ COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Env cleanup for production
-RUN php artisan optimize
+# Caches will be handled by entrypoint.sh at runtime to ensure Railway vars are used.
 
 # Export port
 EXPOSE 80
