@@ -22,8 +22,8 @@ class HandleInertiaRequests extends Middleware
      */
     public function version(Request $request): ?string
     {
-        // Forzamos la recarga al desplegar en producción
-        return config('app.version', 'v2-midnight-' . time());
+        $manifestPath = public_path('build/manifest.json');
+        return file_exists($manifestPath) ? md5_file($manifestPath) : parent::version($request);
     }
 
     /**
