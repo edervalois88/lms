@@ -3,7 +3,12 @@
 namespace App\Http\Controllers\Student;
 
 use App\Enums\SubjectArea;
+use App\Http\Controllers\Controller;
 use App\Models\Major;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class OnboardingController extends Controller
 {
