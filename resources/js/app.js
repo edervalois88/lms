@@ -4,6 +4,8 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 import { createPinia } from 'pinia'
 import '../css/app.css'
 
+import { ZiggyVue } from '../../vendor/tightenco/ziggy'
+
 createInertiaApp({
     title: (title) => title ? `${title} — NexusEdu` : 'NexusEdu — AI Powered Education',
     resolve: (name) => resolvePageComponent(
@@ -16,6 +18,7 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(pinia)
+            .use(ZiggyVue)
             .mount(el)
     },
     progress: {
