@@ -2,7 +2,7 @@
 FROM composer:2.7 AS composer-builder
 WORKDIR /app
 COPY composer.json composer.lock ./
-# Instalamos con --no-dev y optimizamos el autoloader para producción
+# Instalamos con --ignore-platform-reqs para que no bloquee PHP 8.4
 RUN composer install --no-dev --no-interaction --no-scripts --optimize-autoloader --ignore-platform-reqs
 
 # Stage 2: Build assets
@@ -11,6 +11,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+# IMPORTANTE: Copiamos vendor aquí para que Vite (Ziggy) pueda encontrar sus rutas
+COPY --from=composer-builder /app/vendor ./vendor
 RUN npm run build
 
 # Stage 3: PHP Application
@@ -50,7 +52,12 @@ COPY --from=composer-builder /app/vendor ./vendor
 COPY --from=assets-builder /app/public/build ./public/build
 
 # Permissions
-RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache
+RUN mkdir -p storage/logs && \
+    mkdir -p storage/framework/cache && \
+    mkdir -p storage/framework/sessions && \
+    mkdir -p storage/framework/views && \
+    mkdir -p bootstrap/cache
+
 RUN chown -R www-data:www-data storage bootstrap/cache public/build
 RUN chmod -R 777 storage bootstrap/cache
 
