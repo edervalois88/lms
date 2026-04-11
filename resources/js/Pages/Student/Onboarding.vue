@@ -137,12 +137,13 @@ onMounted(() => {
                 </div>
 
                 <div class="glass-morphism-dark p-10 rounded-[3rem] border border-white/5 max-h-[60vh] overflow-y-auto space-y-6 custom-scrollbar">
-                    <div v-for="q in vocational_questions" :key="q.id" class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+                    <div v-for="q in vocational_questions" :key="q.id" :id="'q-'+q.id" class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
                         <p class="text-lg font-bold">{{ q.order }}. {{ q.text }}</p>
                         <div class="flex gap-4">
                             <button 
                                 v-for="score in [1, 2, 3, 4, 5]" 
                                 :key="score"
+                                type="button"
                                 @click="testAnswers[q.id] = score"
                                 :class="['w-10 h-10 rounded-xl font-black transition-all border', 
                                     testAnswers[q.id] === score ? 'bg-blue-500 border-blue-400 shadow-blue-glow' : 'bg-white/5 border-white/10 hover:border-blue-500/40']"
@@ -153,8 +154,28 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <button @click="submitTest" class="w-full bg-blue-600 py-6 rounded-2xl font-black text-xl italic uppercase shadow-blue-glow">Procesar Diagnóstico</button>
+                <div class="space-y-2">
+                    <div class="flex justify-between text-[10px] font-black uppercase tracking-widest px-2">
+                        <span class="text-gray-500">Progreso de Sincronización</span>
+                        <span :class="Object.keys(testAnswers).length === vocational_questions.length ? 'text-blue-400' : 'text-orange-500'">
+                            {{ Object.keys(testAnswers).length }} / {{ vocational_questions.length }}
+                        </span>
+                    </div>
+                    <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-500 transition-all duration-300" :style="{ width: (Object.keys(testAnswers).length / vocational_questions.length * 100) + '%' }"></div>
+                    </div>
+                </div>
+
+                <button 
+                    @click="submitTest" 
+                    :disabled="Object.keys(testAnswers).length === 0"
+                    :class="['w-full py-6 rounded-2xl font-black text-xl italic uppercase transition-all', 
+                        Object.keys(testAnswers).length > 0 ? 'bg-blue-600 shadow-blue-glow hover:bg-blue-500' : 'bg-white/5 text-gray-500 cursor-not-allowed']"
+                >
+                    {{ Object.keys(testAnswers).length > 0 ? 'Procesar Diagnóstico' : 'Requiere Datos' }}
+                </button>
             </div>
+
 
             <!-- University Step -->
             <div v-if="currentStep === 'university'" class="space-y-10 step-content">
