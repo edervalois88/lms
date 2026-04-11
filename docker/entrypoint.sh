@@ -1,17 +1,19 @@
 #!/bin/sh
 
-echo "🚀 Iniciando Protocolo de Despegue NexusEdu..."
+echo "🚀 Iniciando Protocolo de Despegue NexusEdu (v8.4 Resilient)..."
 
 # Esperar un poco a que la DB esté lista
 sleep 5
 
-echo "📂 Ejecutando Migraciones..."
-php artisan migrate --force
+echo "📂 Intentando Migraciones Automáticas..."
+# Usamos || true para que si falla la DB, el servidor Nginx igual encienda y nos deje ver el error real
+php artisan migrate --force || echo "⚠️ Advertencia: Las migraciones fallaron. Verifica la conexión a la DB."
 
-echo "🌱 Poblando base de datos con carreras UNAM (si es necesario)..."
-# Solo ejecutamos el seeder si la tabla de carreras está vacía o el usuario lo ha pedido
-# Para este caso inicial, lo ejecutaremos para asegurar que vea las 50 carreras
-php artisan db:seed --force
+echo "🌱 Intentando Cargar Datos (Seeders)..."
+php artisan db:seed --force || echo "⚠️ Advertencia: El poblado de datos falló o ya estaba realizado."
 
-echo "✅ Sistema Listo. Iniciando Servidor..."
+echo "📂 Limpiando Caché de Aplicación..."
+php artisan optimize:clear
+
+echo "✅ Protocolo finalizado. Iniciando Capas de Servicio..."
 exec /usr/bin/supervisord -c /etc/supervisord.conf
