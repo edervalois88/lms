@@ -61,4 +61,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.index');
 });
 
-require __DIR__.'/auth.php';
+Route::get('/debug-nexus', function () {
+    try {
+        DB::connection()->getPdo();
+        return "<h1>✅ Laravel está VIVO</h1><p>Base de datos: " . DB::connection()->getDatabaseName() . "</p><p>Vite Manifest: " . (file_exists(public_path('build/manifest.json')) ? 'Encontrado' : 'MISSING') . "</p>";
+    } catch (\Exception $e) {
+        return "<h1>❌ Error de Laravel</h1><p>" . $e->getMessage() . "</p>";
+    }
+});

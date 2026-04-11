@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "🚀 Iniciando Protocolo de Despegue NexusEdu (v8.4 Ultra-Resilient)..."
+echo "🚀 Iniciando Protocolo de Despegue NexusEdu (v8.4 Fresh Startup)..."
 
 # Función para esperar a la base de datos
 wait_for_db() {
@@ -11,21 +11,21 @@ wait_for_db() {
   echo "✅ ¡Base de Datos detectada!"
 }
 
-# Solo esperamos si las variables están seteadas
 if [ -n "$DB_HOST" ]; then
   wait_for_db
 fi
 
 echo "📂 Preparando Estructura de Datos..."
-# Forzamos la migración limpia
-php artisan migrate:fresh --force --seed || echo "⚠️ Fallo en migración. Probando con migración simple..."
-php artisan migrate --force
+# Ejecutamos migraciones normales (sin fresh para no borrar datos si ya se crearon)
+php artisan migrate --force --seed || echo "⚠️ Advertencia en migraciones."
 
-echo "📂 Optimizando Motores..."
+echo "📂 Limpiando TODO el Caché (Modo Seguro)..."
+# Desactivamos los caches en producción temporalmente para evitar el Error 500 por config vieja
 php artisan optimize:clear
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
 
 echo "✅ NexusEdu está LIVE."
 exec /usr/bin/supervisord -c /etc/supervisord.conf
