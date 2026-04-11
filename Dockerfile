@@ -3,7 +3,7 @@ FROM composer:2.7 AS composer-builder
 WORKDIR /app
 COPY composer.json composer.lock ./
 # Instalamos con --no-dev y optimizamos el autoloader para producción
-RUN composer install --no-dev --no-interaction --no-scripts --optimize-autoloader
+RUN composer install --no-dev --no-interaction --no-scripts --optimize-autoloader --ignore-platform-reqs
 
 # Stage 2: Build assets
 FROM node:20-alpine AS assets-builder
