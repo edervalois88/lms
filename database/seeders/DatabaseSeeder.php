@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
             SubjectSeeder::class,
             TopicSeeder::class,
             UserSeeder::class,
+            MultiUniversitySeeder::class,
+            VocationalQuestionSeeder::class,
         ]);
     }
 }

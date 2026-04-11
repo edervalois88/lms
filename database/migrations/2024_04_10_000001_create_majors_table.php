@@ -11,16 +11,28 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('majors', function (Blueprint $user_rule) {
-            $user_rule->id();
-            $user_rule->string('name');
-            $user_rule->integer('area_id');
-            $user_rule->string('school_name');
-            $user_rule->integer('min_score');
-            $user_rule->integer('min_score_prev')->nullable();
-            $user_rule->string('demand_level')->nullable();
-            $user_rule->text('description')->nullable();
-            $user_rule->timestamps();
+        Schema::create('majors', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('campus_id')->constrained()->onDelete('cascade');
+            $table->string('name');
+            $table->string('slug')->nullable();
+            
+            // Refleja la división académica (ej: Area 1, CBI, IyCFM)
+            $table->string('division_name'); 
+            
+            // Datos del último año para vista rápida
+            $table->integer('min_score');
+            $table->integer('applicants')->nullable();
+            $table->integer('places')->nullable();
+            
+            // Código Holland para el Test Vocacional (ej: RIA, SAE)
+            $table->string('holland_code', 10)->nullable();
+            
+            $table->text('description')->nullable();
+            $table->json('extra_requirements')->nullable(); // Para carreras con pre-requisitos
+            $table->timestamps();
+            
+            $table->index(['name', 'division_name']);
         });
     }
 

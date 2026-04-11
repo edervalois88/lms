@@ -54,7 +54,7 @@ onMounted(() => {
                 <div class="flex items-center gap-4">
                     <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-xl font-black shadow-orange-glow">N</div>
                     <div class="hidden md:block">
-                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Status: Operador</p>
+                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Status: Operador | GPA: {{ user_gpa || '---' }}</p>
                         <p class="text-sm font-black">{{ $page.props.auth.user.name }}</p>
                     </div>
                 </div>
@@ -104,13 +104,18 @@ onMounted(() => {
                                     <div>
                                         <div class="flex items-center gap-3 mb-2">
                                             <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-blue-glow"></span>
-                                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em]">Misión de Ingreso Activa</p>
+                                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em]">Misión de Ingreso Activa: {{ major?.campus?.university?.acronym }}</p>
                                         </div>
                                         <h2 class="text-5xl font-black uppercase italic tracking-tighter">{{ authMajor?.name || 'Sector no Definido' }}</h2>
-                                        <p class="text-gray-500 font-bold uppercase tracking-widest text-xs mt-2">{{ authMajor?.school_name || 'Protocolo de Onboarding Requerido' }}</p>
+                                        <p class="text-gray-500 font-bold uppercase tracking-widest text-xs mt-2">{{ major?.campus?.name || 'Protocolo de Onboarding Requerido' }}</p>
                                     </div>
-                                    <div :class="['px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border shadow-2xl', gapStatus.bg, gapStatus.color, gapStatus.color.replace('text', 'border').replace('400', '400/20')]">
-                                        {{ gapStatus.text }}
+                                    <div class="flex flex-col items-end gap-2">
+                                        <div :class="['px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border shadow-2xl', gapStatus.bg, gapStatus.color, gapStatus.color.replace('text', 'border').replace('400', '400/20')]">
+                                            {{ gapStatus.text }}
+                                        </div>
+                                        <div v-if="major" class="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-500 font-black text-[9px] rounded uppercase tracking-widest">
+                                            AMENAZA: {{ major.difficulty_category }}
+                                        </div>
                                     </div>
                                 </div>
 

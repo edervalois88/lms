@@ -19,3 +19,4 @@ user.ini
 /storage/logs/*.log
 /storage/app/public/*
 /public/hot
+/database/database.sqlite

@@ -16,9 +16,11 @@ class DashboardController extends Controller
 
     public function index(): Response
     {
-        $user = auth()->user()->load('major');
+        $user = auth()->user()->load('major.campus.university');
         
         return Inertia::render('Dashboard', [
+            'major' => $user->major,
+            'user_gpa' => $user->gpa,
             'stats' => [
                 'streak' => $user->streak_days,
                 'total_exams' => $user->exams()->completed()->count(),

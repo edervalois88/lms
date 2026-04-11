@@ -1,42 +1,50 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
-import { animate, spring } from 'motion';
+import { Head, useForm, router } from '@inertiajs/vue3';
+import { animate, spring, stagger } from 'motion';
 import { playSound } from '@/Utils/SoundService';
+import MajorTrendsModal from '@/Components/Modals/MajorTrendsModal.vue';
 
 const props = defineProps({
-    areas: Array,
-    majors: Array,
+    universities: Array,
+    vocational_questions: Array,
+    vocational_result: Object,
+    recommendations: Array,
+    step: { type: String, default: 'welcome' }
 });
+
+// Wizard State
+const currentStep = ref(props.step); // welcome, test, university, campus, major, summary
+const testAnswers = ref({});
+const selectedUni = ref(null);
+const selectedCampus = ref(null);
+const searchQuery = ref('');
+const showTrendsModal = ref(false);
 
 const form = useForm({
-    area_id: null,
     major_id: null,
     study_hours_per_day: 4,
+    gpa: 8.5,
 });
 
-const searchQuery = ref('');
-
-const filteredMajors = computed(() => {
-    if (!form.area_id) return [];
-    let list = props.majors.filter(m => m.area_id === form.area_id);
-    if (searchQuery.value) {
-        list = list.filter(m => m.name.toLowerCase().includes(searchQuery.value.toLowerCase()));
-    }
-    return list;
-});
-
-const selectedMajor = computed(() => props.majors.find(m => m.id === form.major_id));
-
-const selectArea = (id) => {
-    form.area_id = id;
-    form.major_id = null;
+// Logic
+const goToStep = (step) => {
+    currentStep.value = step;
     playSound('pop');
-    
-    // Animación de entrada para la sección de carreras
-    setTimeout(() => {
-        animate(".career-section", { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, easing: spring() });
-    }, 50);
+    animate(".step-content", { opacity: [0, 1], x: [20, 0] }, { duration: 0.5, easing: spring() });
+};
+
+const selectUni = (uni) => {
+    selectedUni.value = uni;
+    selectedCampus.value = null;
+    form.major_id = null;
+    goToStep('campus');
+};
+
+const selectCampus = (campus) => {
+    selectedCampus.value = campus;
+    form.major_id = null;
+    goToStep('major');
 };
 
 const selectMajor = (id) => {
@@ -44,149 +52,251 @@ const selectMajor = (id) => {
     playSound('click');
 };
 
-const submit = () => {
+const submitTest = () => {
+    playSound('success');
+    router.post(route('onboarding.vocational.submit'), {
+        answers: testAnswers.value
+    }, {
+        onSuccess: () => currentStep.value = 'results'
+    });
+};
+
+const finishOnboarding = () => {
     playSound('success');
     form.post(route('onboarding.store'));
 };
 
+// Computed
+const filteredMajors = computed(() => {
+    if (!selectedCampus.value) return [];
+    let list = selectedCampus.value.majors;
+    if (searchQuery.value) {
+        list = list.filter(m => m.name.toLowerCase().includes(searchQuery.value.toLowerCase()));
+    }
+    return list;
+});
+
+const selectedMajorData = computed(() => {
+    if (!form.major_id || !selectedCampus.value) return null;
+    return selectedCampus.value.majors.find(m => m.id === form.major_id);
+});
+
 onMounted(() => {
-    animate(".onboarding-container", { opacity: [0, 1], scale: [0.95, 1] }, { duration: 0.8, easing: spring() });
+    animate(".onboarding-container", { opacity: [0, 1], scale: [0.98, 1] }, { duration: 0.8 });
 });
 </script>
 
 <template>
-    <Head title="Bienvenido a NexusEdu" />
+    <Head title="Misión: Onboarding - NexusEdu" />
 
-    <div class="min-h-screen bg-white flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 onboarding-container">
-        <div class="max-w-xl w-full mx-auto space-y-12">
+    <div class="min-h-screen bg-midnight text-white selection:bg-orange-500/30 flex items-center justify-center p-6 font-sans">
+        <div class="max-w-4xl w-full onboarding-container">
             
-            <div class="text-center">
-                <div class="w-16 h-16 bg-orange-500 rounded-2xl mx-auto flex items-center justify-center text-white text-3xl font-black shadow-lg mb-8 logo-bounce">N</div>
-                <h1 class="text-4xl font-black text-gray-900 mb-4">Bienvenido a <span class="text-orange-600">NexusEdu</span></h1>
-                <p class="text-lg text-gray-500">Configura tu perfil para comenzar tu camino a la UNAM.</p>
-            </div>
-
-            <form @submit.prevent="submit" class="space-y-12">
-                <!-- Select Area -->
-                <div class="space-y-6">
-                    <h2 class="text-xl font-bold text-gray-900 border-l-4 border-orange-500 pl-4">1. ¿A qué área perteneces?</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button
-                            v-for="area in areas"
-                            :key="area.id"
-                            type="button"
-                            @click="selectArea(area.id)"
-                            class="flex flex-col items-center p-4 rounded-2xl border-2 transition-all text-center transform active:scale-95"
-                            :class="form.area_id === area.id ? 'border-orange-500 bg-orange-50 ring-4 ring-orange-100' : 'border-gray-100 hover:border-orange-200'"
-                        >
-                            <span class="text-2xl font-black mb-1" :class="form.area_id === area.id ? 'text-orange-600' : 'text-gray-300'">
-                                {{ area.id }}
-                            </span>
-                            <span class="text-xs font-bold text-gray-800 leading-tight">{{ area.name.split(' ')[0] }}...</span>
-                        </button>
-                    </div>
+            <!-- Welcome Step -->
+            <div v-if="currentStep === 'welcome'" class="text-center space-y-12 step-content">
+                <div class="w-20 h-20 bg-orange-600 rounded-[2rem] mx-auto flex items-center justify-center text-4xl font-black shadow-orange-glow logo-bounce">N</div>
+                <div class="space-y-4">
+                    <h1 class="text-6xl font-black italic tracking-tighter uppercase glow-text">Iniciando Protocolo</h1>
+                    <p class="text-gray-400 font-bold uppercase tracking-[0.4em] text-xs">Identificación de Metas de Aspirante</p>
                 </div>
 
-                <!-- Select Major -->
-                <div v-if="form.area_id" class="space-y-6 career-section">
-                    <h2 class="text-xl font-bold text-gray-900 border-l-4 border-orange-500 pl-4">2. Selecciona tu Carrera Meta</h2>
-                    
-                    <div class="relative">
-                        <input 
-                            v-model="searchQuery"
-                            type="text" 
-                            placeholder="Buscar carrera (ej: Medicina, Derecho...)"
-                            class="w-full bg-gray-50 border-0 rounded-2xl p-4 pl-12 text-gray-900 focus:ring-2 focus:ring-orange-500 shadow-inner"
-                        />
-                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    </div>
-
-                    <div class="max-h-64 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                        <button
-                            v-for="major in filteredMajors"
-                            :key="major.id"
-                            type="button"
-                            @click="selectMajor(major.id)"
-                            class="w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left transform active:scale-98"
-                            :class="form.major_id === major.id ? 'border-orange-500 bg-orange-50' : 'border-gray-50 bg-gray-50 hover:bg-white'"
-                        >
-                            <div>
-                                <p class="font-bold text-gray-900">{{ major.name }}</p>
-                                <p class="text-xs text-gray-400">{{ major.school_name }}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-black text-orange-600">{{ major.min_score }}</p>
-                                <p class="text-[10px] text-gray-400 uppercase font-black">Aciertos</p>
-                            </div>
-                        </button>
-                    </div>
-
-                    <div v-if="selectedMajor" class="bg-gray-900 p-6 rounded-2xl text-white shadow-xl animate-pop-in">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-bold text-orange-400 uppercase tracking-widest mb-1">Tu Objetivo Seleccionado</p>
-                                <p class="text-xl font-black">{{ selectedMajor.name }}</p>
-                                <p class="text-sm text-gray-400">{{ selectedMajor.school_name }}</p>
-                            </div>
-                            <div class="text-center bg-white/10 px-4 py-2 rounded-xl border border-white/10">
-                                <p class="text-2xl font-black text-orange-500">{{ selectedMajor.min_score }}</p>
-                                <p class="text-[10px] uppercase font-bold text-gray-300">Meta</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Study Hours -->
-                <div v-if="form.major_id" class="space-y-6 study-hours-section">
-                    <h2 class="text-xl font-bold text-gray-900 border-l-4 border-orange-500 pl-4">3. Plan de estudio diario</h2>
-                    <div class="bg-gray-50 p-8 rounded-3xl">
-                        <input 
-                            type="range" 
-                            v-model="form.study_hours_per_day" 
-                            min="1" 
-                            max="12" 
-                            class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
-                        />
-                        <div class="flex justify-between mt-4 text-gray-400 font-bold uppercase tracking-widest text-[10px]">
-                            <span>1 hora</span>
-                            <span class="text-orange-600 text-lg font-black">{{ form.study_hours_per_day }} horas</span>
-                            <span>12 horas</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <button 
-                        type="submit"
-                        :disabled="!form.major_id || form.processing"
-                        class="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-xl hover:bg-gray-800 transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 hover:shadow-orange-500/20"
+                        @click="goToStep('university')"
+                        class="glass-morphism-dark p-10 rounded-[3rem] border border-white/5 hover:border-orange-500/40 transition-all group text-left relative overflow-hidden"
                     >
-                        {{ form.processing ? 'Configurando...' : '¡Comenzar mi Preparación!' }}
+                        <div class="relative z-10">
+                            <i class="fa-solid fa-crosshairs text-3xl text-orange-500 mb-6 group-hover:scale-110 transition-transform"></i>
+                            <h3 class="text-2xl font-black uppercase italic mb-2">Tengo una Meta</h3>
+                            <p class="text-xs text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Configuración directa de institución y carrera objetivo.</p>
+                        </div>
+                        <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl"></div>
+                    </button>
+
+                    <button 
+                        @click="goToStep('test')"
+                        class="glass-morphism-dark p-10 rounded-[3rem] border border-white/5 hover:border-blue-500/40 transition-all group text-left relative overflow-hidden"
+                    >
+                        <div class="relative z-10">
+                            <i class="fa-solid fa-brain text-3xl text-blue-400 mb-6 group-hover:scale-110 transition-transform"></i>
+                            <h3 class="text-2xl font-black uppercase italic mb-2">Necesito Orientación</h3>
+                            <p class="text-xs text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Ejecutar diagnóstico RIASEC para identificar compatibilidad vocacional.</p>
+                        </div>
+                        <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-blue-400/5 rounded-full blur-3xl"></div>
                     </button>
                 </div>
-            </form>
+            </div>
+
+            <!-- Vocational Test Step -->
+            <div v-if="currentStep === 'test'" class="space-y-10 step-content">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-3xl font-black italic uppercase tracking-tighter">Diagnóstico Vocacional</h2>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Protocolo de 30 preguntas RIASEC</p>
+                    </div>
+                </div>
+
+                <div class="glass-morphism-dark p-10 rounded-[3rem] border border-white/5 max-h-[60vh] overflow-y-auto space-y-6 custom-scrollbar">
+                    <div v-for="q in vocational_questions" :key="q.id" class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+                        <p class="text-lg font-bold">{{ q.order }}. {{ q.text }}</p>
+                        <div class="flex gap-4">
+                            <button 
+                                v-for="score in [1, 2, 3, 4, 5]" 
+                                :key="score"
+                                @click="testAnswers[q.id] = score"
+                                :class="['w-10 h-10 rounded-xl font-black transition-all border', 
+                                    testAnswers[q.id] === score ? 'bg-blue-500 border-blue-400 shadow-blue-glow' : 'bg-white/5 border-white/10 hover:border-blue-500/40']"
+                            >
+                                {{ score }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="submitTest" class="w-full bg-blue-600 py-6 rounded-2xl font-black text-xl italic uppercase shadow-blue-glow">Procesar Diagnóstico</button>
+            </div>
+
+            <!-- University Step -->
+            <div v-if="currentStep === 'university'" class="space-y-10 step-content">
+                <div class="text-center space-y-4">
+                    <h2 class="text-4xl font-black italic uppercase tracking-tighter">Selecciona tu Objetivo</h2>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Institución de Nivel Superior</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <button 
+                        v-for="uni in universities" 
+                        :key="uni.id"
+                        @click="selectUni(uni)"
+                        class="glass-morphism-dark p-8 rounded-[2.5rem] border border-white/5 hover:border-orange-500/40 transition-all group flex flex-col items-center gap-6"
+                    >
+                        <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-3xl font-black group-hover:scale-110 transition-transform">
+                            {{ uni.acronym[0] }}
+                        </div>
+                        <div class="text-center">
+                            <h4 class="text-xl font-black">{{ uni.acronym }}</h4>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">{{ uni.exam_config.total_questions }} Preguntas</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Campus/Unit Step -->
+            <div v-if="currentStep === 'campus' && selectedUni" class="space-y-10 step-content">
+                <h2 class="text-3xl font-black italic uppercase tracking-tighter text-center">Selecciona Plantel / Unidad</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <button 
+                        v-for="campus in selectedUni.campuses" 
+                        :key="campus.id"
+                        @click="selectCampus(campus)"
+                        class="p-6 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all font-bold text-center"
+                    >
+                        {{ campus.name }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Major Step -->
+            <div v-if="currentStep === 'major' && selectedCampus" class="space-y-10 step-content">
+                <div class="flex items-center justify-between">
+                     <h2 class="text-3xl font-black italic uppercase tracking-tighter">Carrera de Destino</h2>
+                     <div class="relative">
+                        <input v-model="searchQuery" type="text" placeholder="Filtrar..." class="bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-sm focus:ring-1 focus:ring-orange-500"/>
+                     </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                    <button 
+                        v-for="major in filteredMajors" 
+                        :key="major.id"
+                        @click="selectMajor(major.id)"
+                        :class="['flex items-center justify-between p-6 rounded-2xl border transition-all text-left', 
+                            form.major_id === major.id ? 'border-orange-500 bg-orange-500/10' : 'border-white/5 bg-white/5 hover:bg-white/10']"
+                    >
+                        <div>
+                            <p class="font-black text-lg">{{ major.name }}</p>
+                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{{ major.division_name }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-black text-orange-500">{{ major.min_score }}</p>
+                            <p class="text-[9px] text-gray-500 uppercase font-black">Meta Aciertos</p>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Final Config (GPA & Confirm) -->
+                <div v-if="form.major_id" class="glass-morphism p-8 rounded-[3rem] border border-orange-500/20 space-y-8 animate-pop-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div class="space-y-4">
+                            <h4 class="text-sm font-black text-orange-500 uppercase tracking-widest">Configuración de Red</h4>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Promedio Actual (GPA)</label>
+                                <div class="flex items-center gap-4">
+                                    <input type="range" v-model="form.gpa" min="6" max="10" step="0.1" class="flex-grow accent-orange-500" />
+                                    <span class="text-2xl font-black">{{ form.gpa }}</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-[9px] text-gray-500 italic">* Requerido para el cálculo de precisión de la UAM (30% meta).</p>
+                                    <button @click="showTrendsModal = true" class="text-[10px] font-black text-orange-400 hover:text-orange-300 underline uppercase tracking-widest">Ver Tendencia</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right space-y-2">
+                             <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nivel de Amenaza</p>
+                             <div class="px-4 py-1 rounded bg-red-500/20 border border-red-500/40 inline-block text-[10px] font-black text-red-400 uppercase tracking-widest">
+                                {{ selectedMajorData?.difficulty_category || 'EXTREMA' }} ({{ selectedMajorData?.difficulty_index || '2.4' }}%)
+                             </div>
+                        </div>
+                    </div>
+                    <button @click="finishOnboarding" class="w-full bg-orange-600 py-6 rounded-2xl font-black text-2xl italic uppercase shadow-orange-glow">Establecer Meta de Misión</button>
+                </div>
+            </div>
 
         </div>
+
+        <!-- Modals -->
+        <MajorTrendsModal 
+            :show="showTrendsModal" 
+            :major="selectedMajorData" 
+            @close="showTrendsModal = false" 
+        />
     </div>
 </template>
 
 <style scoped>
+.glass-morphism-dark {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+}
+
+.shadow-orange-glow {
+    box-shadow: 0 0 50px rgba(255, 107, 0, 0.2);
+}
+
+.shadow-blue-glow {
+    box-shadow: 0 0 50px rgba(0, 209, 255, 0.2);
+}
+
+.glow-text {
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+}
+
 .logo-bounce {
-    animation: bounce 2s infinite;
+    animation: bounce 3s infinite;
 }
 
 @keyframes bounce {
-    0%, 100% { transform: translateY(0) rotate(0); }
-    50% { transform: translateY(-10px) rotate(5deg); }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
 
 .animate-pop-in {
-    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes popIn {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
+    from { opacity: 0; scale: 0.9; }
+    to { opacity: 1; scale: 1; }
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -196,7 +306,7 @@ onMounted(() => {
     background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #e5e7eb;
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
 }
 </style>

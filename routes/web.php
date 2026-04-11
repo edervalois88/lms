@@ -28,6 +28,7 @@ Route::middleware(['auth', 'verified', 'streak'])->group(function () {
     // Onboarding
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+    Route::post('/onboarding/vocational', [OnboardingController::class, 'submitVocationalTest'])->name('onboarding.vocational.submit');
 
     // Rutas protegidas por Onboarding
     Route::middleware(['onboarded'])->group(function () {
