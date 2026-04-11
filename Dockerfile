@@ -47,11 +47,15 @@ COPY ./docker/nginx.conf /etc/nginx/http.d/default.conf
 # Supervisor config
 COPY ./docker/supervisord.conf /etc/supervisord.conf
 
+# Entrypoint script
+COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Env cleanup for production
 RUN php artisan optimize
 
 # Export port
 EXPOSE 80
 
-# Start supervisor
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+# Start entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
