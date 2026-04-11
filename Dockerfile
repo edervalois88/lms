@@ -38,6 +38,7 @@ COPY --from=assets-builder /app/public/build ./public/build
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # Permissions
+RUN mkdir -p storage/app storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
 RUN chown -R www-data:www-data storage bootstrap/cache public/build
 
 # Nginx config
