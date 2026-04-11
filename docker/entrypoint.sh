@@ -1,6 +1,13 @@
 #!/bin/sh
 
-echo "🚀 Iniciando Protocolo de Despegue NexusEdu (v8.4 Fresh Startup)..."
+echo "🚀 Iniciando Protocolo de Despegue NexusEdu (v8.4 Environment Force)..."
+
+# 1. Forzar la creación del .env con las variables de Railway
+# Esto asegura que Laravel use MYSQL y no SQLite
+echo "📝 Inyectando variables de entorno..."
+env | grep -E '^(DB_|APP_|REDIS_|MAIL_|QUEUE_|VITE_|ANTHROPIC_)' > .env
+echo "APP_DEBUG=true" >> .env
+echo "APP_ENV=production" >> .env
 
 # Función para esperar a la base de datos
 wait_for_db() {
@@ -16,16 +23,13 @@ if [ -n "$DB_HOST" ]; then
 fi
 
 echo "📂 Preparando Estructura de Datos..."
-# Ejecutamos migraciones normales (sin fresh para no borrar datos si ya se crearon)
+# Limpieza de caches antes de migrar
+php artisan config:clear
 php artisan migrate --force --seed || echo "⚠️ Advertencia en migraciones."
 
-echo "📂 Limpiando TODO el Caché (Modo Seguro)..."
-# Desactivamos los caches en producción temporalmente para evitar el Error 500 por config vieja
+echo "📂 Limpieza Final..."
 php artisan optimize:clear
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-php artisan cache:clear
+php artisan storage:link || true
 
 echo "✅ NexusEdu está LIVE."
 exec /usr/bin/supervisord -c /etc/supervisord.conf
