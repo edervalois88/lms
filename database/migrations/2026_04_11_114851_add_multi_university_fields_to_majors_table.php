@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Forzamos la recreación de la tabla majors para asegurar que el esquema
-        // coincida con el nuevo sistema multi-universidad (UNAM, IPN, UAM).
+        // Desactivamos llaves foráneas porque MySQL impide borrar tablas referenciadas
+        Schema::disableForeignKeyConstraints();
+        
+        // Limpiamos referencias huérfanas en los usuarios para evitar inconsistencias
+        \Illuminate\Support\Facades\DB::table('users')->update(['major_id' => null]);
+
         Schema::dropIfExists('majors');
 
         Schema::create('majors', function (Blueprint $table) {
@@ -38,6 +42,9 @@ return new class extends Migration
             
             $table->index(['name', 'division_name']);
         });
+
+        // Reactivamos las restricciones de llaves foráneas para proteger la integridad
+        Schema::enableForeignKeyConstraints();
     }
 
     /**
