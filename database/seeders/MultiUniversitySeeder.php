@@ -16,6 +16,13 @@ class MultiUniversitySeeder extends Seeder
      */
     public function run(): void
     {
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        University::truncate();
+        Campus::truncate();
+        Major::truncate();
+        MajorStatistic::truncate();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+
         // 1. UNIVERSIDADES
         $unam = University::create([
             'name' => 'Universidad Nacional Autónoma de México',

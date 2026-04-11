@@ -12,6 +12,10 @@ class VocationalQuestionSeeder extends Seeder
      */
     public function run(): void
     {
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        VocationalQuestion::truncate();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+
         $questions = [
             // REALISTA (Manual, Herramientas, Maquinaria)
             ['text' => 'Reparar aparatos eléctricos o electrónicos.', 'ria_type' => 'R', 'order' => 1],
