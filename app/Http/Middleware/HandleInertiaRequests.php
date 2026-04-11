@@ -22,7 +22,8 @@ class HandleInertiaRequests extends Middleware
      */
     public function version(Request $request): ?string
     {
-        return parent::version($request);
+        // Forzamos la recarga al desplegar en producción
+        return config('app.version', 'v2-midnight-' . time());
     }
 
     /**
@@ -34,9 +35,15 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $gamificationData = null;
+        if ($user = $request->user()) {
+            $gamificationData = (new \App\Services\Learning\GamificationService())->getLevel($user);
+        }
+
         return array_merge(parent::share($request), [
             'auth' => [
                 'user' => $request->user(),
+                'gamification' => $gamificationData,
             ],
             'ziggy' => function () use ($request) {
                 return array_merge((new \Tighten\Ziggy\Ziggy)->toArray(), [

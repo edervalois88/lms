@@ -1,0 +1,51 @@
+@theme {
+    --color-midnight: #050505;
+    --color-cyber-gray: #121212;
+    --color-cyber-orange: #ff6b00;
+    --color-cyber-blue: #00d1ff;
+    
+    --shadow-orange-glow: 0 0 20px rgba(255, 107, 0, 0.4);
+    --shadow-blue-glow: 0 0 15px rgba(0, 209, 255, 0.3);
+}
+
+.glass-morphism {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-morphism-dark {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes float {
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-float {
+    animation: float 4s ease-in-out infinite;
+}
+
+.glow-text {
+    text-shadow: 0 0 10px rgba(255, 107, 0, 0.4);
+}
+
+/* Custom scrollbar for cyber look */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #050505;
+}
+::-webkit-scrollbar-thumb {
+    background: #121212;
+    border-radius: 10px;
+    border: 2px solid #050505;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #ff6b00;
+}

@@ -11,6 +11,9 @@ const props = defineProps({
     subject_mastery: Array,
 });
 
+// Access global shared gamification state
+const gamification = computed(() => props.auth?.gamification || { current: 1, xp: 0, progress: 0, rank: 'Novato' });
+
 const progressPercentage = computed(() => {
     if (!props.stats.projection.projected_score || !authMajor.value) return 0;
     return Math.min(100, Math.round((props.stats.projection.projected_score / authMajor.value.min_score) * 100));
@@ -23,211 +26,258 @@ const authMajor = computed(() => props.stats.projection.goal_name !== 'No defini
 
 const gapStatus = computed(() => {
     const gap = props.stats.projection.gap_to_goal;
-    if (gap === null) return { text: 'Configura tu meta', color: 'text-gray-400', bg: 'bg-gray-100' };
-    if (gap <= 0) return { text: '¡En rango de ingreso!', color: 'text-green-600', bg: 'bg-green-100' };
-    if (gap <= 10) return { text: 'Muy cerca del objetivo', color: 'text-orange-500', bg: 'bg-orange-100' };
-    return { text: 'Esfuerzo necesario', color: 'text-red-500', bg: 'bg-red-100' };
+    if (gap === null) return { text: 'NODO INACTIVO', color: 'text-gray-500', bg: 'bg-white/5' };
+    if (gap <= 0) return { text: 'ZONA DE INGRESO', color: 'text-green-400', bg: 'bg-green-400/10' };
+    if (gap <= 10) return { text: 'META PRÓXIMA', color: 'text-orange-400', bg: 'bg-orange-400/10' };
+    return { text: 'BRECHA CRÍTICA', color: 'text-red-400', bg: 'bg-red-400/10' };
 });
 
 onMounted(() => {
-    // Animación de entrada de los elementos
-    animate(".header-section", { opacity: [0, 1], x: [-20, 0] }, { duration: 0.6, easing: spring() });
-    animate(".goal-card", { opacity: [0, 1], scale: [0.9, 1] }, { duration: 0.8, easing: spring() });
-    animate(".stat-card", { opacity: [0, 1], y: [20, 0] }, { 
+    animate(".hud-element", { opacity: [0, 1], y: [20, 0] }, { 
         delay: stagger(0.1),
-        duration: 0.5,
+        duration: 0.8,
         easing: spring() 
     });
 
-    // Animación de la barra de progreso
-    setTimeout(() => {
-        animate(".progress-fill", { width: [0, progressPercentage.value + '%'] }, { duration: 1.5, easing: spring({ stiffness: 100, damping: 10, mass: 1 }) });
-        playSound('pop');
-    }, 500);
+    animate(".progress-orb", { scale: [0, 1] }, { duration: 1, easing: spring() });
 });
 </script>
 
 <template>
-    <Head title="Panel de Control - NexusEdu" />
+    <Head title="Command Center - NexusEdu" />
 
-    <AuthenticatedLayout>
-        <div class="py-12 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-7xl mx-auto space-y-8">
-                
-                <!-- Welcome Section -->
-                <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 header-section">
-                    <div>
-                        <h1 class="text-3xl font-black text-gray-900 leading-tight">
-                            Hola, <span class="text-orange-600">{{ $page.props.auth.user.name.split(' ')[0] }}</span> 👋
-                        </h1>
-                        <p class="text-gray-500 font-medium mt-1">Tu camino a la UNAM está en marcha.</p>
+    <div class="min-h-screen bg-midnight text-white font-sans selection:bg-orange-500/30">
+        
+        <!-- Top Immersive Status Bar -->
+        <div class="bg-cyber-gray/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-xl font-black shadow-orange-glow">N</div>
+                    <div class="hidden md:block">
+                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Status: Operador</p>
+                        <p class="text-sm font-black">{{ $page.props.auth.user.name }}</p>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <div class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-gray-100 flex items-center transform hover:scale-105 transition-transform cursor-pointer" @click="playSound('click')">
-                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-                                <i class="fa-solid fa-fire text-orange-500"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Racha</p>
-                                <p class="text-lg font-black text-gray-900">{{ stats.streak }} días</p>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    <!-- Goal Tracker Widget -->
-                    <div class="lg:col-span-2 bg-gray-900 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden flex flex-col justify-between goal-card border border-white/5">
-                        <div class="relative z-10">
-                            <div class="flex items-center justify-between mb-8">
-                                <div>
-                                    <p class="text-xs font-bold text-orange-400 uppercase tracking-widest mb-1">Tu Objetivo Principal</p>
-                                    <h2 class="text-3xl font-black">{{ authMajor?.name || 'No has seleccionado carrera' }}</h2>
-                                </div>
-                                <div :class="['px-4 py-2 rounded-xl text-xs font-black uppercase tracking-tighter shadow-lg transform hover:rotate-2 transition-transform', gapStatus.bg, gapStatus.color]">
-                                    {{ gapStatus.text }}
-                                </div>
-                            </div>
-
-                            <div class="space-y-6">
-                                <div class="flex justify-between items-end">
-                                    <div>
-                                        <p class="text-4xl font-black text-orange-500">{{ stats.projection.projected_score }} <span class="text-lg text-white/50">aciertos</span></p>
-                                        <p class="text-xs font-bold text-gray-400">Puntaje Proyectado (IA)</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-xl font-black">{{ authMajor?.min_score || '--' }}</p>
-                                        <p class="text-xs font-bold text-gray-400">Meta Histórica</p>
-                                    </div>
-                                </div>
-
-                                <div class="w-full bg-white/10 h-4 rounded-full overflow-hidden border border-white/5 p-[2px]">
-                                    <div 
-                                        class="bg-gradient-to-r from-orange-500 to-red-500 h-full rounded-full transition-all shadow-[0_0_20px_rgba(249,115,22,0.4)] progress-fill"
-                                        style="width: 0%"
-                                    ></div>
-                                </div>
-
-                                <div class="flex items-center justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                    <span>Comienzo</span>
-                                    <span>{{ progressPercentage }}% del objetivo alcanzado</span>
-                                    <span>Éxito</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Recommendations / IA Tip -->
-                        <div class="mt-12 p-5 bg-white/5 border border-white/10 rounded-2xl relative z-10 backdrop-blur-sm group cursor-pointer hover:bg-white/10 transition-colors">
-                            <p class="text-sm font-medium leading-relaxed italic text-gray-300">
-                                <i class="fa-solid fa-robot text-orange-400 mr-2 group-hover:animate-bounce inline-block"></i>
-                                "Según tus últimas respuestas, estás a solo <span class="text-orange-400 font-bold">{{ stats.projection.gap_to_goal }} aciertos</span> de asegurar tu lugar. Refuerza <b>Matemáticas</b> esta semana para cerrar la brecha."
-                            </p>
-                        </div>
-
-                        <!-- BG Decoration -->
-                        <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl"></div>
-                    </div>
-
-                    <!-- Side Stats -->
-                    <div class="space-y-8">
-                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 stat-card">
-                            <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Precisión Global</h3>
-                            <div class="flex items-center justify-center relative">
-                                <div class="text-center">
-                                    <p class="text-4xl font-black text-gray-900">{{ stats.accuracy }}%</p>
-                                    <p class="text-xs font-bold text-green-500 mt-1"><i class="fa-solid fa-arrow-up"></i> +5% este mes</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 stat-card">
-                            <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Materia más fuerte</h3>
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
-                                    <i class="fa-solid fa-calculator"></i>
-                                </div>
-                                <div>
-                                    <p class="font-black text-gray-900">Matemáticas</p>
-                                    <p class="text-xs text-gray-400">92/100 Dominio</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
 
-                <!-- Subjects Grid -->
-                <section>
-                    <h2 class="text-xl font-black text-gray-900 mb-6 flex items-center header-section">
-                        <i class="fa-solid fa-book-open mr-3 text-orange-600"></i>
-                        Tu Dominio por Materia
-                    </h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Global XP Bar -->
+                <div class="flex-grow max-w-md mx-10 hidden lg:block">
+                    <div class="flex justify-between items-end mb-1 px-1">
+                        <span class="text-[10px] font-black text-orange-500 uppercase tracking-widest">{{ $page.props.auth.gamification?.rank || 'Novato' }}</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">NIVEL {{ $page.props.auth.gamification?.current || 1 }}</span>
+                    </div>
+                    <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
                         <div 
-                            v-for="(item, index) in subject_mastery" 
-                            :key="item.subject"
-                            class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-orange-200 transition-all group stat-card cursor-pointer"
-                            @click="playSound('pop')"
-                        >
-                            <div class="flex justify-between items-start mb-4">
-                                <p class="font-black text-gray-900 group-hover:text-orange-600 transition-colors">{{ item.subject }}</p>
-                                <span class="text-xs font-black text-gray-400">{{ Math.round(item.mastery_score * 10) }}%</span>
+                            class="bg-orange-500 h-full shadow-orange-glow transition-all duration-1000"
+                            :style="{ width: ($page.props.auth.gamification?.progress || 0) + '%' }"
+                        ></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-2 px-4 py-2 bg-orange-500/10 rounded-xl border border-orange-500/20 group cursor-help">
+                        <i class="fa-solid fa-fire text-orange-500 group-hover:animate-bounce"></i>
+                        <span class="font-black text-sm">{{ stats.streak }} DÍAS</span>
+                    </div>
+                    <button class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                        <i class="fa-solid fa-bell"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="py-12 px-6">
+            <div class="max-w-7xl mx-auto space-y-12">
+                
+                <!-- Main HUD Wrap -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    
+                    <!-- Primary Mission HUD -->
+                    <div class="lg:col-span-8 space-y-10">
+                        <div class="glass-morphism-dark p-10 rounded-[3rem] border border-white/5 relative overflow-hidden hud-element shadow-2xl">
+                            <!-- Background HUD Lines -->
+                            <div class="absolute inset-0 opacity-[0.03] pointer-events-none">
+                                <div class="grid grid-cols-6 h-full border-x border-white"></div>
                             </div>
-                            <div class="w-full bg-gray-50 h-2 rounded-full overflow-hidden mb-2">
-                                <div 
-                                    class="bg-orange-500 h-full transition-all duration-1000"
-                                    :style="{ width: (item.mastery_score * 10) + '%' }"
-                                ></div>
+
+                            <div class="relative z-10 space-y-12">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                    <div>
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-blue-glow"></span>
+                                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em]">Misión de Ingreso Activa</p>
+                                        </div>
+                                        <h2 class="text-5xl font-black uppercase italic tracking-tighter">{{ authMajor?.name || 'Sector no Definido' }}</h2>
+                                        <p class="text-gray-500 font-bold uppercase tracking-widest text-xs mt-2">{{ authMajor?.school_name || 'Protocolo de Onboarding Requerido' }}</p>
+                                    </div>
+                                    <div :class="['px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border shadow-2xl', gapStatus.bg, gapStatus.color, gapStatus.color.replace('text', 'border').replace('400', '400/20')]">
+                                        {{ gapStatus.text }}
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                                    <div class="space-y-6">
+                                        <div class="flex justify-between items-end">
+                                            <div>
+                                                <p class="text-6xl font-black text-white glow-text">{{ stats.projection.projected_score }}</p>
+                                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Aciertos Proyectados</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-2xl font-black text-orange-500">{{ authMajor?.min_score || '---' }}</p>
+                                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Meta Nivel</p>
+                                            </div>
+                                        </div>
+                                        <!-- Big Progress HUD -->
+                                        <div class="relative pt-4">
+                                            <div class="w-full bg-white/5 h-4 rounded-2xl overflow-hidden p-1 border border-white/5">
+                                                <div 
+                                                    class="h-full bg-gradient-to-r from-orange-600 to-red-500 rounded-xl transition-all duration-[2s] shadow-orange-glow progress-fill"
+                                                    :style="{ width: progressPercentage + '%' }"
+                                                ></div>
+                                            </div>
+                                            <div class="flex justify-between mt-4 text-[9px] font-black text-gray-600 uppercase tracking-[0.3em]">
+                                                <span>Frontera Inicial</span>
+                                                <span class="text-orange-500">{{ progressPercentage }}% Eficacia</span>
+                                                <span>Victoria</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- AI Strategy Box -->
+                                    <div class="bg-white/5 border border-white/5 rounded-[2.5rem] p-8 relative group hover:bg-white/[0.08] transition-all cursor-pointer">
+                                        <div class="absolute -top-4 -left-4 w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center text-white shadow-orange-glow transform -rotate-12">
+                                            <i class="fa-solid fa-robot"></i>
+                                        </div>
+                                        <p class="text-sm font-bold text-gray-300 italic leading-relaxed pl-4">
+                                            "Protocolo detectado: Para neutralizar los <span class="text-orange-500">{{ stats.projection.gap_to_goal }} aciertos</span> restantes, debemos priorizar el módulo de <b>Física Cuántica</b>. El algoritmo estima éxito en 14 sesiones."
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+
+                        <!-- Action Modules -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 hud-element">
+                            <Link 
+                                :href="route('simulator.index')" 
+                                class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
+                                @click="playSound('success')"
+                            >
+                                <div class="bg-midnight rounded-[2.3rem] p-8 flex items-center gap-8 border border-white/5 group-hover:border-orange-500/30 transition-colors">
+                                    <div class="w-20 h-20 bg-orange-500/10 rounded-3xl flex items-center justify-center text-4xl text-orange-500 shadow-orange-glow group-hover:rotate-12 transition-transform duration-500">
+                                        <i class="fa-solid fa-graduation-cap"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-2xl font-black uppercase tracking-tighter italic">Simulacro</h3>
+                                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Ejecutar 120 Reactivos</p>
+                                    </div>
+                                </div>
+                            </Link>
+                            
+                            <Link 
+                                :href="route('quiz.index')" 
+                                class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
+                                @click="playSound('success')"
+                            >
+                                <div class="bg-midnight rounded-[2.3rem] p-8 flex items-center gap-8 border border-white/5 group-hover:border-blue-500/30 transition-colors">
+                                    <div class="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center text-4xl text-blue-400 shadow-blue-glow group-hover:rotate-12 transition-transform duration-500">
+                                        <i class="fa-solid fa-bolt-lightning"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-2xl font-black uppercase tracking-tighter italic">Práctica</h3>
+                                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Entrenamiento Focalizado</p>
+                                    </div>
+                                </div>
+                            </Link>
                         </div>
                     </div>
-                </section>
 
-                <!-- Quick Actions -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-                    <Link 
-                        :href="route('simulator.index')" 
-                        @click="playSound('success')"
-                        class="flex items-center gap-6 p-6 bg-white rounded-3xl border-2 border-transparent hover:border-orange-500 transition-all shadow-sm group hover:scale-[1.02] active:scale-95"
-                    >
-                        <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">
-                            <i class="fa-solid fa-graduation-cap"></i>
+                    <!-- Side HUD: Rankings & Mastery -->
+                    <div class="lg:col-span-4 space-y-10 hud-element">
+                        <!-- Stats Mini HUD -->
+                        <div class="glass-morphism-dark p-8 rounded-[3rem] border border-white/5 space-y-8">
+                            <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                                <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Puntaje Global</h3>
+                                <i class="fa-solid fa-chart-simple text-orange-500"></i>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="text-center flex-grow">
+                                    <p class="text-5xl font-black text-white glow-text">{{ stats.accuracy }}%</p>
+                                    <p class="text-[9px] font-black text-green-400 uppercase mt-2 tracking-widest"><i class="fa-solid fa-arrow-up"></i> +4.2% Eficiencia</p>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <p class="font-black text-lg text-gray-900">Nuevo Simulacro</p>
-                            <p class="text-sm text-gray-400 font-medium">Mide tu nivel con 120 preguntas reales.</p>
+
+                        <!-- Mastery Levels -->
+                        <div class="glass-morphism-dark p-8 rounded-[3rem] border border-white/5">
+                            <h3 class="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-8 border-l-4 border-orange-500 pl-4">Zonas de Dominio</h3>
+                            <div class="space-y-6">
+                                <div v-for="item in subject_mastery.slice(0, 5)" :key="item.subject" class="space-y-2 group cursor-pointer">
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-xs font-black text-gray-300 group-hover:text-white transition-colors uppercase italic">{{ item.subject }}</span>
+                                        <span class="text-[10px] font-black text-orange-500">{{ Math.round(item.mastery_score * 10) }}%</span>
+                                    </div>
+                                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                        <div class="bg-orange-500 h-full group-hover:shadow-orange-glow transition-all duration-1000" :style="{ width: (item.mastery_score * 10) + '%' }"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </Link>
-                    <Link 
-                        :href="route('quiz.index')" 
-                        @click="playSound('success')"
-                        class="flex items-center gap-6 p-6 bg-white rounded-3xl border-2 border-transparent hover:border-blue-500 transition-all shadow-sm group hover:scale-[1.02] active:scale-95"
-                    >
-                        <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">
-                            <i class="fa-solid fa-bolt-lightning"></i>
+
+                        <!-- Quick Profile Info -->
+                        <div class="bg-gradient-to-br from-orange-600 to-orange-900 p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+                           <div class="relative z-10 flex items-center gap-6">
+                               <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-3xl font-black backdrop-blur-md border border-white/20">
+                                   {{ $page.props.auth.gamification?.current || 1 }}
+                               </div>
+                               <div>
+                                   <p class="text-[10px] font-black text-orange-200 uppercase tracking-widest">Rango Actual</p>
+                                   <p class="text-xl font-black italic uppercase tracking-tighter">{{ $page.props.auth.gamification?.rank || 'Novato' }}</p>
+                               </div>
+                           </div>
+                           <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-colors"></div>
                         </div>
-                        <div>
-                            <p class="font-black text-lg text-gray-900">Sesión de Práctica</p>
-                            <p class="text-sm text-gray-400 font-medium">Enfócate en temas específicos para mejorar.</p>
-                        </div>
-                    </Link>
+                    </div>
+
                 </div>
 
             </div>
         </div>
-    </AuthenticatedLayout>
+
+        <!-- Notification Feed (Floating) -->
+        <div class="fixed bottom-10 right-10 z-40 space-y-4 max-w-xs hidden xl:block">
+            <div class="glass-morphism p-5 rounded-2xl border border-white/5 animate-float shadow-2xl flex items-start gap-4">
+                <div class="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center text-green-500">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Logro Desbloqueado</p>
+                    <p class="text-xs font-bold">¡Primer paso dado! Completaste el Onboarding.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </template>
 
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+.italic-glow {
+    text-shadow: 0 0 30px rgba(255, 107, 0, 0.2);
 }
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+
+.shadow-orange-glow {
+    box-shadow: 0 0 40px rgba(255, 107, 0, 0.3);
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #e5e7eb;
-    border-radius: 10px;
+
+.shadow-blue-glow {
+    box-shadow: 0 0 40px rgba(0, 209, 255, 0.2);
+}
+
+@keyframes animate-pulse-glow {
+    0%, 100% { opacity: 1; filter: brightness(1); }
+    50% { opacity: 0.8; filter: brightness(1.5); }
+}
+
+.glow-text {
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
 }
 </style>
