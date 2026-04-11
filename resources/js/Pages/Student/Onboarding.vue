@@ -224,7 +224,7 @@ onMounted(() => {
                     </button>
                 </div>
 
-                <!-- Final Config (GPA & Confirm) -->
+            <!-- Final Config (GPA & Confirm) -->
                 <div v-if="form.major_id" class="glass-morphism p-8 rounded-[3rem] border border-orange-500/20 space-y-8 animate-pop-in">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                         <div class="space-y-4">
@@ -252,7 +252,53 @@ onMounted(() => {
                 </div>
             </div>
 
+            <!-- Results Step -->
+            <div v-if="currentStep === 'results'" class="space-y-10 step-content">
+                <div class="text-center space-y-4">
+                    <h2 class="text-5xl font-black italic uppercase tracking-tighter">Perfil RIASEC Identificado</h2>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Diagnóstico Completado</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="glass-morphism-dark p-10 rounded-[3rem] border border-blue-500/20 space-y-6">
+                        <div class="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center text-4xl text-blue-400 shadow-blue-glow mb-4">
+                            <i class="fa-solid fa-dna"></i>
+                        </div>
+                        <h3 class="text-4xl font-black text-blue-400">{{ vocational_result?.primary_type }}</h3>
+                        <p class="text-sm font-bold text-gray-300 leading-relaxed">{{ vocational_result?.recommendation }}</p>
+                    </div>
+
+                    <div class="space-y-4 h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        <h4 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 sticky top-0 bg-midnight py-2">Sugerencias de Infiltración</h4>
+                        
+                        <div v-if="!recommendations || recommendations.length === 0" class="p-6 bg-white/5 rounded-2xl text-center text-gray-400 font-bold border border-white/5">
+                            No se encontraron carreras exactamente coincidentes.
+                        </div>
+
+                        <button 
+                            v-for="rec in recommendations" 
+                            :key="rec.id"
+                            @click="selectUni(rec.campus.university); selectCampus(rec.campus); selectMajor(rec.id); showTrendsModal = false"
+                            class="w-full flex items-center justify-between p-6 rounded-2xl border border-white/5 bg-white/5 hover:border-blue-500/40 transition-all text-left group"
+                        >
+                            <div>
+                                <p class="font-black text-lg">{{ rec.name }}</p>
+                                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{{ rec.campus.university.acronym }} - {{ rec.campus.name }}</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-500/20 group-hover:text-blue-400 transition-colors">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-8">
+                    <button @click="goToStep('university')" class="text-xs font-black text-gray-400 hover:text-white uppercase tracking-widest underline">Ignorar recomendaciones y elegir manualmente</button>
+                </div>
+            </div>
+
         </div>
+
 
         <!-- Modals -->
         <MajorTrendsModal 
