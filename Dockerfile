@@ -1,5 +1,5 @@
-# Stage 1: Build Assets
-FROM node:20-alpine as assets-builder
+# Stage 1: Build assets
+FROM node:20-alpine AS assets-builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -11,35 +11,38 @@ FROM php:8.4-fpm-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
-    nginx \
-    supervisor \
     libpng-dev \
     libzip-dev \
-    oniguruma-dev \
     icu-dev \
     linux-headers \
     git \
-    unzip
+    unzip \
+    nginx \
+    supervisor \
+    netcat-openbsd
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql gd zip intl opcache bcmath mbstring pcntl posix
+RUN docker-php-ext-install pdo_mysql gd zip intl opcache bcmath pcntl posix
 
-# Working directory
+# Install Redis via PECL (since it's not in some standard Alpine repos for 8.4)
+RUN apk add --no-cache $PHPIZE_DEPS \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del $PHPIZE_DEPS
+
+# Set working directory
 WORKDIR /var/www/html
-
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Copy application files
 COPY . .
+
+# Copy built assets from first stage
 COPY --from=assets-builder /app/public/build ./public/build
 
-# Install PHP dependencies with platform ignorance for minor version mismatches
-RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
-
 # Permissions
-RUN mkdir -p storage/app storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache
 RUN chown -R www-data:www-data storage bootstrap/cache public/build
+RUN chmod -R 775 storage bootstrap/cache
 
 # Nginx config
 COPY ./docker/nginx.conf /etc/nginx/http.d/default.conf
