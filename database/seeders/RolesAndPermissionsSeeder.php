@@ -26,17 +26,17 @@ class RolesAndPermissionsSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Create roles and assign permissions
-        $admin = Role::create(['name' => 'admin']);
+        $admin = Role::firstOrCreate(['name' => 'admin']);
         $admin->givePermissionTo(Permission::all());
 
-        $teacher = Role::create(['name' => 'teacher']);
+        $teacher = Role::firstOrCreate(['name' => 'teacher']);
         $teacher->givePermissionTo(['manage-questions', 'view-analytics']);
 
-        $student = Role::create(['name' => 'student']);
+        $student = Role::firstOrCreate(['name' => 'student']);
         $student->givePermissionTo(['take-exams', 'use-ai']);
     }
 }

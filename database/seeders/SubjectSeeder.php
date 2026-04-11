@@ -89,9 +89,10 @@ class SubjectSeeder extends Seeder
         ];
 
         foreach ($subjects as $subject) {
-            Subject::create(array_merge($subject, [
-                'slug' => Str::slug($subject['name']),
-            ]));
+            Subject::updateOrCreate(
+                ['name' => $subject['name']],
+                array_merge($subject, ['slug' => Str::slug($subject['name'])])
+            );
         }
     }
 }

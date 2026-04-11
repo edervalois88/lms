@@ -85,13 +85,14 @@ class TopicSeeder extends Seeder
             
             if ($subject) {
                 foreach ($topics as $index => $topicName) {
-                    Topic::create([
-                        'subject_id' => $subject->id,
-                        'name' => $topicName,
-                        'slug' => Str::slug($topicName),
-                        'difficulty_base' => rand(2, 4),
-                        'sort_order' => $index + 1,
-                    ]);
+                    Topic::updateOrCreate(
+                        ['subject_id' => $subject->id, 'name' => $topicName],
+                        [
+                            'slug' => Str::slug($topicName),
+                            'difficulty_base' => rand(2, 4),
+                            'sort_order' => $index + 1,
+                        ]
+                    );
                 }
             }
         }
