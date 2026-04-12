@@ -46,7 +46,7 @@ class Major extends Model
 
     public function statistics(): HasMany
     {
-        return $table->hasMany(MajorStatistic::class);
+        return $this->hasMany(MajorStatistic::class);
     }
 
     /**

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Question extends Model
 {
@@ -25,12 +26,27 @@ class Question extends Model
         'is_active',
     ];
 
+    protected $appends = ['body', 'correct_index'];
+
     protected function casts(): array
     {
         return [
             'options' => 'array',
             'type' => 'string',
         ];
+    }
+
+    /** Alias used by QuestionCard component */
+    public function getBodyAttribute(): string
+    {
+        return $this->stem;
+    }
+
+    /** Numeric index of the correct option, used by QuestionCard for visual feedback */
+    public function getCorrectIndexAttribute(): int
+    {
+        $idx = array_search($this->correct_answer, $this->options ?? []);
+        return $idx !== false ? (int) $idx : 0;
     }
 
     public function topic(): BelongsTo
@@ -46,5 +62,10 @@ class Question extends Model
     public function examAnswers(): HasMany
     {
         return $this->hasMany(ExamAnswer::class);
+    }
+
+    public function exams(): BelongsToMany
+    {
+        return $this->belongsToMany(Exam::class)->withTimestamps();
     }
 }

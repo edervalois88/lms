@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Student\OnboardingController;
 use App\Http\Controllers\Student\DashboardController;
+use App\Http\Controllers\Student\DailyPracticeController;
 use App\Http\Controllers\Assessment\QuizController;
 use App\Http\Controllers\Assessment\SimulatorController;
 use App\Http\Controllers\Progress\ProgressController;
@@ -23,7 +24,7 @@ Route::get('/', function () {
 });
 
 // Rutas protegidas por Auth
-Route::middleware(['auth', 'verified', 'streak'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     
     // Onboarding
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');
@@ -34,6 +35,9 @@ Route::middleware(['auth', 'verified', 'streak'])->group(function () {
     Route::middleware(['onboarded'])->group(function () {
         
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Daily Practice (Duolingo-style daily loop)
+        Route::get('/daily-practice', [DailyPracticeController::class, 'index'])->name('practice.daily');
 
         // Quiz
         Route::get('/quiz', [QuizController::class, 'index'])->name('quiz.index');
@@ -49,6 +53,7 @@ Route::middleware(['auth', 'verified', 'streak'])->group(function () {
         // Progress & Review
         Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
         Route::get('/review', [SpacedRepetitionController::class, 'index'])->name('review.index');
+        Route::post('/review/answer/{question}', [SpacedRepetitionController::class, 'answer'])->name('review.answer');
     });
 
     // Profile (Inertia default)
@@ -62,13 +67,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.index');
 });
 
-Route::get('/debug-nexus', function () {
-    try {
-        DB::connection()->getPdo();
-        return "<h1>✅ Laravel está VIVO</h1><p>Base de datos: " . DB::connection()->getDatabaseName() . "</p><p>Vite Manifest: " . (file_exists(public_path('build/manifest.json')) ? 'Encontrado' : 'MISSING') . "</p>";
-    } catch (\Exception $e) {
-        return "<h1>❌ Error de Laravel</h1><p>" . $e->getMessage() . "</p>";
-    }
-});
+if (app()->environment('local')) {
+    Route::get('/debug-nexus', function () {
+        try {
+            \Illuminate\Support\Facades\DB::connection()->getPdo();
+            return "<h1>✅ Laravel está VIVO</h1><p>Base de datos: "
+                . \Illuminate\Support\Facades\DB::connection()->getDatabaseName()
+                . "</p><p>Vite Manifest: "
+                . (file_exists(public_path('build/manifest.json')) ? 'Encontrado' : 'MISSING')
+                . "</p>";
+        } catch (\Exception $e) {
+            return "<h1>❌ Error de Laravel</h1><p>" . $e->getMessage() . "</p>";
+        }
+    });
+}
 
 require __DIR__.'/auth.php';

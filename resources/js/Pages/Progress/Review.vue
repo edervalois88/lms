@@ -14,12 +14,33 @@ const currentIndex = ref(0);
 const currentCard = ref(props.due_cards[0] || null);
 const showFeedback = ref(false);
 const isCorrect = ref(false);
+const submitting = ref(false);
 
-const handleAnswer = (selectedIndex) => {
+const csrfToken = () =>
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+const handleAnswer = async (selectedIndex) => {
+    if (submitting.value) return;
     isCorrect.value = selectedIndex === currentCard.value.question.correct_index;
     showFeedback.value = true;
-    
-    // Aquí se llamaría a un endpoint para processAnswer en SpacedRepetitionService
+    submitting.value = true;
+
+    // SM-2 simplified quality: correct answer = 5, wrong = 1
+    const quality = isCorrect.value ? 5 : 1;
+
+    try {
+        await fetch(route('review.answer', currentCard.value.question.id), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken(),
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ quality }),
+        });
+    } finally {
+        submitting.value = false;
+    }
 };
 
 const nextCard = () => {

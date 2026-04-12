@@ -11,40 +11,32 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Desactivamos llaves foráneas porque MySQL impide borrar tablas referenciadas
-        Schema::disableForeignKeyConstraints();
-        
-        // Limpiamos referencias huérfanas en los usuarios para evitar inconsistencias
-        \Illuminate\Support\Facades\DB::table('users')->update(['major_id' => null]);
+        if (!Schema::hasTable('majors')) {
+            return;
+        }
 
-        Schema::dropIfExists('majors');
+        Schema::table('majors', function (Blueprint $table) {
+            if (!Schema::hasColumn('majors', 'campus_id')) {
+                $table->foreignId('campus_id')->nullable()->constrained()->nullOnDelete();
+            }
 
-        Schema::create('majors', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('campus_id')->constrained()->onDelete('cascade');
-            $table->string('name');
-            $table->string('slug')->nullable();
-            
-            // Refleja la división académica (ej: Area 1, CBI, IyCFM)
-            $table->string('division_name'); 
-            
-            // Datos del último año para vista rápida
-            $table->integer('min_score');
-            $table->integer('applicants')->nullable();
-            $table->integer('places')->nullable();
-            
-            // Código Holland para el Test Vocacional (ej: RIA, SAE)
-            $table->string('holland_code', 10)->nullable();
-            
-            $table->text('description')->nullable();
-            $table->json('extra_requirements')->nullable(); // Para carreras con pre-requisitos
-            $table->timestamps();
-            
-            $table->index(['name', 'division_name']);
+            if (!Schema::hasColumn('majors', 'division_name')) {
+                $table->string('division_name')->nullable();
+            }
+
+            if (!Schema::hasColumn('majors', 'holland_code')) {
+                $table->string('holland_code', 10)->nullable();
+            }
+
+            if (!Schema::hasColumn('majors', 'description')) {
+                $table->text('description')->nullable();
+            }
+
+            if (!Schema::hasColumn('majors', 'extra_requirements')) {
+                $table->json('extra_requirements')->nullable();
+            }
         });
 
-        // Reactivamos las restricciones de llaves foráneas para proteger la integridad
-        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -52,6 +44,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('majors');
+        // Esta migración es aditiva para proteger datos existentes.
     }
 };

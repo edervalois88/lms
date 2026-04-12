@@ -45,8 +45,8 @@ class ProgressCalculatorService
     {
         $mastery = $this->getSubjectMastery($user);
         
-        // Pesos reales UNAM Área 1 (Ejemplo, debería ser dinámico por área)
-        $area = $user->major?->area_id ?? 1;
+        // Resuelve área desde datos actuales del major sin depender de columnas inexistentes.
+        $area = $this->resolveAreaFromMajor($user);
         $weights = $this->getWeightsForArea($area);
 
         $projectedScore = 0;
@@ -93,12 +93,56 @@ class ProgressCalculatorService
             ->where('created_at', '>=', $startOfWeek)
             ->get();
 
+        $mostPracticedSubject = 'Sin datos';
+        $subjectCounts = ExamAnswer::query()
+            ->whereHas('exam', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->where('created_at', '>=', $startOfWeek)
+            ->whereHas('question.topic.subject')
+            ->with('question.topic.subject:id,name')
+            ->get()
+            ->groupBy(fn ($answer) => $answer->question?->topic?->subject?->name)
+            ->map->count()
+            ->filter(fn ($count, $subject) => !empty($subject));
+
+        if ($subjectCounts->isNotEmpty()) {
+            $mostPracticedSubject = (string) $subjectCounts->sortDesc()->keys()->first();
+        }
+
         return [
             'questions_answered' => $answers->count(),
             'avg_accuracy' => $answers->count() > 0 ? round(($answers->where('is_correct', true)->count() / $answers->count()) * 100) : 0,
             'estimated_study_time' => round($answers->sum('time_spent_seconds') / 3600, 1),
-            'most_practiced_subject' => 'Matemáticas' // Mock logic
+            'most_practiced_subject' => $mostPracticedSubject,
         ];
+    }
+
+    private function resolveAreaFromMajor(User $user): int
+    {
+        $division = mb_strtolower((string) ($user->major?->division_name ?? ''));
+
+        if (preg_match('/area\s*([1-4])/', $division, $matches)) {
+            return (int) $matches[1];
+        }
+
+        if (str_contains($division, 'fis') || str_contains($division, 'mat') || str_contains($division, 'ing')) {
+            return 1;
+        }
+
+        if (str_contains($division, 'bio') || str_contains($division, 'salud') || str_contains($division, 'quim')) {
+            return 2;
+        }
+
+        if (str_contains($division, 'social') || str_contains($division, 'econ') || str_contains($division, 'admin')) {
+            return 3;
+        }
+
+        if (str_contains($division, 'human') || str_contains($division, 'arte') || str_contains($division, 'filo')) {
+            return 4;
+        }
+
+        return 1;
     }
 
     private function calculateTrend(iterable $answers): string

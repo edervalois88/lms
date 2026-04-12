@@ -7,18 +7,26 @@ use App\Enums\ExamType;
 use App\Enums\SubjectArea;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Assessment\SubmitExamRequest;
+use App\Jobs\GenerateQuestionBatch;
 use App\Models\Exam;
 use App\Models\ExamAnswer;
 use App\Models\Question;
-use App\Models\Subject;
+use App\Models\Topic;
+use App\Services\Learning\StudyStreakService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SimulatorController extends Controller
 {
+    public function __construct(
+        protected StudyStreakService $streakService
+    ) {}
+
     public function index(): Response
     {
         return Inertia::render('Simulator/Setup', [
@@ -59,19 +67,31 @@ class SimulatorController extends Controller
     {
         abort_if($exam->user_id !== auth()->id(), 403);
 
-        // Obtener materias del área
-        $subjects = Subject::whereJsonContains('exam_areas', $exam->exam_area)->pluck('id');
-        
-        // Obtener preguntas aleatorias balanceadas
-        $questions = Question::whereHas('topic', function($q) use ($subjects) {
-                $q->whereIn('subject_id', $subjects);
-            })
-            ->inRandomOrder()
-            ->limit($exam->total_questions)
-            ->get();
+        // Reusar el set de preguntas si el examen ya fue cargado antes.
+        if ($exam->questions()->exists()) {
+            $questions = $exam->questions()->with('topic.subject')->get();
+        } else {
+            $subjects = Subject::whereJsonContains('exam_areas', $exam->exam_area)->pluck('id');
 
-        if ($questions->count() < $exam->total_questions) {
-            $questions = $this->getFallbackQuestions($exam->total_questions);
+            $questions = Question::whereHas('topic', function ($q) use ($subjects) {
+                    $q->whereIn('subject_id', $subjects);
+                })
+                ->inRandomOrder()
+                ->limit($exam->total_questions)
+                ->get();
+
+            if ($questions->isEmpty()) {
+                return redirect()
+                    ->route('simulator.index')
+                    ->with('error', 'No hay preguntas suficientes para esta area en este momento.');
+            }
+
+            if ($questions->count() < $exam->total_questions) {
+                $this->dispatchQuestionReplenishment($exam, $exam->total_questions - $questions->count());
+                $exam->update(['total_questions' => $questions->count()]);
+            }
+
+            $exam->questions()->syncWithoutDetaching($questions->pluck('id')->all());
         }
 
         return Inertia::render('Simulator/Exam', [
@@ -84,14 +104,52 @@ class SimulatorController extends Controller
     {
         abort_if($exam->user_id !== auth()->id(), 403);
 
+        if ($exam->status !== ExamStatus::InProgress) {
+            throw ValidationException::withMessages([
+                'exam' => 'Este simulador ya fue enviado o no esta en progreso.',
+            ]);
+        }
+
+        $deadline = Carbon::parse($exam->started_at)->addMinutes((int) $exam->time_limit_minutes);
+        if (now()->greaterThan($deadline)) {
+            throw ValidationException::withMessages([
+                'exam' => 'El tiempo del simulador ha expirado. Inicia un nuevo intento.',
+            ]);
+        }
+
         $submittedAnswers = $request->input('answers', []);
+
+        if (count($submittedAnswers) > $exam->total_questions) {
+            throw ValidationException::withMessages([
+                'answers' => 'Se recibieron mas respuestas que preguntas del simulador.',
+            ]);
+        }
+
+        $questionIds = collect($submittedAnswers)->pluck('question_id')->unique()->values()->all();
+
+        $examQuestionIds = $exam->questions()->pluck('questions.id')->all();
+        $invalidQuestionIds = array_diff($questionIds, $examQuestionIds);
+
+        if (!empty($invalidQuestionIds)) {
+            throw ValidationException::withMessages([
+                'answers' => 'El envio incluye preguntas que no pertenecen a este simulador.',
+            ]);
+        }
         
         DB::transaction(function () use ($exam, $submittedAnswers) {
+            $lockedExam = Exam::query()->lockForUpdate()->findOrFail($exam->id);
+
+            if ($lockedExam->status !== ExamStatus::InProgress) {
+                throw ValidationException::withMessages([
+                    'exam' => 'Este simulador ya fue enviado.',
+                ]);
+            }
+
             $correctCount = 0;
             
             // Cargar preguntas para verificar en batch
             $questionIds = collect($submittedAnswers)->pluck('question_id')->toArray();
-            $questions = Question::whereIn('id', $questionIds)->get()->keyBy('id');
+            $questions = $lockedExam->questions()->whereIn('questions.id', $questionIds)->get()->keyBy('id');
 
             foreach ($submittedAnswers as $answerData) {
                 $question = $questions->get($answerData['question_id']);
@@ -107,19 +165,21 @@ class SimulatorController extends Controller
                 if ($isCorrect) $correctCount++;
 
                 ExamAnswer::create([
-                    'exam_id' => $exam->id,
+                    'exam_id' => $lockedExam->id,
                     'question_id' => $answerData['question_id'],
                     'user_answer' => $answerData['selected_index'],
                     'is_correct' => $isCorrect,
-                    'time_spent_seconds' => $answerData['time_spent'] ?? 0,
+                    'time_spent_seconds' => min((int) ($answerData['time_spent'] ?? 0), 7200),
                 ]);
             }
 
-            $exam->update([
+            $lockedExam->update([
                 'status' => ExamStatus::Completed,
                 'completed_at' => now(),
                 'score' => $correctCount,
             ]);
+
+            $this->streakService->recordStudyActivity($lockedExam->user);
         });
 
         return redirect()->route('simulator.results', $exam);
@@ -157,16 +217,33 @@ class SimulatorController extends Controller
         ]);
     }
 
-    private function getFallbackQuestions(int $count)
+    private function dispatchQuestionReplenishment(Exam $exam, int $missingCount): void
     {
-        return collect(range(1, $count))->map(function($i) {
-            return [
-                'id' => $i,
-                'stem' => "¿Pregunta de prueba #$i? (Carga temas en la DB para ver reales)",
-                'options' => ['Opción A', 'Opción B', 'Opción C', 'Opción D'],
-                'correct_answer' => 'Opción A',
-                'difficulty' => 5
-            ];
-        });
+        if ($missingCount <= 0) {
+            return;
+        }
+
+        $topics = Topic::query()
+            ->whereHas('subject', function ($query) use ($exam) {
+                $query->whereJsonContains('exam_areas', $exam->exam_area);
+            })
+            ->inRandomOrder()
+            ->limit(3)
+            ->get();
+
+        if ($topics->isEmpty()) {
+            return;
+        }
+
+        $batchSize = max(1, (int) ceil($missingCount / $topics->count()));
+
+        foreach ($topics as $topic) {
+            GenerateQuestionBatch::dispatch(
+                $exam->user,
+                $topic,
+                random_int(4, 7),
+                $batchSize
+            );
+        }
     }
 }

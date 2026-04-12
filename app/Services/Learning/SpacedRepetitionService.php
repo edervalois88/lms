@@ -17,7 +17,12 @@ class SpacedRepetitionService
             'question_id' => $question->id,
         ]);
 
-        $ef = $card->ease_factor;
+        $ef = $card->ease_factor ?? 2.5;
+        $card->repetitions = (int) ($card->repetitions ?? 0);
+        $card->interval = (int) ($card->interval ?? 0);
+
+        $quality = max(0, min(5, $quality));
+
         // SM-2 formula for Ease Factor
         $newEf = $ef + (0.1 - (5 - $quality) * (0.08 + (5 - $quality) * 0.02));
         $card->ease_factor = max(1.3, $newEf);
