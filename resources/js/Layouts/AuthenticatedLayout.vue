@@ -30,21 +30,37 @@ const navItems = computed(() => {
 
     return baseNavItems;
 });
+
+const equippedCosmetics = computed(() => page.props?.auth?.cosmetics?.equipped || {});
+
+const themePalette = computed(() => {
+    const metadata = equippedCosmetics.value?.ui_theme?.metadata || {};
+
+    return {
+        primary: metadata.primary_color || '#ff6b00',
+        secondary: metadata.secondary_color || '#f97316',
+        soft: metadata.soft_color || 'rgba(255, 107, 0, 0.18)',
+    };
+});
+
+const avatarMetadata = computed(() => equippedCosmetics.value?.avatar?.metadata || {});
+const avatarIcon = computed(() => avatarMetadata.value.icon_class || 'fa-solid fa-user');
+const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.metadata?.label || null);
 </script>
 
 <template>
     <div class="min-h-screen bg-midnight text-white selection:bg-orange-500/30">
         
         <!-- Premium Cyber Nav -->
-        <nav class="bg-cyber-gray/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-[100]">
+        <nav class="bg-cyber-gray/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-20">
                     <div class="flex items-center gap-12">
                         <!-- Logo -->
                         <div class="shrink-0 flex items-center">
                             <Link :href="route('dashboard')" class="flex items-center gap-3 group" @click="playSound('pop')">
-                                <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-orange-glow transform group-hover:rotate-12 transition-transform">N</div>
-                                <span class="text-2xl font-black tracking-tighter uppercase italic hidden md:block">Nexus<span class="text-orange-500">Edu</span></span>
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-orange-glow transform group-hover:rotate-12 transition-transform" :style="{ background: `linear-gradient(135deg, ${themePalette.primary}, ${themePalette.secondary})` }">N</div>
+                                <span class="text-2xl font-black tracking-tighter uppercase italic hidden md:block">Nexus<span :style="{ color: themePalette.primary }">Edu</span></span>
                             </Link>
                         </div>
 
@@ -78,10 +94,10 @@ const navItems = computed(() => {
                         <div class="flex items-center gap-4 bg-white/5 px-6 py-2 rounded-2xl border border-white/5">
                             <div class="text-right hidden lg:block">
                                 <p class="text-[10px] font-black text-white uppercase">{{ $page.props.auth.user.name }}</p>
-                                <p class="text-[8px] text-orange-500 font-black uppercase tracking-widest">{{ $page.props.auth.gamification?.rank || 'OPERADOR' }}</p>
+                                <p class="text-[8px] font-black uppercase tracking-widest" :style="{ color: themePalette.primary }">{{ profileTitle || $page.props.auth.gamification?.rank || 'OPERADOR' }}</p>
                             </div>
-                            <div class="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center text-orange-500 border border-orange-500/30">
-                                {{ $page.props.auth.gamification?.current || 1 }}
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center border" :style="{ backgroundColor: themePalette.soft, color: themePalette.primary, borderColor: themePalette.primary + '55' }">
+                                <i :class="avatarIcon"></i>
                             </div>
                         </div>
 

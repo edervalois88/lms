@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Learning\GamificationService;
+use App\Services\Rewards\RewardInventoryService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -36,8 +38,10 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $gamificationData = null;
+        $cosmeticsData = null;
         if ($user = $request->user()) {
-            $gamificationData = (new \App\Services\Learning\GamificationService())->getLevel($user);
+            $gamificationData = app(GamificationService::class)->getLevel($user);
+            $cosmeticsData = app(RewardInventoryService::class)->getUiCosmetics($user);
         }
 
         return array_merge(parent::share($request), [
@@ -45,6 +49,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
                 'is_admin' => (bool) ($request->user()?->hasRole('admin')),
                 'gamification' => $gamificationData,
+                'cosmetics' => $cosmeticsData,
             ],
             'ziggy' => function () use ($request) {
                 return array_merge((new \Tighten\Ziggy\Ziggy)->toArray(), [

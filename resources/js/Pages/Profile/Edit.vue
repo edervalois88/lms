@@ -1,6 +1,7 @@
 <script setup>
 import { computed, watch, ref } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import MajorTrendsModal from '@/Components/Modals/MajorTrendsModal.vue';
 
@@ -13,9 +14,24 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    rewardCatalog: {
+        type: Array,
+        default: () => [],
+    },
+    rewardInventory: {
+        type: Array,
+        default: () => [],
+    },
+    rewardEquipped: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const showTrendsModal = ref(false);
+const rewardActionLoading = ref(false);
+const rewardNotice = ref('');
+const page = usePage();
 
 const initialUniversityId = props.user?.major?.campus?.university_id ?? null;
 const initialCampusId = props.user?.major?.campus_id ?? null;
@@ -64,6 +80,79 @@ const difficultyCategory = computed(() => {
     if (index <= 30) return 'MEDIA';
     return 'NORMAL';
 });
+
+const currentXp = computed(() => Number(page.props?.auth?.gamification?.xp || 0));
+const rewardCatalogBySlot = computed(() => {
+    const groups = {
+        avatar: [],
+        ui_theme: [],
+        profile_title: [],
+        profile_frame: [],
+    };
+
+    for (const item of props.rewardCatalog) {
+        if (groups[item.slot]) {
+            groups[item.slot].push(item);
+        }
+    }
+
+    return groups;
+});
+
+const equippedSummary = computed(() => props.rewardEquipped || {});
+
+const buyReward = async (rewardItemId) => {
+    rewardActionLoading.value = true;
+    rewardNotice.value = '';
+
+    try {
+        const response = await axios.post(route('rewards.purchase'), {
+            reward_item_id: rewardItemId,
+        });
+
+        rewardNotice.value = response.data?.message || 'Recompensa desbloqueada.';
+        router.reload({ preserveScroll: true });
+    } catch (error) {
+        rewardNotice.value = error?.response?.data?.message || 'No se pudo completar la compra.';
+    } finally {
+        rewardActionLoading.value = false;
+    }
+};
+
+const equipReward = async (userRewardItemId) => {
+    rewardActionLoading.value = true;
+    rewardNotice.value = '';
+
+    try {
+        const response = await axios.post(route('rewards.equip'), {
+            user_reward_item_id: userRewardItemId,
+        });
+
+        rewardNotice.value = response.data?.message || 'Recompensa equipada.';
+        router.reload({ preserveScroll: true });
+    } catch (error) {
+        rewardNotice.value = error?.response?.data?.message || 'No se pudo equipar la recompensa.';
+    } finally {
+        rewardActionLoading.value = false;
+    }
+};
+
+const inventoryItemForCode = (code) => {
+    return props.rewardInventory.find((item) => item.reward_item?.code === code) || null;
+};
+
+const isEquipped = (code) => {
+    return Object.values(props.rewardEquipped || {}).some((item) => item?.code === code);
+};
+
+const slotLabel = (slot) => {
+    return {
+        avatar: 'Avatares',
+        ui_theme: 'Temas UI',
+        profile_title: 'Titulos',
+        profile_frame: 'Marcos',
+    }[slot] || slot;
+};
 
 watch(() => form.university_id, () => {
     const hasCampus = availableCampuses.value.some((campus) => campus.id === Number(form.campus_id));
@@ -114,6 +203,103 @@ const destroyAccount = () => {
                 <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p class="text-xs font-black uppercase tracking-wider text-gray-500">Carrera actual</p>
                     <p class="mt-2 font-bold">{{ props.user.major?.name || 'Sin definir' }}</p>
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-6 space-y-5">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-wider text-cyan-300">Arsenal cosmetico</p>
+                        <h2 class="text-2xl font-black mt-1">Tienda e inventario</h2>
+                    </div>
+                    <div class="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-cyan-200">XP disponible</p>
+                        <p class="text-xl font-black text-white">{{ currentXp }}</p>
+                    </div>
+                </div>
+
+                <div v-if="rewardNotice" class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white">
+                    {{ rewardNotice }}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div v-for="(items, slot) in rewardCatalogBySlot" :key="slot" class="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="text-sm font-black uppercase tracking-wider text-cyan-200">{{ slotLabel(slot) }}</h3>
+                            <span v-if="equippedSummary?.[slot]" class="text-[11px] text-gray-300 font-bold">
+                                Equipado: {{ equippedSummary[slot].name }}
+                            </span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div v-for="item in items" :key="item.id" class="rounded-xl border border-white/10 bg-black/10 p-3">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white"
+                                            :style="{ background: `linear-gradient(135deg, ${item.metadata?.primary_color || '#ff6b00'}, ${item.metadata?.secondary_color || '#f97316'})` }">
+                                            <i :class="item.metadata?.icon_class || 'fa-solid fa-sparkles'"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-black text-white">{{ item.name }}</p>
+                                            <p class="text-xs text-gray-400 uppercase">{{ item.rarity }} • {{ item.cost_xp }} XP</p>
+                                        </div>
+                                    </div>
+
+                                    <span v-if="isEquipped(item.code)" class="rounded-full bg-emerald-500/20 px-2.5 py-1 text-[10px] font-black uppercase text-emerald-300">Equipado</span>
+                                </div>
+
+                                <div class="mt-3 flex justify-end gap-2">
+                                    <button
+                                        v-if="!item.owned"
+                                        type="button"
+                                        @click="buyReward(item.id)"
+                                        :disabled="rewardActionLoading || currentXp < item.cost_xp"
+                                        class="rounded-lg bg-cyan-600 px-3 py-2 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50"
+                                    >
+                                        Comprar
+                                    </button>
+                                    <button
+                                        v-else-if="inventoryItemForCode(item.code) && !isEquipped(item.code)"
+                                        type="button"
+                                        @click="equipReward(inventoryItemForCode(item.code).id)"
+                                        :disabled="rewardActionLoading"
+                                        class="rounded-lg bg-white/10 border border-white/10 px-3 py-2 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50"
+                                    >
+                                        Equipar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <h3 class="text-sm font-black uppercase tracking-wider text-cyan-200">Inventario desbloqueado</h3>
+                        <span class="text-sm text-gray-400">{{ rewardInventory.length }} items</span>
+                    </div>
+
+                    <div v-if="rewardInventory.length" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div v-for="owned in rewardInventory" :key="owned.id" class="rounded-xl border border-white/10 bg-black/10 p-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="font-black text-white">{{ owned.reward_item?.name }}</p>
+                                    <p class="text-xs text-gray-400 uppercase">{{ slotLabel(owned.reward_item?.slot) }} • {{ owned.price_paid_xp }} XP</p>
+                                </div>
+                                <button
+                                    v-if="owned.reward_item && !isEquipped(owned.reward_item.code)"
+                                    type="button"
+                                    @click="equipReward(owned.id)"
+                                    :disabled="rewardActionLoading"
+                                    class="rounded-lg bg-white/10 border border-white/10 px-3 py-2 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50"
+                                >
+                                    Equipar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p v-else class="text-sm text-gray-400">Todavia no has desbloqueado recompensas cosmeticas.</p>
                 </div>
             </div>
 

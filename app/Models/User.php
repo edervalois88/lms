@@ -68,4 +68,24 @@ class User extends Authenticatable
     {
         return $this->hasMany(StudyPlan::class);
     }
+
+    public function xpLedgers(): HasMany
+    {
+        return $this->hasMany(XpLedger::class);
+    }
+
+    public function rewardItems(): HasMany
+    {
+        return $this->hasMany(UserRewardItem::class);
+    }
+
+    public function rewardEquips(): HasMany
+    {
+        return $this->hasMany(UserRewardEquip::class);
+    }
+
+    public function rewardPurchases(): HasMany
+    {
+        return $this->hasMany(RewardPurchase::class);
+    }
 }

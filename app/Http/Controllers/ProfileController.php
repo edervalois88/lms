@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\University;
+use App\Services\Rewards\RewardInventoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,7 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function edit(Request $request): Response
+    public function edit(Request $request, RewardInventoryService $rewards): Response
     {
         $user = $request->user()->load('major.campus.university');
 
@@ -27,6 +28,9 @@ class ProfileController extends Controller
                 ])
                 ->orderBy('name')
                 ->get(),
+            'rewardCatalog' => $rewards->getCatalogForUser($user),
+            'rewardInventory' => $rewards->getInventoryForUser($user),
+            'rewardEquipped' => $rewards->getEquippedForUser($user),
         ]);
     }
 

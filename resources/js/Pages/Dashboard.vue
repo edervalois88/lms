@@ -17,6 +17,18 @@ const page = usePage();
 const { theme, initializeTheme, toggleTheme } = useTheme();
 
 const isAdmin = computed(() => Boolean(page.props?.auth?.is_admin));
+const equippedCosmetics = computed(() => page.props?.auth?.cosmetics?.equipped || {});
+const themePalette = computed(() => {
+    const metadata = equippedCosmetics.value?.ui_theme?.metadata || {};
+
+    return {
+        primary: metadata.primary_color || '#ff6b00',
+        secondary: metadata.secondary_color || '#f97316',
+        soft: metadata.soft_color || 'rgba(255, 107, 0, 0.18)',
+    };
+});
+const avatarIcon = computed(() => equippedCosmetics.value?.avatar?.metadata?.icon_class || 'fa-solid fa-user');
+const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.metadata?.label || null);
 
 // Access global shared gamification state
 const gamification = computed(() => props.auth?.gamification || { current: 1, xp: 0, progress: 0, rank: 'Novato' });
@@ -61,7 +73,9 @@ onMounted(() => {
         <div class="bg-cyber-gray/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-xl font-black shadow-orange-glow">N</div>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-black shadow-orange-glow text-white" :style="{ background: `linear-gradient(135deg, ${themePalette.primary}, ${themePalette.secondary})` }">
+                        <i :class="avatarIcon"></i>
+                    </div>
                     <div class="hidden md:block">
                         <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Status: Operador | GPA: {{ props.user_gpa || '---' }}</p>
                         <p class="text-sm font-black">{{ $page.props.auth.user.name }}</p>
@@ -69,15 +83,15 @@ onMounted(() => {
                 </div>
 
                 <!-- Global XP Bar -->
-                <div class="flex-grow max-w-md mx-10 hidden lg:block">
+                <div class="grow max-w-md mx-10 hidden lg:block">
                     <div class="flex justify-between items-end mb-1 px-1">
-                        <span class="text-[10px] font-black text-orange-500 uppercase tracking-widest">{{ $page.props.auth.gamification?.rank || 'Novato' }}</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest" :style="{ color: themePalette.primary }">{{ profileTitle || $page.props.auth.gamification?.rank || 'Novato' }}</span>
                         <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">NIVEL {{ $page.props.auth.gamification?.current || 1 }}</span>
                     </div>
                     <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
                         <div 
-                            class="bg-orange-500 h-full shadow-orange-glow transition-all duration-1000"
-                            :style="{ width: ($page.props.auth.gamification?.progress || 0) + '%' }"
+                            class="h-full shadow-orange-glow transition-all duration-1000"
+                            :style="{ width: ($page.props.auth.gamification?.progress || 0) + '%', backgroundColor: themePalette.primary }"
                         ></div>
                     </div>
                 </div>
@@ -180,7 +194,7 @@ onMounted(() => {
                                         <div class="relative pt-4">
                                             <div class="w-full bg-white/5 h-4 rounded-2xl overflow-hidden p-1 border border-white/5">
                                                 <div 
-                                                    class="h-full bg-gradient-to-r from-orange-600 to-red-500 rounded-xl transition-all duration-[2s] shadow-orange-glow progress-fill"
+                                                    class="h-full bg-linear-to-r from-orange-600 to-red-500 rounded-xl transition-all duration-[2s] shadow-orange-glow progress-fill"
                                                     :style="{ width: progressPercentage + '%' }"
                                                 ></div>
                                             </div>
@@ -193,7 +207,7 @@ onMounted(() => {
                                     </div>
 
                                     <!-- AI Strategy Box -->
-                                    <div class="bg-white/5 border border-white/5 rounded-[2.5rem] p-8 relative group hover:bg-white/[0.08] transition-all cursor-pointer">
+                                    <div class="bg-white/5 border border-white/5 rounded-[2.5rem] p-8 relative group hover:bg-white/8 transition-all cursor-pointer">
                                         <div class="absolute -top-4 -left-4 w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center text-white shadow-orange-glow transform -rotate-12">
                                             <i class="fa-solid fa-robot"></i>
                                         </div>
@@ -266,7 +280,7 @@ onMounted(() => {
                                 <i class="fa-solid fa-chart-simple text-orange-500"></i>
                             </div>
                             <div class="flex justify-between items-center">
-                                <div class="text-center flex-grow">
+                                <div class="text-center grow">
                                     <p class="text-5xl font-black text-white glow-text">{{ stats.accuracy }}%</p>
                                     <p class="text-[9px] font-black text-green-400 uppercase mt-2 tracking-widest"><i class="fa-solid fa-arrow-up"></i> +4.2% Eficiencia</p>
                                 </div>
@@ -290,7 +304,7 @@ onMounted(() => {
                         </div>
 
                         <!-- Quick Profile Info -->
-                        <div class="bg-gradient-to-br from-orange-600 to-orange-900 p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+                        <div class="bg-linear-to-br from-orange-600 to-orange-900 p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
                            <div class="relative z-10 flex items-center gap-6">
                                <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-3xl font-black backdrop-blur-md border border-white/20">
                                    {{ $page.props.auth.gamification?.current || 1 }}

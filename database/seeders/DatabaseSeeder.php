@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             AcademicOfferSeeder::class,
             VocationalQuestionSeeder::class,
+            RewardItemSeeder::class,
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Learning\GamificationService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -9,6 +10,8 @@ use Carbon\Carbon;
 
 class TrackStudyStreak
 {
+    public function __construct(protected GamificationService $gamification) {}
+
     /**
      * Handle an incoming request.
      */
@@ -17,6 +20,7 @@ class TrackStudyStreak
         if (auth()->check()) {
             $user = auth()->user();
             $now = Carbon::now();
+            $shouldAwardDaily = false;
             
             // Actualizar solo una vez cada 15 minutos para optimizar DB
             if ($user->last_study_at && Carbon::parse($user->last_study_at)->diffInMinutes($now) < 15) {
@@ -27,6 +31,7 @@ class TrackStudyStreak
                 $user->streak_days = 1;
                 $user->last_study_at = $now;
                 $user->save();
+                $shouldAwardDaily = true;
             } else {
                 $lastStudy = Carbon::parse($user->last_study_at);
                 
@@ -39,12 +44,18 @@ class TrackStudyStreak
                     $user->streak_days += 1;
                     $user->last_study_at = $now;
                     $user->save();
+                    $shouldAwardDaily = true;
                 } else {
                     // Pasó más de un día, reseteamos racha
                     $user->streak_days = 1;
                     $user->last_study_at = $now;
                     $user->save();
+                    $shouldAwardDaily = true;
                 }
+            }
+
+            if ($shouldAwardDaily) {
+                $this->gamification->awardDailyStreakXp($user, (int) $user->streak_days);
             }
         }
 

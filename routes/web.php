@@ -7,6 +7,7 @@ use App\Http\Controllers\Assessment\QuizController;
 use App\Http\Controllers\Assessment\SimulatorController;
 use App\Http\Controllers\Progress\ProgressController;
 use App\Http\Controllers\Progress\SpacedRepetitionController;
+use App\Http\Controllers\Rewards\RewardStoreController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -63,6 +64,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Rewards / Cosmetics
+    Route::get('/rewards/catalog', [RewardStoreController::class, 'catalog'])->name('rewards.catalog');
+    Route::get('/rewards/inventory', [RewardStoreController::class, 'inventory'])->name('rewards.inventory');
+    Route::post('/rewards/purchase', [RewardStoreController::class, 'purchase'])->name('rewards.purchase');
+    Route::post('/rewards/equip', [RewardStoreController::class, 'equip'])->name('rewards.equip');
 });
 
 // Admin Panel

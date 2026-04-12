@@ -26,6 +26,10 @@ const props = defineProps({
         type: Number,
         default: 0,
     },
+    currentXp: {
+        type: Number,
+        default: 0,
+    },
 });
 
 const emit = defineEmits(['ask']);
@@ -49,6 +53,10 @@ const submit = () => {
                 {{ loading ? 'Generando respuesta...' : (enabled ? 'Activo' : 'Responde primero para activarlo') }}
             </span>
         </div>
+
+        <p class="text-xs text-blue-700 font-semibold mb-3">
+            Cada pista cuesta 20 XP. Saldo actual: {{ currentXp }} XP.
+        </p>
 
         <div class="rounded-2xl bg-white border border-blue-100 p-4 min-h-20">
             <p class="text-sm text-gray-700 whitespace-pre-line">

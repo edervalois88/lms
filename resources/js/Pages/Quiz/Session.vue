@@ -22,6 +22,9 @@ const requestError = ref('');
 const selectedIndex = ref(null);
 const adaptiveFeedback = ref(null);
 const tutorLoading = ref(false);
+const xpToast = ref('');
+const showLevelModal = ref(false);
+const levelModalData = ref({ level: 1, badges: [] });
 
 const csrfToken = () =>
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -75,6 +78,22 @@ const submitEvaluation = async (answerIndex) => {
         adaptiveFeedback.value = payload;
         selectedIndex.value = answerIndex;
 
+        const gamification = payload?.gamification || {};
+        if (Number(gamification.xp_earned || 0) > 0) {
+            xpToast.value = `+${gamification.xp_earned} XP`;
+            setTimeout(() => {
+                xpToast.value = '';
+            }, 1800);
+        }
+
+        if (Boolean(gamification.level_up)) {
+            levelModalData.value = {
+                level: Number(gamification.new_level || 1),
+                badges: Array.isArray(gamification.unlocked_badges) ? gamification.unlocked_badges : [],
+            };
+            showLevelModal.value = true;
+        }
+
         const isCorrect = answerIndex === currentQuestion.value.correct_index;
         lastAnswerCorrect.value = isCorrect;
 
@@ -124,6 +143,10 @@ const handleTutorAsk = async (message) => {
         const chat = response.data?.chat || {};
         adaptiveFeedback.value = {
             ...(adaptiveFeedback.value || {}),
+            gamification: {
+                ...(adaptiveFeedback.value?.gamification || {}),
+                ...(response.data?.gamification || {}),
+            },
             chat: {
                 respuesta_directa: chat.respuesta_directa || '',
                 es_fuera_de_contexto: Boolean(chat.es_fuera_de_contexto),
@@ -132,7 +155,10 @@ const handleTutorAsk = async (message) => {
             },
         };
     } catch (_error) {
-        requestError.value = 'No se pudo obtener respuesta del Tutor IA. Intenta nuevamente.';
+        const serverMessage = _error?.response?.data?.message;
+        requestError.value = typeof serverMessage === 'string' && serverMessage !== ''
+            ? serverMessage
+            : 'No se pudo obtener respuesta del Tutor IA. Intenta nuevamente.';
     } finally {
         tutorLoading.value = false;
     }
@@ -143,6 +169,28 @@ const handleTutorAsk = async (message) => {
     <Head :title="`Quiz: ${subject.name}`" />
 
     <div class="min-h-screen bg-gray-50 flex flex-col">
+        <div v-if="xpToast" class="fixed top-5 right-5 z-50 rounded-xl bg-emerald-600 text-white px-4 py-2 text-sm font-black shadow-lg animate-fade-in">
+            {{ xpToast }}
+        </div>
+
+        <div v-if="showLevelModal" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+            <div class="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl">
+                <p class="text-xs font-black uppercase tracking-widest text-emerald-600">Nivel alcanzado</p>
+                <h3 class="text-3xl font-black text-gray-900 mt-2">Nivel {{ levelModalData.level }}</h3>
+                <p class="text-gray-600 mt-2">Tu misión sube de dificultad. Excelente progreso.</p>
+                <p v-if="levelModalData.badges.length" class="mt-3 text-sm font-semibold text-orange-600">
+                    Insignias: {{ levelModalData.badges.join(', ') }}
+                </p>
+                <button
+                    type="button"
+                    @click="showLevelModal = false"
+                    class="mt-6 px-6 py-3 rounded-xl bg-gray-900 text-white font-bold hover:bg-black"
+                >
+                    Continuar
+                </button>
+            </div>
+        </div>
+
         <!-- Header -->
         <nav class="bg-white border-b border-gray-200 px-4 py-4 sm:px-6 lg:px-8">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -236,6 +284,7 @@ const handleTutorAsk = async (message) => {
                                     :blocked="Boolean(adaptiveFeedback?.chat?.es_fuera_de_contexto)"
                                     :from-cache="Boolean(adaptiveFeedback?.chat?.from_cache)"
                                     :tokens-saved="Number(adaptiveFeedback?.chat?.tokens_saved || 0)"
+                                    :current-xp="Number(adaptiveFeedback?.gamification?.current_xp || 0)"
                                     @ask="handleTutorAsk"
                                 />
                             </div>

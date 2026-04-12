@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Assessment;
 
 use App\Http\Controllers\Controller;
+use App\Models\Exam;
+use App\Models\ExamAnswer;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\Topic;
@@ -10,6 +12,8 @@ use App\Services\GroqService;
 use App\Services\AI\QuestionGeneratorService;
 use App\Services\Learning\AdaptiveExamPipelineService;
 use App\Services\Learning\AdaptiveDifficultyService;
+use App\Services\Learning\GamificationService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -23,6 +27,7 @@ class QuizController extends Controller
         protected QuestionGeneratorService $questionGenerator,
         protected AdaptiveExamPipelineService $adaptivePipeline,
         protected GroqService $groq,
+        protected GamificationService $gamification,
     ) {}
 
     public function index(): Response
@@ -125,6 +130,8 @@ class QuizController extends Controller
         $selectedAnswer = (string) ($selected[(int) $data['selected_index']] ?? '');
         $correctAnswer = (string) ($question->correct_answer ?? '');
         $isCorrect = $selectedAnswer !== '' && $selectedAnswer === $correctAnswer;
+        $levelBefore = $this->gamification->getLevel($user);
+        $examId = $this->resolvePracticeExamId($request, $user->id, $subject->id);
 
         $sessionKey = $this->streakSessionKey($subject, $topic);
         $streak = (int) $request->session()->get($sessionKey, 0);
@@ -134,6 +141,8 @@ class QuizController extends Controller
             $streak = $isCorrect ? ($streak + 1) : 0;
             $request->session()->put($sessionKey, $streak);
         }
+
+        $this->recordPracticeAnswer($examId, $question, $selectedAnswer, $isCorrect);
 
         $payload = $this->adaptivePipeline->evaluate(
             $user,
@@ -145,8 +154,44 @@ class QuizController extends Controller
             ! $skip,
         );
 
+        $gamificationPayload = [
+            'xp_earned' => 0,
+            'current_xp' => $levelBefore['xp'] ?? 0,
+            'level_up' => false,
+            'new_level' => $levelBefore['current'] ?? 1,
+            'unlocked_badges' => [],
+        ];
+
+        if (! $skip) {
+            $questionCounterKey = sprintf('quiz.practice.counter.%d.%d', (int) $user->id, (int) $subject->id);
+            $questionCounter = (int) $request->session()->get($questionCounterKey, 0) + 1;
+            $request->session()->put($questionCounterKey, $questionCounter);
+
+            if ($questionCounter % 10 === 0) {
+                $practiceAward = $this->gamification->awardPracticeCompletion($user, (int) $subject->id);
+                $consistencyAward = $this->gamification->awardConsistencyBonusIfEligible($user);
+                $rankEvaluation = $this->gamification->evaluateSubjectRank($user, (int) $subject->id);
+
+                $levelAfter = $this->gamification->getLevel($user);
+
+                $xpEarned = (int) ($practiceAward['earned'] ?? 0) + (int) ($consistencyAward['earned'] ?? 0);
+                $xpEarned += ! empty($rankEvaluation['unlocked_badges']) ? GamificationService::XP_SUBJECT_RANK_UP : 0;
+
+                $gamificationPayload = [
+                    'xp_earned' => $xpEarned,
+                    'current_xp' => (int) ($levelAfter['xp'] ?? 0),
+                    'level_up' => (int) ($levelAfter['current'] ?? 1) > (int) ($levelBefore['current'] ?? 1),
+                    'new_level' => (int) ($levelAfter['current'] ?? 1),
+                    'unlocked_badges' => (array) ($rankEvaluation['unlocked_badges'] ?? []),
+                    'subject_rank' => $rankEvaluation['rank'] ?? null,
+                    'subject_accuracy' => $rankEvaluation['accuracy'] ?? null,
+                ];
+            }
+        }
+
         data_set($payload, 'evaluacion.resultado', $isCorrect ? 'ACIERTO' : 'ERROR');
         data_set($payload, 'metadatos.racha_aciertos', $streak);
+        data_set($payload, 'gamification', $gamificationPayload);
 
         return response()->json($payload);
     }
@@ -162,9 +207,26 @@ class QuizController extends Controller
         $question = Question::query()
             ->with('topic.subject')
             ->findOrFail($data['question_id']);
+        $user = auth()->user();
 
         if ((int) $question->topic?->subject_id !== (int) $subject->id) {
             return response()->json(['message' => 'Pregunta no válida para la materia seleccionada.'], 422);
+        }
+
+        $xpCharge = $this->gamification->spendXp($user, GamificationService::XP_TUTOR_HINT_COST, 'ai_hint', [
+            'question_id' => (int) $question->id,
+            'subject_id' => (int) $subject->id,
+        ]);
+
+        if (! (bool) ($xpCharge['ok'] ?? false)) {
+            return response()->json([
+                'message' => 'XP insuficiente para usar una pista IA. Costo: ' . GamificationService::XP_TUTOR_HINT_COST . ' XP.',
+                'gamification' => [
+                    'xp_earned' => 0,
+                    'current_xp' => (int) ($xpCharge['current_xp'] ?? 0),
+                    'hint_cost' => GamificationService::XP_TUTOR_HINT_COST,
+                ],
+            ], 422);
         }
 
         $selected = (array) ($question->options ?? []);
@@ -190,6 +252,12 @@ class QuizController extends Controller
             'explicacion' => (string) ($tutor['respuesta_directa'] ?? ''),
             'from_cache' => (bool) ($tutor['from_cache'] ?? false),
             'tokens_saved' => (int) ($tutor['tokens_saved'] ?? 0),
+            'gamification' => [
+                'xp_earned' => 0,
+                'xp_spent' => (int) ($xpCharge['spent'] ?? GamificationService::XP_TUTOR_HINT_COST),
+                'current_xp' => (int) ($xpCharge['current_xp'] ?? 0),
+                'hint_cost' => GamificationService::XP_TUTOR_HINT_COST,
+            ],
             'chat' => [
                 'respuesta_directa' => (string) ($tutor['respuesta_directa'] ?? ''),
                 'es_fuera_de_contexto' => (bool) ($tutor['es_fuera_de_contexto'] ?? false),
@@ -213,6 +281,43 @@ class QuizController extends Controller
         }
 
         return 'La respuesta correcta es **' . $respuestaCorrecta . '**. Tu selección fue **' . ($respuestaAlumno !== '' ? $respuestaAlumno : 'sin respuesta') . '**. **Explicación oficial:** ' . $explicacion;
+    }
+
+    private function resolvePracticeExamId(Request $request, int $userId, int $subjectId): int
+    {
+        $sessionKey = sprintf('quiz.practice.exam.%d.%d', $userId, $subjectId);
+        $existingId = (int) $request->session()->get($sessionKey, 0);
+
+        if ($existingId > 0 && Exam::query()->where('id', $existingId)->exists()) {
+            return $existingId;
+        }
+
+        $exam = Exam::create([
+            'user_id' => $userId,
+            'type' => 'practice',
+            'exam_area' => null,
+            'total_questions' => 10,
+            'time_limit_minutes' => 15,
+            'status' => 'in_progress',
+            'started_at' => Carbon::now(),
+            'score' => null,
+        ]);
+
+        $request->session()->put($sessionKey, (int) $exam->id);
+
+        return (int) $exam->id;
+    }
+
+    private function recordPracticeAnswer(int $examId, Question $question, string $selectedAnswer, bool $isCorrect): void
+    {
+        ExamAnswer::create([
+            'exam_id' => $examId,
+            'question_id' => $question->id,
+            'user_answer' => $selectedAnswer,
+            'is_correct' => $isCorrect,
+            'time_spent_seconds' => 0,
+            'confidence' => null,
+        ]);
     }
 
     private function streakSessionKey(Subject $subject, Topic $topic): string
