@@ -35,8 +35,34 @@ wait_for_db() {
   DB_USER_VALUE="${DB_USERNAME:-}"
   DB_PASS_VALUE="${DB_PASSWORD:-}"
 
+  # Railway proporciona DATABASE_URL en lugar de variables separadas.
+  # Parsear DATABASE_URL si DB_HOST no está definido.
+  if [ -z "$DB_HOST_VALUE" ] && [ -n "${DATABASE_URL:-}" ]; then
+    # Formato: mysql://user:password@host:port/dbname
+    _url="${DATABASE_URL}"
+    # Remover esquema (mysql:// o mysql2://)
+    _url="${_url#*://}"
+    # Extraer userinfo (antes del @)
+    _userinfo="${_url%@*}"
+    # Extraer hostinfo (después del @)
+    _hostinfo="${_url##*@}"
+    # Extraer host y puerto (antes del /)
+    _hostport="${_hostinfo%%/*}"
+    DB_HOST_VALUE="${_hostport%%:*}"
+    _port="${_hostport##*:}"
+    # Si el puerto es igual al host (no había :), usar 3306
+    if [ "$_port" = "$DB_HOST_VALUE" ]; then
+      DB_PORT_VALUE="3306"
+    else
+      DB_PORT_VALUE="$_port"
+    fi
+    DB_USER_VALUE="${_userinfo%%:*}"
+    DB_PASS_VALUE="${_userinfo#*:}"
+    echo "🔍 Parseado DATABASE_URL: host=${DB_HOST_VALUE} port=${DB_PORT_VALUE} user=${DB_USER_VALUE}"
+  fi
+
   if [ -z "$DB_HOST_VALUE" ]; then
-    echo "⏭️ DB_HOST no definido, se omite espera de base de datos."
+    echo "⏭️ DB_HOST y DATABASE_URL no definidos, se omite espera de base de datos."
     return 0
   fi
 
