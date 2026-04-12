@@ -37,8 +37,8 @@ const submit = () => {
     <div class="rounded-3xl border border-blue-200 bg-blue-50 p-5">
         <div class="flex items-center justify-between gap-3 mb-3">
             <h4 class="text-sm font-black uppercase tracking-widest text-blue-700">Tutor Chat</h4>
-            <span class="text-[11px] font-semibold" :class="enabled ? 'text-blue-600' : 'text-gray-500'">
-                {{ enabled ? 'Activo' : 'Responde primero para activarlo' }}
+            <span class="text-[11px] font-semibold" :class="loading ? 'text-amber-600' : (enabled ? 'text-blue-600' : 'text-gray-500')">
+                {{ loading ? 'Generando respuesta...' : (enabled ? 'Activo' : 'Responde primero para activarlo') }}
             </span>
         </div>
 
@@ -55,7 +55,7 @@ const submit = () => {
                 type="text"
                 :disabled="!enabled || loading"
                 placeholder="Pregunta algo del tema..."
-                class="flex-1 rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm disabled:opacity-50"
+                class="flex-1 rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
                 type="submit"

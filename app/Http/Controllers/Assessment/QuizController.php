@@ -11,6 +11,7 @@ use App\Services\Learning\AdaptiveExamPipelineService;
 use App\Services\Learning\AdaptiveDifficultyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -69,21 +70,10 @@ class QuizController extends Controller
             ->findOrFail($data['topic_id']);
 
         $difficulty = $this->difficultyService->getCurrentDifficulty($user, $subject);
+        $sessionStreak = (int) $request->session()->get($this->streakSessionKey($subject, $topic), 0);
 
-        $question = Question::query()
-            ->where('topic_id', $topic->id)
-            ->where('is_active', true)
-            ->whereBetween('difficulty', [max(1, $difficulty - 1), min(10, $difficulty + 1)])
-            ->inRandomOrder()
-            ->first();
-
-        if (! $question) {
-            $question = Question::query()
-                ->where('topic_id', $topic->id)
-                ->where('is_active', true)
-                ->inRandomOrder()
-                ->first();
-        }
+        // Si hay 3 aciertos seguidos, primero intenta una pregunta de nivel superior.
+        $question = $this->findQuestionForAdaptiveStep($topic->id, $difficulty, $sessionStreak >= 3);
 
         if (! $question) {
             $question = $this->questionGenerator->generateForTopic($topic, $difficulty, $user);
@@ -114,7 +104,6 @@ class QuizController extends Controller
         $data = $request->validate([
             'question_id' => ['required', 'integer', 'exists:questions,id'],
             'selected_index' => ['required', 'integer', 'min:0', 'max:3'],
-            'correct_streak' => ['nullable', 'integer', 'min:0'],
             'duda_usuario' => ['nullable', 'string', 'max:1000'],
             'skip_adaptation' => ['nullable', 'boolean'],
         ]);
@@ -129,8 +118,21 @@ class QuizController extends Controller
             return response()->json(['message' => 'Pregunta no válida para la materia seleccionada.'], 422);
         }
 
-        $streak = (int) ($data['correct_streak'] ?? 0);
         $skip = (bool) ($data['skip_adaptation'] ?? false);
+        $topic = $question->topic;
+        $selected = (array) ($question->options ?? []);
+        $selectedAnswer = (string) ($selected[(int) $data['selected_index']] ?? '');
+        $correctAnswer = (string) ($question->correct_answer ?? '');
+        $isCorrect = $selectedAnswer !== '' && $selectedAnswer === $correctAnswer;
+
+        $sessionKey = $this->streakSessionKey($subject, $topic);
+        $streak = (int) $request->session()->get($sessionKey, 0);
+
+        // Solo actualiza racha en evaluaciones reales; las dudas del chat no deben modificar adaptabilidad.
+        if (! $skip) {
+            $streak = $isCorrect ? ($streak + 1) : 0;
+            $request->session()->put($sessionKey, $streak);
+        }
 
         $payload = $this->adaptivePipeline->evaluate(
             $user,
@@ -142,6 +144,58 @@ class QuizController extends Controller
             ! $skip,
         );
 
+        data_set($payload, 'evaluacion.resultado', $isCorrect ? 'ACIERTO' : 'ERROR');
+        data_set($payload, 'metadatos.racha_aciertos', $streak);
+
         return response()->json($payload);
+    }
+
+    private function streakSessionKey(Subject $subject, Topic $topic): string
+    {
+        return sprintf('quiz.streak.%d.%d.%d', (int) auth()->id(), (int) $subject->id, (int) $topic->id);
+    }
+
+    private function findQuestionForAdaptiveStep(int $topicId, int $difficulty, bool $shouldRaiseLevel): ?Question
+    {
+        $baseQuery = Question::query()
+            ->where('topic_id', $topicId)
+            ->where('is_active', true);
+
+        if ($shouldRaiseLevel) {
+            if (Schema::hasColumn('questions', 'level_id')) {
+                $higher = (clone $baseQuery)
+                    ->where('level_id', '>', $difficulty)
+                    ->orderBy('level_id')
+                    ->inRandomOrder()
+                    ->first();
+
+                if ($higher) {
+                    return $higher;
+                }
+            } else {
+                $higher = (clone $baseQuery)
+                    ->where('difficulty', '>', $difficulty)
+                    ->orderBy('difficulty')
+                    ->inRandomOrder()
+                    ->first();
+
+                if ($higher) {
+                    return $higher;
+                }
+            }
+        }
+
+        $window = (clone $baseQuery)
+            ->whereBetween('difficulty', [max(1, $difficulty - 1), min(10, $difficulty + 1)])
+            ->inRandomOrder()
+            ->first();
+
+        if ($window) {
+            return $window;
+        }
+
+        return (clone $baseQuery)
+            ->inRandomOrder()
+            ->first();
     }
 }

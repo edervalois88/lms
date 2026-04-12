@@ -56,7 +56,8 @@ RUN mkdir -p storage/logs && \
     mkdir -p storage/framework/cache && \
     mkdir -p storage/framework/sessions && \
     mkdir -p storage/framework/views && \
-    mkdir -p bootstrap/cache
+    mkdir -p bootstrap/cache && \
+    mkdir -p /etc/supervisor/conf.d
 
 RUN chown -R www-data:www-data storage bootstrap/cache public/build
 RUN chmod -R 777 storage bootstrap/cache

@@ -19,7 +19,6 @@ const lastAnswerCorrect = ref(false);
 const score = ref(0);
 const totalAnswered = ref(0);
 const requestError = ref('');
-const correctStreak = ref(0);
 const selectedIndex = ref(null);
 const adaptiveFeedback = ref(null);
 const tutorLoading = ref(false);
@@ -65,7 +64,6 @@ const submitEvaluation = async (answerIndex, dudaUsuario, skipAdaptation = false
         const response = await axios.post(route('quiz.evaluate', props.subject.slug), {
             question_id: currentQuestion.value.id,
             selected_index: answerIndex,
-            correct_streak: correctStreak.value,
             duda_usuario: dudaUsuario || null,
             skip_adaptation: skipAdaptation,
         }, {
@@ -86,9 +84,6 @@ const submitEvaluation = async (answerIndex, dudaUsuario, skipAdaptation = false
             totalAnswered.value++;
             if (isCorrect) {
                 score.value++;
-                correctStreak.value++;
-            } else {
-                correctStreak.value = 0;
             }
             showFeedback.value = true;
         }
