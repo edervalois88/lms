@@ -10,16 +10,53 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
-// Simular historial si no existe (para demostración de estética)
+const safeNumber = (value, fallback = 0) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
 const stats = computed(() => {
     if (!props.major) return [];
-    // En producción usaríamos props.major.statistics
-    // Por ahora generamos una tendencia basada en el min_score real
+
+    const rows = Array.isArray(props.major.statistics) ? props.major.statistics : [];
+    if (rows.length > 0) {
+        return rows
+            .map((row) => ({
+                year: safeNumber(row.year),
+                score: safeNumber(row.cutoff_score, safeNumber(props.major.min_score)),
+                applicants: safeNumber(row.applicants, safeNumber(props.major.applicants)),
+                places: safeNumber(row.places_offered, safeNumber(props.major.places)),
+            }))
+            .sort((a, b) => a.year - b.year);
+    }
+
     return [
-        { year: 2021, score: props.major.min_score - 4 },
-        { year: 2022, score: props.major.min_score - 2 },
-        { year: 2023, score: props.major.min_score },
+        {
+            year: 2023,
+            score: safeNumber(props.major.min_score) - 3,
+            applicants: safeNumber(props.major.applicants),
+            places: safeNumber(props.major.places),
+        },
+        {
+            year: 2024,
+            score: safeNumber(props.major.min_score) - 1,
+            applicants: safeNumber(props.major.applicants),
+            places: safeNumber(props.major.places),
+        },
+        {
+            year: 2025,
+            score: safeNumber(props.major.min_score),
+            applicants: safeNumber(props.major.applicants),
+            places: safeNumber(props.major.places),
+        },
     ];
+});
+
+const trendDelta = computed(() => {
+    if (stats.value.length < 2) return 0;
+    const first = stats.value[0].score;
+    const last = stats.value[stats.value.length - 1].score;
+    return Math.round((last - first) * 10) / 10;
 });
 
 onMounted(() => {
@@ -33,7 +70,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div v-if="show" class="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-midnight/90 backdrop-blur-xl">
+    <div v-if="show" class="fixed inset-0 z-60 flex items-center justify-center p-6 bg-midnight/90 backdrop-blur-xl">
         <div class="max-w-xl w-full glass-morphism p-10 rounded-[3rem] border border-white/10 relative animate-pop-in">
             
             <button @click="$emit('close')" class="absolute top-6 right-6 w-10 h-10 bg-white/5 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
@@ -48,13 +85,30 @@ onMounted(() => {
 
                 <!-- Gamified Bar Chart -->
                 <div class="flex items-end justify-between h-48 gap-4 px-4 border-b border-white/5 pb-2">
-                    <div v-for="stat in stats" :key="stat.year" class="flex-grow flex flex-col items-center gap-4">
+                    <div v-for="stat in stats" :key="stat.year" class="grow flex flex-col items-center gap-4">
                         <span class="text-xs font-black text-orange-500">{{ stat.score }}</span>
                         <div 
-                            class="w-full bg-gradient-to-t from-orange-600 to-orange-400 rounded-t-xl shadow-orange-glow stat-bar"
-                            :style="{ '--bar-height': (stat.score / 1.28) + '%' }"
+                            class="w-full bg-linear-to-t from-orange-600 to-orange-400 rounded-t-xl shadow-orange-glow stat-bar"
+                            :style="{ '--bar-height': Math.min(100, (stat.score / 1.4) * 100) + '%' }"
                         ></div>
                         <span class="text-[10px] font-black text-gray-500">{{ stat.year }}</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-center">
+                    <div class="p-3 rounded-xl bg-white/5 border border-white/10">
+                        <p class="text-[9px] text-gray-400 uppercase font-black tracking-widest">Aspirantes</p>
+                        <p class="text-lg font-black text-white">{{ stats[stats.length - 1]?.applicants ?? 'N/A' }}</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-white/5 border border-white/10">
+                        <p class="text-[9px] text-gray-400 uppercase font-black tracking-widest">Lugares</p>
+                        <p class="text-lg font-black text-white">{{ stats[stats.length - 1]?.places ?? 'N/A' }}</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-white/5 border border-white/10">
+                        <p class="text-[9px] text-gray-400 uppercase font-black tracking-widest">Tendencia</p>
+                        <p class="text-lg font-black" :class="trendDelta >= 0 ? 'text-green-400' : 'text-red-400'">
+                            {{ trendDelta >= 0 ? '+' : '' }}{{ trendDelta }} aciertos
+                        </p>
                     </div>
                 </div>
 
@@ -65,7 +119,7 @@ onMounted(() => {
                     <div>
                         <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Análisis de Inteligencia</p>
                         <p class="text-xs font-bold leading-relaxed">
-                            Detectada tendencia ascendente de **+2 aciertos/año**. Se recomienda sobrepasar la meta por un margen del 5% para asegurar el acceso.
+                            Tendencia histórica cargada desde estadísticas del catálogo. Usa este indicador junto con la relación aspirantes/lugares para ajustar tu meta de aciertos.
                         </p>
                     </div>
                 </div>

@@ -21,7 +21,7 @@ class OnboardingController extends Controller
     public function show(): Response
     {
         return Inertia::render('Student/Onboarding', [
-            'universities' => University::with('campuses.majors')->get(),
+            'universities' => University::with('campuses.majors.statistics')->get(),
             'vocational_questions' => VocationalQuestion::orderBy('order')->get(),
         ]);
     }

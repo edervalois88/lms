@@ -22,7 +22,8 @@ class ProfileController extends Controller
                 ->select(['id', 'name', 'acronym'])
                 ->with([
                     'campuses:id,university_id,name',
-                    'campuses.majors:id,campus_id,name',
+                    'campuses.majors:id,campus_id,name,division_name,min_score,applicants,places',
+                    'campuses.majors.statistics:id,major_id,year,cutoff_score,applicants,places_offered',
                 ])
                 ->orderBy('name')
                 ->get(),

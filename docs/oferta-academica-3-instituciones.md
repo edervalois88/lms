@@ -1,0 +1,256 @@
+# Oferta academica consolidada (UNAM, IPN, UAM)
+
+Generado: 2026-04-12 01:03:13
+
+## Resumen
+- IPN: 19 escuelas detectadas, 72 carreras detectadas.
+- UAM: 5 unidades, 68 carreras detectadas.
+- UNAM: 26 escuelas/planteles (fallback repo), 48 carreras (fallback repo).
+
+## Fuentes
+- IPN: https://www.ipn.mx/oferta-educativa/educacion-superior/
+- UAM: https://licenciaturas.uam.mx/wp-sitemap-posts-post-1.xml
+- UNAM: repo-fallback (UNAM official pages returned 403 from this environment)
+
+## IPN - Escuelas detectadas
+- CICS
+- ENCB
+- ENMH
+- EPP
+- ESCA
+- ESCOM
+- ESEO
+- ESIA
+- ESIME
+- ESM
+- UES
+- UPIIAP
+- UPIIC
+- UPIICSA
+- UPIIG
+- UPIIH
+- UPIIT
+- UPIITA
+- UPIIZ
+
+## IPN - Carreras detectadas
+- Contador Público
+- Ingeniería Aeronáutica
+- Ingeniería Ambiental
+- Ingeniería Biomédica
+- Ingeniería Biónica
+- Ingeniería Bioquímica
+- Ingeniería Biotecnológica
+- Ingeniería Civil
+- Ingeniería Eléctrica
+- Ingeniería en Alimentos
+- Ingeniería en Computación
+- Ingeniería en Comunicaciones y Electrónica
+- Ingeniería en Control y Automatización
+- Ingeniería en Energía
+- Ingeniería en Informática
+- Ingeniería en Inteligencia Artificial
+- Ingeniería en Metalurgia y Materiales
+- Ingeniería en Meteorología
+- Ingeniería en Movilidad Urbana
+- Ingeniería en Negocios Energéticos Sustentables
+- Ingeniería en Robótica Industrial
+- Ingeniería en Sistemas Ambientales
+- Ingeniería en Sistemas Automotrices
+- Ingeniería en Sistemas Computacionales
+- Ingeniería en Sistemas Energéticos y Redes Inteligentes
+- Ingeniería en Transporte
+- Ingeniería Farmacéutica
+- Ingeniería Ferroviaria
+- Ingeniería Fotónica
+- Ingeniería Geofísica
+- Ingeniería Geológica
+- Ingeniería Industrial
+- Ingeniería Matemática
+- Ingeniería Mecánica
+- Ingeniería Mecatrónica
+- Ingeniería Metalúrgica
+- Ingeniería Petrolera
+- Ingeniería Química Industrial
+- Ingeniería Química Petrolera
+- Ingeniería Telemática
+- Ingeniería Textil
+- Ingeniería Topográfica y Fotogramétrica
+- Ingeniero Arquitecto
+- Licenciatura en Administración Industrial
+- Licenciatura en Administración y Desarrollo Empresarial
+- Licenciatura en Archivonomía
+- Licenciatura en Biblioteconomía
+- Licenciatura en Biología
+- Licenciatura en Ciencia de Datos
+- Licenciatura en Ciencias de la Informática
+- Licenciatura en Comercio Internacional
+- Licenciatura en Contaduría y Finanzas Públicas
+- Licenciatura en Economía
+- Licenciatura en Enfermería
+- Licenciatura en Enfermería y Obstetricia
+- Licenciatura en Física y Matemáticas
+- Licenciatura en Matemática Algorítmica
+- Licenciatura en Mercadotecnia Digital
+- Licenciatura en Negocios Digitales
+- Licenciatura en Negocios Internacionales
+- Licenciatura en Nutrición
+- Licenciatura en Odontología
+- Licenciatura en Optometría
+- Licenciatura en Psicología
+- Licenciatura en Relaciones Comerciales
+- Licenciatura en Trabajo Social
+- Licenciatura en Turismo
+- Licenciatura en Turismo Sustentable
+- Médico Cirujano Homeópata
+- Médico Cirujano Partero
+- Químico Bacteriólogo y Parasitólogo
+- Quimico Farmacéutico Industrial
+
+## UAM - Carreras y unidades
+- Administración – Licenciaturas UAM: Unidad Azcapotzalco, Unidad Cuajimalpa, Unidad Iztapalapa, Unidad Lerma, Unidad Xochimilco
+- Agronomía – Licenciaturas UAM: Unidad Xochimilco
+- Antropología Social – Licenciaturas UAM: Unidad Iztapalapa
+- Arquitectura – Licenciaturas UAM: Unidad Azcapotzalco, Unidad Xochimilco
+- Arte y Comunicación Digitales – Licenciaturas UAM: Unidad Lerma
+- Biología – Licenciaturas UAM: Unidad Iztapalapa, Unidad Xochimilco
+- Biología Ambiental – Licenciaturas UAM: Unidad Lerma
+- Biología Experimental – Licenciaturas UAM: Unidad Iztapalapa
+- Biología Molecular – Licenciaturas UAM: Unidad Cuajimalpa
+- Ciencia Política – Licenciaturas UAM: Unidad Iztapalapa
+- Ciencia y Tecnología de Alimentos – Licenciaturas UAM: Unidad Lerma
+- Ciencias Atmosféricas – Licenciaturas UAM: Unidad Iztapalapa
+- Ciencias de la Comunicación – Licenciaturas UAM: Unidad Cuajimalpa
+- Computación – Licenciaturas UAM: Unidad Iztapalapa
+- Comunicación Social – Licenciaturas UAM: Unidad Xochimilco
+- Derecho – Licenciaturas UAM: Unidad Azcapotzalco, Unidad Cuajimalpa
+- Diseño – Licenciaturas UAM: Unidad Cuajimalpa
+- Diseño de la Comunicación Gráfica – Licenciaturas UAM: Unidad Azcapotzalco, Unidad Xochimilco
+- Diseño de Proyectos Sustentables – Licenciaturas UAM: Unidad Azcapotzalco
+- Diseño Industrial – Licenciaturas UAM: Unidad Azcapotzalco, Unidad Xochimilco
+- Economía – Licenciaturas UAM: Unidad Azcapotzalco, Unidad Iztapalapa, Unidad Xochimilco
+- Educación y Tecnologías Digitales – Licenciaturas UAM: Unidad Lerma
+- Enfermería – Licenciaturas UAM: Unidad Xochimilco
+- Estomatología – Licenciaturas UAM: Unidad Xochimilco
+- Estudios Socioterritoriales – Licenciaturas UAM: Unidad Cuajimalpa
+- Filosofía – Licenciaturas UAM: Unidad Iztapalapa
+- Física – Licenciaturas UAM: Unidad Iztapalapa
+- Geografía Humana – Licenciaturas UAM: Unidad Iztapalapa
+- Hidrobiología – Licenciaturas UAM: Unidad Iztapalapa
+- Historia – Licenciaturas UAM: Unidad Iztapalapa
+- Humanidades – Licenciaturas UAM: Unidad Cuajimalpa
+- Ingeniería Ambiental – Licenciaturas UAM: Unidad Azcapotzalco
+- Ingeniería Biológica – Licenciaturas UAM: Unidad Cuajimalpa
+- Ingeniería Biomédica – Licenciaturas UAM: Unidad Iztapalapa
+- Ingeniería Bioquímica Industrial – Licenciaturas UAM: Unidad Iztapalapa
+- Ingeniería Civil – Licenciaturas UAM: Unidad Azcapotzalco
+- Ingeniería de los Alimentos – Licenciaturas UAM: Unidad Iztapalapa
+- Ingeniería Eléctrica – Licenciaturas UAM: Unidad Azcapotzalco
+- Ingeniería Electrónica – Licenciaturas UAM: Unidad Azcapotzalco, Unidad Iztapalapa
+- Ingeniería en Ciencia y Tecnología del Agua – Licenciaturas UAM: Unidad Lerma
+- Ingeniería en Computación – Licenciaturas UAM: Unidad Azcapotzalco, Unidad Cuajimalpa
+- Ingeniería en Computación y Telecomunicaciones – Licenciaturas UAM: Unidad Lerma
+- Ingeniería en Energía – Licenciaturas UAM: Unidad Iztapalapa
+- Ingeniería en Sistemas Mecatrónicos – Licenciaturas UAM: Unidad Lerma
+- Ingeniería Física – Licenciaturas UAM: Unidad Azcapotzalco
+- Ingeniería Hidrológica – Licenciaturas UAM: Unidad Iztapalapa
+- Ingeniería Industrial – Licenciaturas UAM: Unidad Azcapotzalco
+- Ingeniería Mecánica – Licenciaturas UAM: Unidad Azcapotzalco
+- Ingeniería Metalúrgica – Licenciaturas UAM: Unidad Azcapotzalco
+- Ingeniería Química – Licenciaturas UAM: Unidad Azcapotzalco, Unidad Iztapalapa
+- Letras Hispánicas – Licenciaturas UAM: Unidad Iztapalapa
+- Lingüística – Licenciaturas UAM: Unidad Iztapalapa
+- Matemáticas – Licenciaturas UAM: Unidad Iztapalapa
+- Matemáticas Aplicadas – Licenciaturas UAM: Unidad Cuajimalpa
+- Medicina – Licenciaturas UAM: Unidad Xochimilco
+- Medicina Veterinaria y Zootecnia – Licenciaturas UAM: Unidad Xochimilco
+- Nutrición Humana – Licenciaturas UAM: Unidad Xochimilco
+- Planeación Territorial – Licenciaturas UAM: Unidad Xochimilco
+- Política y Gestión Social – Licenciaturas UAM: Unidad Xochimilco
+- Políticas Públicas – Licenciaturas UAM: Unidad Lerma
+- Producción Animal – Licenciaturas UAM: Unidad Iztapalapa
+- Psicología – Licenciaturas UAM: Unidad Xochimilco
+- Psicología Biomédica – Licenciaturas UAM: Unidad Lerma
+- Psicología Social – Licenciaturas UAM: Unidad Iztapalapa
+- Química – Licenciaturas UAM: Unidad Iztapalapa
+- Química Farmacéutica Biológica – Licenciaturas UAM: Unidad Xochimilco
+- Sociología – Licenciaturas UAM: Unidad Azcapotzalco, Unidad Iztapalapa, Unidad Xochimilco
+- Tecnologías y Sistemas de Información – Licenciaturas UAM: Unidad Cuajimalpa
+
+## UNAM - Escuelas/planteles (fallback repo)
+- Claustro de Sor Juana (Convenio)
+- CNyN Ensenada
+- ENAC
+- ENES Juriquilla
+- ENES Morelia
+- Facultad de Arquitectura (CU)
+- Facultad de Ciencias (CU)
+- Facultad de Ciencias Políticas (CU)
+- Facultad de Contaduría (CU)
+- Facultad de Derecho (CU)
+- Facultad de Economía (CU)
+- Facultad de Filosofía (CU)
+- Facultad de Ingeniería (CU)
+- Facultad de Medicina (CU)
+- Facultad de Medicina Veterinaria (CU)
+- Facultad de Odontología (CU)
+- Facultad de Psicología (CU)
+- Facultad de Química (CU)
+- FAD
+- FCA (CU)
+- FENO (CU)
+- FES Acatlán
+- FES Aragón
+- FES Iztacala
+- FES Zaragoza
+- IIMAS (CU)
+
+## UNAM - Carreras (fallback repo)
+- Actuaría
+- Administración
+- Arquitectura
+- Artes Visuales
+- Bibliotecología y Estudios de la Información
+- Biología
+- Ciencia de Datos
+- Ciencias de la Comunicación
+- Cine
+- Cirujano Dentista
+- Comunicación y Periodismo
+- Contaduría
+- Criminología
+- Derecho
+- Desarrollo Comunitario para el Envejecimiento
+- Diseño y Comunicación Visual
+- Economía
+- Enfermería
+- Filosofía
+- Física
+- Fisioterapia
+- Gastronomía
+- Geografía
+- Historia
+- Ingeniería Aeroespacial
+- Ingeniería Civil
+- Ingeniería en Computación
+- Ingeniería Mecatrónica
+- Ingeniería Química
+- Inteligencia Artificial
+- Lengua y Literaturas Hispánicas
+- Letras Modernas (Inglesas)
+- Literatura Dramática y Teatro
+- Matemáticas Aplicadas y Computación
+- Medicina Veterinaria y Zootecnia
+- Médico Cirujano
+- Música y Tecnología Artística
+- Nanotecnología
+- Negocios Internacionales
+- Neurociencias
+- Nutriología
+- Pedagogía
+- Psicología
+- Química Farmacéutico Biológica
+- Relaciones Internacionales
+- Sociología
+- Teatro y Actuación
+- Turismo y Desarrollo Sostenible

@@ -1,7 +1,8 @@
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, watch, ref } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import MajorTrendsModal from '@/Components/Modals/MajorTrendsModal.vue';
 
 const props = defineProps({
     user: {
@@ -13,6 +14,8 @@ const props = defineProps({
         default: () => [],
     },
 });
+
+const showTrendsModal = ref(false);
 
 const initialUniversityId = props.user?.major?.campus?.university_id ?? null;
 const initialCampusId = props.user?.major?.campus_id ?? null;
@@ -43,6 +46,23 @@ const availableMajors = computed(() => selectedCampus.value?.majors ?? []);
 
 const selectedMajor = computed(() => {
     return availableMajors.value.find((major) => major.id === Number(form.major_id)) ?? null;
+});
+
+const difficultyIndex = computed(() => {
+    if (!selectedMajor.value) return null;
+    const applicants = Number(selectedMajor.value.applicants ?? 0);
+    const places = Number(selectedMajor.value.places ?? 0);
+    if (!Number.isFinite(applicants) || applicants <= 0) return null;
+    return Math.round((places / applicants) * 100 * 100) / 100;
+});
+
+const difficultyCategory = computed(() => {
+    const index = difficultyIndex.value;
+    if (index === null) return 'N/A';
+    if (index <= 5) return 'EXTREMA';
+    if (index <= 15) return 'ALTA';
+    if (index <= 30) return 'MEDIA';
+    return 'NORMAL';
 });
 
 watch(() => form.university_id, () => {
@@ -143,6 +163,41 @@ const destroyAccount = () => {
                     Selección nueva: {{ selectedUniversity?.acronym }} / {{ selectedCampus?.name }} / {{ selectedMajor?.name }}
                 </p>
 
+                <div v-if="selectedMajor" class="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 md:p-5 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <p class="text-xs font-black uppercase tracking-wider text-orange-300">Análisis de la Carrera Seleccionada</p>
+                        <button
+                            type="button"
+                            @click="showTrendsModal = true"
+                            class="rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-orange-200 hover:bg-orange-500/20"
+                        >
+                            Ver Tendencia
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                            <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Meta Aciertos</p>
+                            <p class="text-lg font-black text-orange-300">{{ selectedMajor.min_score ?? 'N/A' }}</p>
+                        </div>
+                        <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                            <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Aspirantes</p>
+                            <p class="text-lg font-black">{{ selectedMajor.applicants ?? 'N/A' }}</p>
+                        </div>
+                        <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                            <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Lugares</p>
+                            <p class="text-lg font-black">{{ selectedMajor.places ?? 'N/A' }}</p>
+                        </div>
+                        <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                            <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Dificultad</p>
+                            <p class="text-lg font-black" :class="difficultyCategory === 'EXTREMA' ? 'text-rose-300' : 'text-amber-300'">
+                                {{ difficultyCategory }}
+                                <span v-if="difficultyIndex !== null" class="text-sm text-gray-300">({{ difficultyIndex }}%)</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <button type="submit" class="rounded-xl bg-orange-600 px-4 py-2 font-bold hover:bg-orange-500">Guardar cambios</button>
             </form>
 
@@ -154,5 +209,11 @@ const destroyAccount = () => {
                 <button type="submit" class="rounded-xl bg-rose-700 px-4 py-2 font-bold hover:bg-rose-600">Eliminar cuenta</button>
             </form>
         </div>
+
+        <MajorTrendsModal
+            :show="showTrendsModal"
+            :major="selectedMajor"
+            @close="showTrendsModal = false"
+        />
     </AuthenticatedLayout>
 </template>

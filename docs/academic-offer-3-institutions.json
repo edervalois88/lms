@@ -1,0 +1,506 @@
+{
+  "generated_at": "2026-04-12 01:03:13",
+  "sources": {
+    "ipn": "https://www.ipn.mx/oferta-educativa/educacion-superior/",
+    "uam": "https://licenciaturas.uam.mx/wp-sitemap-posts-post-1.xml",
+    "unam": "repo-fallback (UNAM official pages returned 403 from this environment)"
+  },
+  "ipn": {
+    "schools": [
+      "CICS",
+      "ENCB",
+      "ENMH",
+      "EPP",
+      "ESCA",
+      "ESCOM",
+      "ESEO",
+      "ESIA",
+      "ESIME",
+      "ESM",
+      "UES",
+      "UPIIAP",
+      "UPIIC",
+      "UPIICSA",
+      "UPIIG",
+      "UPIIH",
+      "UPIIT",
+      "UPIITA",
+      "UPIIZ"
+    ],
+    "careers": [
+      "Contador Público",
+      "Ingeniería Aeronáutica",
+      "Ingeniería Ambiental",
+      "Ingeniería Biomédica",
+      "Ingeniería Biónica",
+      "Ingeniería Bioquímica",
+      "Ingeniería Biotecnológica",
+      "Ingeniería Civil",
+      "Ingeniería Eléctrica",
+      "Ingeniería en Alimentos",
+      "Ingeniería en Computación",
+      "Ingeniería en Comunicaciones y Electrónica",
+      "Ingeniería en Control y Automatización",
+      "Ingeniería en Energía",
+      "Ingeniería en Informática",
+      "Ingeniería en Inteligencia Artificial",
+      "Ingeniería en Metalurgia y Materiales",
+      "Ingeniería en Meteorología",
+      "Ingeniería en Movilidad Urbana",
+      "Ingeniería en Negocios Energéticos Sustentables",
+      "Ingeniería en Robótica Industrial",
+      "Ingeniería en Sistemas Ambientales",
+      "Ingeniería en Sistemas Automotrices",
+      "Ingeniería en Sistemas Computacionales",
+      "Ingeniería en Sistemas Energéticos y Redes Inteligentes",
+      "Ingeniería en Transporte",
+      "Ingeniería Farmacéutica",
+      "Ingeniería Ferroviaria",
+      "Ingeniería Fotónica",
+      "Ingeniería Geofísica",
+      "Ingeniería Geológica",
+      "Ingeniería Industrial",
+      "Ingeniería Matemática",
+      "Ingeniería Mecánica",
+      "Ingeniería Mecatrónica",
+      "Ingeniería Metalúrgica",
+      "Ingeniería Petrolera",
+      "Ingeniería Química Industrial",
+      "Ingeniería Química Petrolera",
+      "Ingeniería Telemática",
+      "Ingeniería Textil",
+      "Ingeniería Topográfica y Fotogramétrica",
+      "Ingeniero Arquitecto",
+      "Licenciatura en Administración Industrial",
+      "Licenciatura en Administración y Desarrollo Empresarial",
+      "Licenciatura en Archivonomía",
+      "Licenciatura en Biblioteconomía",
+      "Licenciatura en Biología",
+      "Licenciatura en Ciencia de Datos",
+      "Licenciatura en Ciencias de la Informática",
+      "Licenciatura en Comercio Internacional",
+      "Licenciatura en Contaduría y Finanzas Públicas",
+      "Licenciatura en Economía",
+      "Licenciatura en Enfermería",
+      "Licenciatura en Enfermería y Obstetricia",
+      "Licenciatura en Física y Matemáticas",
+      "Licenciatura en Matemática Algorítmica",
+      "Licenciatura en Mercadotecnia Digital",
+      "Licenciatura en Negocios Digitales",
+      "Licenciatura en Negocios Internacionales",
+      "Licenciatura en Nutrición",
+      "Licenciatura en Odontología",
+      "Licenciatura en Optometría",
+      "Licenciatura en Psicología",
+      "Licenciatura en Relaciones Comerciales",
+      "Licenciatura en Trabajo Social",
+      "Licenciatura en Turismo",
+      "Licenciatura en Turismo Sustentable",
+      "Médico Cirujano Homeópata",
+      "Médico Cirujano Partero",
+      "Químico Bacteriólogo y Parasitólogo",
+      "Quimico Farmacéutico Industrial"
+    ]
+  },
+  "uam": {
+    "schools": [
+      "Unidad Azcapotzalco",
+      "Unidad Cuajimalpa",
+      "Unidad Iztapalapa",
+      "Unidad Lerma",
+      "Unidad Xochimilco"
+    ],
+    "careers": [
+      {
+        "name": "Administración – Licenciaturas UAM",
+        "units": [
+          "Unidad Azcapotzalco",
+          "Unidad Cuajimalpa",
+          "Unidad Iztapalapa",
+          "Unidad Lerma",
+          "Unidad Xochimilco"
+        ]
+      },
+      {
+        "name": "Agronomía – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Antropología Social – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Arquitectura – Licenciaturas UAM",
+        "units": [
+          "Unidad Azcapotzalco",
+          "Unidad Xochimilco"
+        ]
+      },
+      {
+        "name": "Arte y Comunicación Digitales – Licenciaturas UAM",
+        "units": "Unidad Lerma"
+      },
+      {
+        "name": "Biología – Licenciaturas UAM",
+        "units": [
+          "Unidad Iztapalapa",
+          "Unidad Xochimilco"
+        ]
+      },
+      {
+        "name": "Biología Ambiental – Licenciaturas UAM",
+        "units": "Unidad Lerma"
+      },
+      {
+        "name": "Biología Experimental – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Biología Molecular – Licenciaturas UAM",
+        "units": "Unidad Cuajimalpa"
+      },
+      {
+        "name": "Ciencia Política – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Ciencia y Tecnología de Alimentos – Licenciaturas UAM",
+        "units": "Unidad Lerma"
+      },
+      {
+        "name": "Ciencias Atmosféricas – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Ciencias de la Comunicación – Licenciaturas UAM",
+        "units": "Unidad Cuajimalpa"
+      },
+      {
+        "name": "Computación – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Comunicación Social – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Derecho – Licenciaturas UAM",
+        "units": [
+          "Unidad Azcapotzalco",
+          "Unidad Cuajimalpa"
+        ]
+      },
+      {
+        "name": "Diseño – Licenciaturas UAM",
+        "units": "Unidad Cuajimalpa"
+      },
+      {
+        "name": "Diseño de la Comunicación Gráfica – Licenciaturas UAM",
+        "units": [
+          "Unidad Azcapotzalco",
+          "Unidad Xochimilco"
+        ]
+      },
+      {
+        "name": "Diseño de Proyectos Sustentables – Licenciaturas UAM",
+        "units": "Unidad Azcapotzalco"
+      },
+      {
+        "name": "Diseño Industrial – Licenciaturas UAM",
+        "units": [
+          "Unidad Azcapotzalco",
+          "Unidad Xochimilco"
+        ]
+      },
+      {
+        "name": "Economía – Licenciaturas UAM",
+        "units": [
+          "Unidad Azcapotzalco",
+          "Unidad Iztapalapa",
+          "Unidad Xochimilco"
+        ]
+      },
+      {
+        "name": "Educación y Tecnologías Digitales – Licenciaturas UAM",
+        "units": "Unidad Lerma"
+      },
+      {
+        "name": "Enfermería – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Estomatología – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Estudios Socioterritoriales – Licenciaturas UAM",
+        "units": "Unidad Cuajimalpa"
+      },
+      {
+        "name": "Filosofía – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Física – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Geografía Humana – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Hidrobiología – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Historia – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Humanidades – Licenciaturas UAM",
+        "units": "Unidad Cuajimalpa"
+      },
+      {
+        "name": "Ingeniería Ambiental – Licenciaturas UAM",
+        "units": "Unidad Azcapotzalco"
+      },
+      {
+        "name": "Ingeniería Biológica – Licenciaturas UAM",
+        "units": "Unidad Cuajimalpa"
+      },
+      {
+        "name": "Ingeniería Biomédica – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Ingeniería Bioquímica Industrial – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Ingeniería Civil – Licenciaturas UAM",
+        "units": "Unidad Azcapotzalco"
+      },
+      {
+        "name": "Ingeniería de los Alimentos – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Ingeniería Eléctrica – Licenciaturas UAM",
+        "units": "Unidad Azcapotzalco"
+      },
+      {
+        "name": "Ingeniería Electrónica – Licenciaturas UAM",
+        "units": [
+          "Unidad Azcapotzalco",
+          "Unidad Iztapalapa"
+        ]
+      },
+      {
+        "name": "Ingeniería en Ciencia y Tecnología del Agua – Licenciaturas UAM",
+        "units": "Unidad Lerma"
+      },
+      {
+        "name": "Ingeniería en Computación – Licenciaturas UAM",
+        "units": [
+          "Unidad Azcapotzalco",
+          "Unidad Cuajimalpa"
+        ]
+      },
+      {
+        "name": "Ingeniería en Computación y Telecomunicaciones – Licenciaturas UAM",
+        "units": "Unidad Lerma"
+      },
+      {
+        "name": "Ingeniería en Energía – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Ingeniería en Sistemas Mecatrónicos – Licenciaturas UAM",
+        "units": "Unidad Lerma"
+      },
+      {
+        "name": "Ingeniería Física – Licenciaturas UAM",
+        "units": "Unidad Azcapotzalco"
+      },
+      {
+        "name": "Ingeniería Hidrológica – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Ingeniería Industrial – Licenciaturas UAM",
+        "units": "Unidad Azcapotzalco"
+      },
+      {
+        "name": "Ingeniería Mecánica – Licenciaturas UAM",
+        "units": "Unidad Azcapotzalco"
+      },
+      {
+        "name": "Ingeniería Metalúrgica – Licenciaturas UAM",
+        "units": "Unidad Azcapotzalco"
+      },
+      {
+        "name": "Ingeniería Química – Licenciaturas UAM",
+        "units": [
+          "Unidad Azcapotzalco",
+          "Unidad Iztapalapa"
+        ]
+      },
+      {
+        "name": "Letras Hispánicas – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Lingüística – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Matemáticas – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Matemáticas Aplicadas – Licenciaturas UAM",
+        "units": "Unidad Cuajimalpa"
+      },
+      {
+        "name": "Medicina – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Medicina Veterinaria y Zootecnia – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Nutrición Humana – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Planeación Territorial – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Política y Gestión Social – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Políticas Públicas – Licenciaturas UAM",
+        "units": "Unidad Lerma"
+      },
+      {
+        "name": "Producción Animal – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Psicología – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Psicología Biomédica – Licenciaturas UAM",
+        "units": "Unidad Lerma"
+      },
+      {
+        "name": "Psicología Social – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Química – Licenciaturas UAM",
+        "units": "Unidad Iztapalapa"
+      },
+      {
+        "name": "Química Farmacéutica Biológica – Licenciaturas UAM",
+        "units": "Unidad Xochimilco"
+      },
+      {
+        "name": "Sociología – Licenciaturas UAM",
+        "units": [
+          "Unidad Azcapotzalco",
+          "Unidad Iztapalapa",
+          "Unidad Xochimilco"
+        ]
+      },
+      {
+        "name": "Tecnologías y Sistemas de Información – Licenciaturas UAM",
+        "units": "Unidad Cuajimalpa"
+      }
+    ]
+  },
+  "unam": {
+    "schools": [
+      "Claustro de Sor Juana (Convenio)",
+      "CNyN Ensenada",
+      "ENAC",
+      "ENES Juriquilla",
+      "ENES Morelia",
+      "Facultad de Arquitectura (CU)",
+      "Facultad de Ciencias (CU)",
+      "Facultad de Ciencias Políticas (CU)",
+      "Facultad de Contaduría (CU)",
+      "Facultad de Derecho (CU)",
+      "Facultad de Economía (CU)",
+      "Facultad de Filosofía (CU)",
+      "Facultad de Ingeniería (CU)",
+      "Facultad de Medicina (CU)",
+      "Facultad de Medicina Veterinaria (CU)",
+      "Facultad de Odontología (CU)",
+      "Facultad de Psicología (CU)",
+      "Facultad de Química (CU)",
+      "FAD",
+      "FCA (CU)",
+      "FENO (CU)",
+      "FES Acatlán",
+      "FES Aragón",
+      "FES Iztacala",
+      "FES Zaragoza",
+      "IIMAS (CU)"
+    ],
+    "careers": [
+      "Actuaría",
+      "Administración",
+      "Arquitectura",
+      "Artes Visuales",
+      "Bibliotecología y Estudios de la Información",
+      "Biología",
+      "Ciencia de Datos",
+      "Ciencias de la Comunicación",
+      "Cine",
+      "Cirujano Dentista",
+      "Comunicación y Periodismo",
+      "Contaduría",
+      "Criminología",
+      "Derecho",
+      "Desarrollo Comunitario para el Envejecimiento",
+      "Diseño y Comunicación Visual",
+      "Economía",
+      "Enfermería",
+      "Filosofía",
+      "Física",
+      "Fisioterapia",
+      "Gastronomía",
+      "Geografía",
+      "Historia",
+      "Ingeniería Aeroespacial",
+      "Ingeniería Civil",
+      "Ingeniería en Computación",
+      "Ingeniería Mecatrónica",
+      "Ingeniería Química",
+      "Inteligencia Artificial",
+      "Lengua y Literaturas Hispánicas",
+      "Letras Modernas (Inglesas)",
+      "Literatura Dramática y Teatro",
+      "Matemáticas Aplicadas y Computación",
+      "Medicina Veterinaria y Zootecnia",
+      "Médico Cirujano",
+      "Música y Tecnología Artística",
+      "Nanotecnología",
+      "Negocios Internacionales",
+      "Neurociencias",
+      "Nutriología",
+      "Pedagogía",
+      "Psicología",
+      "Química Farmacéutico Biológica",
+      "Relaciones Internacionales",
+      "Sociología",
+      "Teatro y Actuación",
+      "Turismo y Desarrollo Sostenible"
+    ]
+  }
+}
