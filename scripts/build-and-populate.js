@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { execSync } = require('node:child_process');
+import { execSync } from 'node:child_process';
 
 const color = {
     reset: '\x1b[0m',
