@@ -135,7 +135,7 @@ const destroyAccount = () => {
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="text-sm text-gray-500">Universidad</label>
-                        <select v-model="form.university_id" class="w-full mt-1 rounded-xl bg-white/5 border border-white/10 px-3 py-2">
+                        <select v-model="form.university_id" class="profile-select w-full mt-1 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-white">
                             <option :value="null">Selecciona universidad</option>
                             <option v-for="uni in universities" :key="uni.id" :value="uni.id">{{ uni.acronym }} - {{ uni.name }}</option>
                         </select>
@@ -143,7 +143,7 @@ const destroyAccount = () => {
 
                     <div>
                         <label class="text-sm text-gray-500">Escuela / Campus</label>
-                        <select v-model="form.campus_id" class="w-full mt-1 rounded-xl bg-white/5 border border-white/10 px-3 py-2" :disabled="!form.university_id">
+                        <select v-model="form.campus_id" class="profile-select w-full mt-1 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-white" :disabled="!form.university_id">
                             <option :value="null">Selecciona campus</option>
                             <option v-for="campus in availableCampuses" :key="campus.id" :value="campus.id">{{ campus.name }}</option>
                         </select>
@@ -151,7 +151,7 @@ const destroyAccount = () => {
 
                     <div>
                         <label class="text-sm text-gray-500">Carrera</label>
-                        <select v-model="form.major_id" class="w-full mt-1 rounded-xl bg-white/5 border border-white/10 px-3 py-2" :disabled="!form.campus_id">
+                        <select v-model="form.major_id" class="profile-select w-full mt-1 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-white" :disabled="!form.campus_id">
                             <option :value="null">Selecciona carrera</option>
                             <option v-for="major in availableMajors" :key="major.id" :value="major.id">{{ major.name }}</option>
                         </select>
@@ -217,3 +217,10 @@ const destroyAccount = () => {
         />
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+.profile-select option {
+    color: #0f172a;
+    background-color: #ffffff;
+}
+</style>

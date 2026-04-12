@@ -179,7 +179,7 @@ class QuizController extends Controller
 
         if (! is_array($tutor)) {
             $tutor = [
-                'respuesta_directa' => 'No pude generar la explicación en este momento. Revisa la respuesta correcta y la explicación oficial del reactivo.',
+                'respuesta_directa' => $this->buildTutorFallback($question, $selectedAnswer, $correctAnswer),
                 'es_fuera_de_contexto' => false,
                 'from_cache' => false,
                 'tokens_saved' => 0,
@@ -197,6 +197,22 @@ class QuizController extends Controller
                 'tokens_saved' => (int) ($tutor['tokens_saved'] ?? 0),
             ],
         ]);
+    }
+
+    public function tutorHealth(): JsonResponse
+    {
+        return response()->json($this->groq->tutorHealthCheck());
+    }
+
+    private function buildTutorFallback(Question $question, string $respuestaAlumno, string $respuestaCorrecta): string
+    {
+        $explicacion = trim((string) ($question->explanation ?? ''));
+
+        if ($explicacion === '') {
+            return 'La respuesta correcta es **' . $respuestaCorrecta . '**. Tu selección fue **' . ($respuestaAlumno !== '' ? $respuestaAlumno : 'sin respuesta') . '**; revisa el concepto principal del reactivo y compáralo con las opciones para identificar el distractor.';
+        }
+
+        return 'La respuesta correcta es **' . $respuestaCorrecta . '**. Tu selección fue **' . ($respuestaAlumno !== '' ? $respuestaAlumno : 'sin respuesta') . '**. **Explicación oficial:** ' . $explicacion;
     }
 
     private function streakSessionKey(Subject $subject, Topic $topic): string

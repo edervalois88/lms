@@ -55,11 +55,7 @@ PROMPT;
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type' => 'application/json',
-            ])->post(rtrim((string) config('services.groq.base_url', 'https://api.groq.com/openai/v1'), '/') . '/chat/completions', [
-                'model' => (string) config('services.groq.model', 'llama-3.1-8b-instant'),
+            $requestBody = [
                 'temperature' => 0.3,
                 'max_tokens' => 300,
                 'response_format' => ['type' => 'json_object'],
@@ -67,10 +63,11 @@ PROMPT;
                     ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
                     ['role' => 'user', 'content' => $this->buildPrompt($payload)],
                 ],
-            ]);
+            ];
 
-            if (! $response->ok()) {
-                Log::warning('Groq API error', ['status' => $response->status(), 'body' => $response->body()]);
+            $response = $this->postChatCompletionWithFallback($apiKey, $requestBody, 'Groq API error');
+
+            if ($response === null || ! $response->ok()) {
                 return null;
             }
 
@@ -103,21 +100,18 @@ PROMPT;
             . "Explica el concepto de forma clara y directa.";
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type' => 'application/json',
-            ])->post(rtrim((string) config('services.groq.base_url', 'https://api.groq.com/openai/v1'), '/') . '/chat/completions', [
-                'model' => (string) config('services.groq.model', 'llama-3.1-8b-instant'),
+            $requestBody = [
                 'temperature' => 0.3,
                 'max_tokens' => 300,
                 'messages' => [
                     ['role' => 'system', 'content' => self::STATELESS_TUTOR_SYSTEM_PROMPT],
                     ['role' => 'user', 'content' => $userPrompt],
                 ],
-            ]);
+            ];
 
-            if (! $response->ok()) {
-                Log::warning('Groq Tutor API error', ['status' => $response->status(), 'body' => $response->body()]);
+            $response = $this->postChatCompletionWithFallback($apiKey, $requestBody, 'Groq Tutor API error');
+
+            if ($response === null || ! $response->ok()) {
                 return null;
             }
 
@@ -191,6 +185,96 @@ PROMPT;
 
         $response['from_cache'] = false;
         $response['tokens_saved'] = 0;
+
+        return $response;
+    }
+
+    public function tutorHealthCheck(): array
+    {
+        $apiKey = (string) config('services.groq.key');
+        $model = (string) config('services.groq.model', 'llama-3.1-8b-instant');
+
+        if ($apiKey === '') {
+            return [
+                'ok' => false,
+                'status' => null,
+                'model' => $model,
+                'error' => 'missing_api_key',
+            ];
+        }
+
+        try {
+            $response = $this->postChatCompletionWithFallback($apiKey, [
+                'temperature' => 0.3,
+                'max_tokens' => 20,
+                'messages' => [
+                    ['role' => 'system', 'content' => 'Responde solo: ok'],
+                    ['role' => 'user', 'content' => 'ping'],
+                ],
+            ], 'Groq Health API error');
+
+            if ($response === null || ! $response->ok()) {
+                return [
+                    'ok' => false,
+                    'status' => $response?->status(),
+                    'model' => $model,
+                    'error' => (string) data_get($response?->json(), 'error.code', 'request_failed'),
+                    'message' => (string) data_get($response?->json(), 'error.message', ''),
+                ];
+            }
+
+            return [
+                'ok' => true,
+                'status' => $response->status(),
+                'model' => $model,
+                'reply' => trim((string) data_get($response->json(), 'choices.0.message.content', '')),
+            ];
+        } catch (\Throwable $exception) {
+            return [
+                'ok' => false,
+                'status' => null,
+                'model' => $model,
+                'error' => 'exception',
+                'message' => $exception->getMessage(),
+            ];
+        }
+    }
+
+    private function postChatCompletionWithFallback(string $apiKey, array $requestBody, string $logPrefix)
+    {
+        $baseUrl = rtrim((string) config('services.groq.base_url', 'https://api.groq.com/openai/v1'), '/');
+        $primaryModel = (string) config('services.groq.model', 'llama-3.1-8b-instant');
+        $fallbackModel = (string) config('services.groq.fallback_model', 'llama-3.3-70b-versatile');
+
+        $send = function (string $model) use ($apiKey, $baseUrl, $requestBody) {
+            $payload = array_merge(['model' => $model], $requestBody);
+            return Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->post($baseUrl . '/chat/completions', $payload);
+        };
+
+        $response = $send($primaryModel);
+
+        $blocked = $response->status() === 403
+            && (string) data_get($response->json(), 'error.code', '') === 'model_permission_blocked_org';
+
+        if ($blocked && $fallbackModel !== '' && $fallbackModel !== $primaryModel) {
+            Log::warning($logPrefix . ' (primary blocked, retrying fallback)', [
+                'primary_model' => $primaryModel,
+                'fallback_model' => $fallbackModel,
+            ]);
+            $response = $send($fallbackModel);
+        }
+
+        if (! $response->ok()) {
+            Log::warning($logPrefix, [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'primary_model' => $primaryModel,
+                'fallback_model' => $fallbackModel,
+            ]);
+        }
 
         return $response;
     }
