@@ -32,14 +32,22 @@ chown -R www-data:www-data storage bootstrap/cache
 
 # Función para esperar a la base de datos
 wait_for_db() {
+  DB_HOST_VALUE="${DB_HOST:-}"
+  DB_PORT_VALUE="${DB_PORT:-3306}"
+
+  if [ -z "$DB_HOST_VALUE" ]; then
+    echo "⏭️ DB_HOST no definido, se omite espera de base de datos."
+    return 0
+  fi
+
   echo "⏳ Esperando a que MySQL responda..."
-  while ! nc -z $DB_HOST $DB_PORT; do
+  while ! nc -z "$DB_HOST_VALUE" "$DB_PORT_VALUE"; do
     sleep 2
   done
   echo "✅ ¡Base de Datos detectada!"
 }
 
-if [ -n "$DB_HOST" ]; then
+if [ "${DB_CONNECTION:-mysql}" != "sqlite" ]; then
   wait_for_db
 fi
 
