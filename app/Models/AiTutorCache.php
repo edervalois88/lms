@@ -16,7 +16,15 @@ class AiTutorCache extends Model
         'question_id',
         'respuesta_incorrecta',
         'explicacion_ia',
+        'hit_count',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'hit_count' => 'integer',
+        ];
+    }
 
     public function question(): BelongsTo
     {

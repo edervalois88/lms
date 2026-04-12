@@ -25,7 +25,11 @@ const navItems = computed(() => {
     const isAdmin = Boolean(page.props?.auth?.is_admin);
 
     if (isAdmin) {
-        return [...baseNavItems, { name: 'ADMIN', route: 'admin.index', icon: 'fa-solid fa-shield-halved' }];
+        return [
+            ...baseNavItems,
+            { name: 'ADMIN', route: 'admin.index', icon: 'fa-solid fa-shield-halved' },
+            { name: 'IA DASH', route: 'admin.dashboard', icon: 'fa-solid fa-chart-column' },
+        ];
     }
 
     return baseNavItems;

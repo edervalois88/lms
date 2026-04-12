@@ -142,6 +142,8 @@ PROMPT;
                 ->first();
 
             if ($cachedResponse) {
+                $cachedResponse->increment('hit_count');
+
                 return [
                     'respuesta_directa' => (string) $cachedResponse->explicacion_ia,
                     'es_fuera_de_contexto' => false,
@@ -175,6 +177,7 @@ PROMPT;
                 ],
                 [
                     'explicacion_ia' => (string) $response['respuesta_directa'],
+                    'hit_count' => 1,
                 ]
             );
         }

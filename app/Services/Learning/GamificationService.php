@@ -14,10 +14,19 @@ class GamificationService
     public const XP_SUBJECT_RANK_UP = 100;
     public const XP_CONSISTENCY_BONUS = 200;
     public const XP_TUTOR_HINT_COST = 20;
+    public const XP_SIMULATION_COMPLETE = 150;
 
     public function getCurrentXp(User $user): int
     {
         return (int) ($user->preferences['xp'] ?? 0);
+    }
+
+    /**
+     * Backward-compatible alias used by legacy controllers.
+     */
+    public function addXP(User $user, int $amount): void
+    {
+        $this->earnXp($user, $amount, 'legacy_add_xp');
     }
 
     public function earnXp(User $user, int $amount, string $eventType, array $meta = []): array
@@ -104,6 +113,13 @@ class GamificationService
     {
         return $this->earnXp($user, self::XP_PRACTICE_SHORT, 'practice_completion', [
             'subject_id' => $subjectId,
+        ]);
+    }
+
+    public function awardSimulationCompletion(User $user, int $examId): array
+    {
+        return $this->earnXp($user, self::XP_SIMULATION_COMPLETE, 'simulation_completion', [
+            'exam_id' => $examId,
         ]);
     }
 

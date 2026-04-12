@@ -28,7 +28,7 @@ class SubmitExamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'answers' => 'required|array|min:1',
+            'answers' => 'required|array',
             'answers.*.question_id' => 'required|integer|distinct|exists:questions,id',
             'answers.*.selected_index' => 'required|integer|min:0|max:3',
             'answers.*.time_spent' => 'nullable|integer|min:0|max:7200',

@@ -13,6 +13,7 @@ use App\Models\ExamAnswer;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\Topic;
+use App\Services\Learning\GamificationService;
 use App\Services\Learning\StudyStreakService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -26,7 +27,8 @@ use Inertia\Response;
 class SimulatorController extends Controller
 {
     public function __construct(
-        protected StudyStreakService $streakService
+        protected StudyStreakService $streakService,
+        protected GamificationService $gamification,
     ) {}
 
     public function index(): Response
@@ -79,6 +81,12 @@ class SimulatorController extends Controller
                 return redirect()
                     ->route('simulator.index')
                     ->with('error', 'No hay preguntas suficientes para esta area en este momento.');
+            }
+
+            if ($exam->type === ExamType::Simulation && $questions->count() < 120) {
+                return redirect()
+                    ->route('simulator.index')
+                    ->with('error', 'No hay 120 preguntas disponibles para el modo Simulacro Estricto. Intenta más tarde.');
             }
 
             if ($questions->count() < $exam->total_questions) {
@@ -175,6 +183,10 @@ class SimulatorController extends Controller
             ]);
 
             $this->streakService->recordStudyActivity($lockedExam->user);
+
+            if ($lockedExam->type === ExamType::Simulation) {
+                $this->gamification->awardSimulationCompletion($lockedExam->user, (int) $lockedExam->id);
+            }
         });
 
         return redirect()->route('simulator.results', $exam);
@@ -208,7 +220,8 @@ class SimulatorController extends Controller
             'percentage' => $percentage,
             'message'    => $message,
             'goal'       => $user->major,
-            'ai_suggestions' => $suggestions
+            'ai_suggestions' => $suggestions,
+            'xp_awarded' => $exam->type === ExamType::Simulation ? GamificationService::XP_SIMULATION_COMPLETE : 0,
         ]);
     }
 

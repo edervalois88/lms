@@ -13,8 +13,13 @@ const answers = ref({});
 const timeLeft = ref(props.exam.time_limit_minutes * 60);
 const timerInterval = ref(null);
 const questionStartTime = ref(Date.now());
+const visibilityWarnings = ref(0);
+const showVisibilityAlert = ref(false);
+const hasSubmitted = ref(false);
 
 const currentQuestion = computed(() => props.questions[currentQuestionIndex.value]);
+const isSimulation = computed(() => props.exam?.type === 'simulation');
+const severeWarning = computed(() => visibilityWarnings.value >= 3);
 
 const formattedTime = computed(() => {
     const h = Math.floor(timeLeft.value / 3600);
@@ -29,7 +34,7 @@ const startTimer = () => {
         if (timeLeft.value > 0) {
             timeLeft.value--;
         } else {
-            finishExam();
+            submitExam(true);
         }
     }, 1000);
 };
@@ -65,23 +70,45 @@ const form = useForm({
     answers: []
 });
 
-const finishExam = () => {
-    if (Object.keys(answers.value).length < props.questions.length) {
+const submitExam = (forceAuto = false) => {
+    if (hasSubmitted.value || form.processing) {
+        return;
+    }
+
+    if (!forceAuto && Object.keys(answers.value).length < props.questions.length) {
         if (!confirm('Aún tienes preguntas sin responder. ¿Estás seguro de que deseas finalizar?')) {
             return;
         }
     }
-    
+
+    hasSubmitted.value = true;
     form.answers = Object.values(answers.value);
-    form.post(route('simulator.submit', props.exam.id));
+    form.post(route('simulator.submit', props.exam.id), {
+        onError: () => {
+            hasSubmitted.value = false;
+        },
+    });
+};
+
+const handleVisibilityChange = () => {
+    if (!isSimulation.value) {
+        return;
+    }
+
+    if (document.hidden) {
+        visibilityWarnings.value++;
+        showVisibilityAlert.value = true;
+    }
 };
 
 onMounted(() => {
     startTimer();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 });
 
 onUnmounted(() => {
     clearInterval(timerInterval.value);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 </script>
 
@@ -92,6 +119,9 @@ onUnmounted(() => {
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold text-gray-800">UNAM: {{ exam.type }}</h2>
                 <div class="flex items-center gap-6">
+                    <div v-if="isSimulation" class="px-3 py-1 rounded-full bg-red-100 text-red-600 text-[11px] font-black uppercase tracking-widest">
+                        Modo estricto · sin ayudas
+                    </div>
                     <div class="text-right">
                         <p class="text-xs text-gray-400 uppercase font-bold">Tiempo</p>
                         <p class="text-xl font-mono font-black" :class="timeLeft < 300 ? 'text-red-500 animate-pulse' : 'text-gray-900'">
@@ -112,7 +142,7 @@ onUnmounted(() => {
                         <div class="bg-orange-500 h-full transition-all" :style="{ width: (Object.keys(answers).length / questions.length * 100) + '%' }"></div>
                     </div>
                 </div>
-                <div class="flex-grow overflow-y-auto p-4 grid grid-cols-5 gap-2 content-start">
+                <div class="grow overflow-y-auto p-4 grid grid-cols-5 gap-2 content-start">
                     <button 
                         v-for="(q, index) in questions" 
                         :key="index"
@@ -128,7 +158,7 @@ onUnmounted(() => {
                 </div>
                 <div class="p-4 bg-gray-50 border-t border-gray-100">
                     <button 
-                        @click="finishExam"
+                        @click="submitExam(false)"
                         class="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors"
                     >
                         Finalizar Examen
@@ -137,7 +167,7 @@ onUnmounted(() => {
             </aside>
 
             <!-- Question Area -->
-            <main class="flex-grow overflow-y-auto bg-gray-50 p-6 md:p-12 lg:p-20">
+            <main class="grow overflow-y-auto bg-gray-50 p-6 md:p-12 lg:p-20">
                 <div v-if="currentQuestion" class="max-w-3xl mx-auto space-y-10">
                     
                     <div class="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-gray-100">
@@ -189,6 +219,28 @@ onUnmounted(() => {
                     </div>
                 </div>
             </main>
+        </div>
+
+        <div v-if="showVisibilityAlert" class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+            <div class="w-full max-w-lg rounded-2xl border border-red-500/50 bg-red-950/90 p-6 text-red-100 shadow-2xl">
+                <p class="text-xs font-black uppercase tracking-widest text-red-300">Advertencia de foco</p>
+                <h3 class="mt-2 text-2xl font-black">¡Atención! En el examen real no puedes distraerte.</h3>
+                <p class="mt-3 text-sm text-red-200">Mantén el foco aquí. Cambiar de pestaña reduce la calidad de tu simulación.</p>
+                <p class="mt-3 text-sm font-bold">
+                    Advertencias: {{ visibilityWarnings }}
+                    <span v-if="severeWarning" class="text-yellow-300"> · Modo severo activado. Tu rendimiento será marcado como baja concentración.</span>
+                </p>
+
+                <div class="mt-6 flex justify-end">
+                    <button
+                        type="button"
+                        class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-400 text-white font-black text-sm uppercase tracking-wider"
+                        @click="showVisibilityAlert = false"
+                    >
+                        Entendido
+                    </button>
+                </div>
+            </div>
         </div>
     </AuthenticatedLayout>
 </template>

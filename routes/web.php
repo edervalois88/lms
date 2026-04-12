@@ -9,6 +9,7 @@ use App\Http\Controllers\Progress\ProgressController;
 use App\Http\Controllers\Progress\SpacedRepetitionController;
 use App\Http\Controllers\Rewards\RewardStoreController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Admin Panel
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.index');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 });
 
 if (app()->environment('local')) {
