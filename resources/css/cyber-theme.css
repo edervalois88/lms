@@ -13,17 +13,19 @@
     --app-text: #ffffff;
     --app-card: rgba(255, 255, 255, 0.03);
     --app-card-border: rgba(255, 255, 255, 0.08);
+    --app-muted: #94a3b8;
 }
 
 .theme-light {
-    --color-midnight: #f3f6fb;
+    --color-midnight: #edf2f7;
     --color-cyber-gray: #ffffff;
     --color-cyber-orange: #f97316;
     --color-cyber-blue: #0284c7;
-    --app-bg: #f3f6fb;
-    --app-text: #0f172a;
-    --app-card: rgba(255, 255, 255, 0.8);
-    --app-card-border: rgba(15, 23, 42, 0.08);
+    --app-bg: #edf2f7;
+    --app-text: #0b1220;
+    --app-card: rgba(255, 255, 255, 0.95);
+    --app-card-border: rgba(15, 23, 42, 0.18);
+    --app-muted: #334155;
 }
 
 .glass-morphism {
@@ -69,18 +71,46 @@
 }
 
 .theme-light .text-white {
-    color: #0f172a !important;
+    color: #0b1220 !important;
 }
 
 .theme-light .text-gray-500 {
+    color: #334155 !important;
+}
+
+.theme-light .text-gray-400 {
+    color: #334155 !important;
+}
+
+.theme-light .text-gray-300 {
+    color: #1e293b !important;
+}
+
+.theme-light .text-gray-600 {
     color: #475569 !important;
 }
 
 .theme-light .bg-white\/5 {
-    background-color: rgba(15, 23, 42, 0.05) !important;
+    background-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+.theme-light .bg-white\/10 {
+    background-color: rgba(15, 23, 42, 0.12) !important;
 }
 
 .theme-light .border-white\/5,
 .theme-light .border-white\/10 {
-    border-color: rgba(15, 23, 42, 0.1) !important;
+    border-color: rgba(15, 23, 42, 0.2) !important;
+}
+
+.theme-light .bg-midnight {
+    background-color: var(--app-bg) !important;
+}
+
+.theme-light .bg-cyber-gray\/80 {
+    background-color: rgba(255, 255, 255, 0.94) !important;
+}
+
+.theme-light .glow-text {
+    text-shadow: none !important;
 }

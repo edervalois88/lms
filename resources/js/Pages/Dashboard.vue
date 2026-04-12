@@ -1,9 +1,9 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
 import { animate, spring, stagger } from 'motion';
 import { playSound } from '@/Utils/SoundService';
+import { useTheme } from '@/Composables/useTheme';
 
 const props = defineProps({
     major: Object,
@@ -12,6 +12,11 @@ const props = defineProps({
     recent_exams: Array,
     subject_mastery: Array,
 });
+
+const page = usePage();
+const { theme, initializeTheme, toggleTheme } = useTheme();
+
+const isAdmin = computed(() => Boolean(page.props?.auth?.is_admin));
 
 // Access global shared gamification state
 const gamification = computed(() => props.auth?.gamification || { current: 1, xp: 0, progress: 0, rank: 'Novato' });
@@ -35,6 +40,8 @@ const gapStatus = computed(() => {
 });
 
 onMounted(() => {
+    initializeTheme();
+
     animate(".hud-element", { opacity: [0, 1], y: [20, 0] }, { 
         delay: stagger(0.1),
         duration: 0.8,
@@ -76,6 +83,42 @@ onMounted(() => {
                 </div>
 
                 <div class="flex items-center gap-6">
+                    <button
+                        type="button"
+                        @click="toggleTheme()"
+                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors border border-white/10"
+                        :title="theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+                    >
+                        <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+                    </button>
+
+                    <Link
+                        v-if="isAdmin"
+                        :href="route('admin.index')"
+                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors border border-white/10"
+                        title="Panel admin"
+                    >
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </Link>
+
+                    <Link
+                        :href="route('profile.edit')"
+                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors border border-white/10"
+                        title="Perfil"
+                    >
+                        <i class="fa-solid fa-user-gear"></i>
+                    </Link>
+
+                    <Link
+                        :href="route('logout')"
+                        method="post"
+                        as="button"
+                        class="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-colors border border-red-500/20"
+                        title="Cerrar sesión"
+                    >
+                        <i class="fa-solid fa-power-off"></i>
+                    </Link>
+
                     <div class="flex items-center gap-2 px-4 py-2 bg-orange-500/10 rounded-xl border border-orange-500/20 group cursor-help">
                         <i class="fa-solid fa-fire text-orange-500 group-hover:animate-bounce"></i>
                         <span class="font-black text-sm">{{ stats.streak }} DÍAS</span>

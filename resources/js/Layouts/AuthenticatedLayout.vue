@@ -1,17 +1,18 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { computed, onMounted, ref } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import { playSound } from '@/Utils/SoundService';
 import { useTheme } from '@/Composables/useTheme';
 
 const showingNavigationDropdown = ref(false);
 const { theme, initializeTheme, toggleTheme } = useTheme();
+const page = usePage();
 
 onMounted(() => {
     initializeTheme();
 });
 
-const navItems = [
+const baseNavItems = [
     { name: 'NODO CENTRAL', route: 'dashboard', icon: 'fa-solid fa-house' },
     { name: 'SIMULACRO', route: 'simulator.index', icon: 'fa-solid fa-graduation-cap' },
     { name: 'ENTRENAMIENTO', route: 'quiz.index', icon: 'fa-solid fa-bolt-lightning' },
@@ -19,6 +20,16 @@ const navItems = [
     { name: 'ANALÍTICA', route: 'progress.index', icon: 'fa-solid fa-chart-line' },
     { name: 'REPETICIÓN', route: 'review.index', icon: 'fa-solid fa-repeat' },
 ];
+
+const navItems = computed(() => {
+    const isAdmin = Boolean(page.props?.auth?.is_admin);
+
+    if (isAdmin) {
+        return [...baseNavItems, { name: 'ADMIN', route: 'admin.index', icon: 'fa-solid fa-shield-halved' }];
+    }
+
+    return baseNavItems;
+});
 </script>
 
 <template>
@@ -85,7 +96,15 @@ const navItems = [
                     </div>
 
                     <!-- Mobile Trigger -->
-                    <div class="-me-2 flex items-center sm:hidden">
+                    <div class="-me-2 flex items-center gap-2 sm:hidden">
+                        <button
+                            type="button"
+                            @click="toggleTheme()"
+                            class="inline-flex items-center justify-center p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition duration-150 ease-in-out"
+                            :title="theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+                        >
+                            <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+                        </button>
                         <button @click="showingNavigationDropdown = !showingNavigationDropdown" class="inline-flex items-center justify-center p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition duration-150 ease-in-out">
                             <i :class="showingNavigationDropdown ? 'fa-solid fa-xmark' : 'fa-solid fa-bars-staggered'"></i>
                         </button>
@@ -106,6 +125,30 @@ const navItems = [
                     >
                         {{ item.name }}
                     </Link>
+
+                    <div class="pt-3 grid grid-cols-3 gap-3">
+                        <Link
+                            :href="route('profile.edit')"
+                            class="py-3 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white"
+                        >
+                            Perfil
+                        </Link>
+                        <Link
+                            :href="route('logout')"
+                            method="post"
+                            as="button"
+                            class="py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-black uppercase tracking-widest text-red-400"
+                        >
+                            Salir
+                        </Link>
+                        <button
+                            type="button"
+                            @click="toggleTheme()"
+                            class="py-3 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white"
+                        >
+                            {{ theme === 'dark' ? 'Claro' : 'Oscuro' }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </nav>
