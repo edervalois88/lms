@@ -42,6 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Quiz
         Route::get('/quiz', [QuizController::class, 'index'])->name('quiz.index');
         Route::get('/quiz/{subject:slug}', [QuizController::class, 'show'])->name('quiz.show');
+        Route::post('/quiz/{subject:slug}/question', [QuizController::class, 'question'])->name('quiz.question');
 
         // Simulator
         Route::get('/simulator', [SimulatorController::class, 'index'])->name('simulator.index');

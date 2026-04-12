@@ -18,6 +18,7 @@ const isCorrect = ref(false);
 const submitting = ref(false);
 const correctCount = ref(0);
 const xpEarned = ref(0);
+const apiError = ref('');
 
 const progress = computed(() =>
     props.total > 0 ? Math.round((currentIndex.value / props.total) * 100) : 0
@@ -27,28 +28,41 @@ const csrfToken = () =>
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 
 const handleAnswer = async (selectedIndex) => {
-    if (submitting.value) return;
-    isCorrect.value = selectedIndex === currentQuestion.value.correct_index;
-    showFeedback.value = true;
+    if (submitting.value || !currentQuestion.value) return;
+
+    apiError.value = '';
     submitting.value = true;
+    const answerIsCorrect = selectedIndex === currentQuestion.value.correct_index;
 
-    if (isCorrect.value) {
-        correctCount.value++;
-        xpEarned.value += 10;
-    }
-
-    const quality = isCorrect.value ? 5 : 1;
+    const quality = answerIsCorrect ? 5 : 1;
 
     try {
-        await fetch(route('review.answer', currentQuestion.value.id), {
+        const response = await fetch(route('review.answer', currentQuestion.value.id), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken(),
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ quality }),
+            body: JSON.stringify({ quality, source: 'daily' }),
         });
+
+        if (!response.ok) {
+            throw new Error('No se pudo guardar la respuesta.');
+        }
+
+        const payload = await response.json();
+
+        isCorrect.value = answerIsCorrect;
+        showFeedback.value = true;
+
+        if (answerIsCorrect) {
+            correctCount.value++;
+        }
+
+        xpEarned.value += Number(payload?.xp_awarded ?? 0);
+    } catch (_error) {
+        apiError.value = 'No pudimos guardar tu respuesta. Reintenta para continuar.';
     } finally {
         submitting.value = false;
     }
@@ -102,6 +116,13 @@ const nextQuestion = () => {
 
                 <!-- Question in progress -->
                 <div v-if="currentQuestion" class="space-y-6">
+                    <div
+                        v-if="apiError"
+                        class="rounded-2xl border border-rose-500/40 bg-rose-500/10 text-rose-300 px-4 py-3 text-sm font-bold"
+                    >
+                        {{ apiError }}
+                    </div>
+
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest px-2">
                         Materia: {{ currentQuestion.topic?.subject?.name ?? currentQuestion.topic?.name ?? '—' }}
                     </p>
@@ -117,6 +138,7 @@ const nextQuestion = () => {
                             :correct="isCorrect"
                             :explanation="currentQuestion.explanation"
                             :concept="currentQuestion.topic?.name ?? 'Tema'"
+                            :topic-detail="currentQuestion.topic?.description"
                             @next="nextQuestion"
                         />
                     </div>

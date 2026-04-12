@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             SubjectSeeder::class,
             TopicSeeder::class,
+            OfficialQuestionBankSeeder::class,
             UserSeeder::class,
             MultiUniversitySeeder::class,
             VocationalQuestionSeeder::class,

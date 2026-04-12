@@ -9,6 +9,10 @@ use Carbon\Carbon;
 
 class ProgressCalculatorService
 {
+    public function __construct(
+        protected ExamAreaResolver $areaResolver,
+    ) {}
+
     public function getSubjectMastery(User $user): array
     {
         $subjects = Subject::all();
@@ -46,7 +50,7 @@ class ProgressCalculatorService
         $mastery = $this->getSubjectMastery($user);
         
         // Resuelve área desde datos actuales del major sin depender de columnas inexistentes.
-        $area = $this->resolveAreaFromMajor($user);
+        $area = $this->areaResolver->fromUser($user);
         $weights = $this->getWeightsForArea($area);
 
         $projectedScore = 0;
@@ -116,33 +120,6 @@ class ProgressCalculatorService
             'estimated_study_time' => round($answers->sum('time_spent_seconds') / 3600, 1),
             'most_practiced_subject' => $mostPracticedSubject,
         ];
-    }
-
-    private function resolveAreaFromMajor(User $user): int
-    {
-        $division = mb_strtolower((string) ($user->major?->division_name ?? ''));
-
-        if (preg_match('/area\s*([1-4])/', $division, $matches)) {
-            return (int) $matches[1];
-        }
-
-        if (str_contains($division, 'fis') || str_contains($division, 'mat') || str_contains($division, 'ing')) {
-            return 1;
-        }
-
-        if (str_contains($division, 'bio') || str_contains($division, 'salud') || str_contains($division, 'quim')) {
-            return 2;
-        }
-
-        if (str_contains($division, 'social') || str_contains($division, 'econ') || str_contains($division, 'admin')) {
-            return 3;
-        }
-
-        if (str_contains($division, 'human') || str_contains($division, 'arte') || str_contains($division, 'filo')) {
-            return 4;
-        }
-
-        return 1;
     }
 
     private function calculateTrend(iterable $answers): string

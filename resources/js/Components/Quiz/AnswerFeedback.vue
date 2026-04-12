@@ -1,15 +1,30 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     correct: Boolean,
     explanation: String,
-    concept: String
+    concept: String,
+    topicDetail: {
+        type: String,
+        default: '',
+    },
 });
 
 defineEmits(['next']);
 
 const showExplanation = ref(!props.correct);
+const showTopicDetail = ref(false);
+
+const briefExplanation = computed(() => {
+    const raw = (props.explanation || '').trim();
+    if (!raw) {
+        return 'Revisa la idea central del tema y vuelve a intentarlo con calma.';
+    }
+
+    const firstSentence = raw.split(/[.!?]\s/)[0]?.trim() || raw;
+    return firstSentence.length > 180 ? `${firstSentence.slice(0, 177)}...` : firstSentence;
+});
 
 const motivationalMessages = [
     "¡Excelente trabajo! Sigue así.",
@@ -30,7 +45,7 @@ const randomMessage = motivationalMessages[Math.floor(Math.random() * motivation
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div class="flex items-start md:items-center">
                 <div 
-                    class="w-12 h-12 rounded-2xl flex items-center justify-center mr-4 flex-shrink-0 animate-bounce"
+                    class="w-12 h-12 rounded-2xl flex items-center justify-center mr-4 shrink-0 animate-bounce"
                     :class="correct ? 'bg-green-500 text-white' : 'bg-red-500 text-white'"
                 >
                     <i :class="correct ? 'fa-solid fa-star' : 'fa-solid fa-lightbulb'"></i>
@@ -73,14 +88,33 @@ const randomMessage = motivationalMessages[Math.floor(Math.random() * motivation
                 {{ showExplanation ? 'Ocultar explicación' : '¿Por qué es correcto?' }}
             </button>
 
-            <div 
-                v-show="showExplanation"
-                class="animate-fade-in"
-            >
-                <h4 class="font-black text-sm uppercase tracking-wider mb-2 opacity-60">Explicación Detallada</h4>
-                <p class="text-lg leading-relaxed font-medium" :class="correct ? 'text-green-900' : 'text-red-900'">
-                    {{ explanation }}
-                </p>
+            <div class="animate-fade-in space-y-4">
+                <div>
+                    <h4 class="font-black text-sm uppercase tracking-wider mb-2 opacity-60">Explicación Breve</h4>
+                    <p class="text-base leading-relaxed font-semibold" :class="correct ? 'text-green-900' : 'text-red-900'">
+                        {{ briefExplanation }}
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="font-black text-sm underline"
+                    :class="correct ? 'text-green-700' : 'text-red-700'"
+                    @click="showTopicDetail = !showTopicDetail"
+                >
+                    {{ showTopicDetail ? 'Ocultar detalle del tema' : 'Ver detalle del tema' }}
+                </button>
+
+                <div v-if="showTopicDetail" class="rounded-2xl p-4 border" :class="correct ? 'border-green-200 bg-green-100/50' : 'border-red-200 bg-red-100/50'">
+                    <h5 class="font-black text-xs uppercase tracking-widest mb-2 opacity-70">Detalle</h5>
+                    <p class="text-sm leading-relaxed" :class="correct ? 'text-green-900' : 'text-red-900'">
+                        {{ explanation }}
+                    </p>
+                    <p v-if="topicDetail" class="text-sm leading-relaxed mt-3" :class="correct ? 'text-green-900' : 'text-red-900'">
+                        <span class="font-black uppercase text-xs tracking-wider opacity-70">Guía del tema:</span>
+                        {{ topicDetail }}
+                    </p>
+                </div>
             </div>
         </div>
     </div>

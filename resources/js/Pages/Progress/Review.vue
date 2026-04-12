@@ -15,29 +15,40 @@ const currentCard = ref(props.due_cards[0] || null);
 const showFeedback = ref(false);
 const isCorrect = ref(false);
 const submitting = ref(false);
+const apiError = ref('');
 
 const csrfToken = () =>
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 
 const handleAnswer = async (selectedIndex) => {
-    if (submitting.value) return;
-    isCorrect.value = selectedIndex === currentCard.value.question.correct_index;
-    showFeedback.value = true;
+    if (submitting.value || !currentCard.value) return;
+
+    apiError.value = '';
     submitting.value = true;
+    const answerIsCorrect = selectedIndex === currentCard.value.question.correct_index;
 
     // SM-2 simplified quality: correct answer = 5, wrong = 1
-    const quality = isCorrect.value ? 5 : 1;
+    const quality = answerIsCorrect ? 5 : 1;
 
     try {
-        await fetch(route('review.answer', currentCard.value.question.id), {
+        const response = await fetch(route('review.answer', currentCard.value.question.id), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken(),
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ quality }),
+            body: JSON.stringify({ quality, source: 'review' }),
         });
+
+        if (!response.ok) {
+            throw new Error('No se pudo guardar la respuesta.');
+        }
+
+        isCorrect.value = answerIsCorrect;
+        showFeedback.value = true;
+    } catch (_error) {
+        apiError.value = 'No pudimos guardar tu respuesta. Reintenta para continuar.';
     } finally {
         submitting.value = false;
     }
@@ -71,6 +82,13 @@ const nextCard = () => {
             <div class="max-w-3xl mx-auto">
                 
                 <div v-if="currentCard" class="space-y-6">
+                    <div
+                        v-if="apiError"
+                        class="rounded-2xl border border-rose-500/40 bg-rose-500/10 text-rose-300 px-4 py-3 text-sm font-bold"
+                    >
+                        {{ apiError }}
+                    </div>
+
                     <div class="flex items-center justify-between px-2">
                         <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">
                             Sesión: {{ currentIndex + 1 }} / {{ due_cards.length }}
@@ -89,6 +107,7 @@ const nextCard = () => {
                             :correct="isCorrect"
                             :explanation="currentCard.question.explanation"
                             :concept="currentCard.question.topic.name"
+                            :topic-detail="currentCard.question.topic?.description"
                             @next="nextCard"
                         />
                     </div>

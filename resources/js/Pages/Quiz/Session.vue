@@ -16,29 +16,38 @@ const showFeedback = ref(false);
 const lastAnswerCorrect = ref(false);
 const score = ref(0);
 const totalAnswered = ref(0);
+const requestError = ref('');
 
-// Mock question generator
+const csrfToken = () =>
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
 const fetchQuestion = async (topic) => {
     loading.value = true;
     activeTopic.value = topic;
-    
-    // Simulating API call to /api/ai/generate-question
-    setTimeout(() => {
-        currentQuestion.value = {
-            id: Math.floor(Math.random() * 1000),
-            body: `¿Cuál es un concepto fundamental relacionado con ${topic.name}?`,
-            options: [
-                "Opción Correcta de Prueba",
-                "Segunda Opción Incorrecta",
-                "Tercera Opción de Distracción",
-                "Cuarta Opción No Relacionada"
-            ],
-            correct_index: 0,
-            explanation: `Como estamos en el tema de ${topic.name}, la primera opción es la más precisa según el temario de la UNAM.`,
-            concept: topic.name
-        };
+    requestError.value = '';
+
+    try {
+        const response = await fetch(route('quiz.question', props.subject.slug), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken(),
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ topic_id: topic.id }),
+        });
+
+        if (!response.ok) {
+            throw new Error('No se pudo cargar una pregunta real.');
+        }
+
+        currentQuestion.value = await response.json();
+    } catch (_error) {
+        requestError.value = 'No se pudo obtener una pregunta del banco real. Intenta nuevamente.';
+        currentQuestion.value = null;
+    } finally {
         loading.value = false;
-    }, 1000);
+    }
 };
 
 const handleAnswer = (selectedIndex) => {
@@ -88,7 +97,7 @@ const exitQuiz = () => {
             </div>
         </nav>
 
-        <main class="flex-grow flex items-center justify-center p-4">
+            <main class="grow flex items-center justify-center p-4">
             <div class="max-w-4xl w-full">
                 
                 <!-- Topic Selection -->
@@ -108,7 +117,7 @@ const exitQuiz = () => {
                             @click="fetchQuestion(topic)"
                             class="flex items-center p-6 bg-white border-2 border-transparent hover:border-orange-500 rounded-2xl shadow-sm transition-all text-left group"
                         >
-                            <div class="flex-grow">
+                            <div class="grow">
                                 <h3 class="font-bold text-lg text-gray-900 group-hover:text-orange-600 transition-colors">{{ topic.name }}</h3>
                                 <div class="flex items-center mt-2 text-sm text-gray-400 font-medium">
                                     <span class="mr-3 flex items-center">
@@ -148,9 +157,14 @@ const exitQuiz = () => {
                                 :correct="lastAnswerCorrect"
                                 :explanation="currentQuestion.explanation"
                                 :concept="currentQuestion.concept"
+                                :topic-detail="currentQuestion.topic_detail"
                                 @next="nextQuestion"
                             />
                         </div>
+                    </div>
+
+                    <div v-else-if="requestError" class="rounded-2xl border border-rose-300 bg-rose-50 text-rose-700 p-4 font-semibold">
+                        {{ requestError }}
                     </div>
                 </div>
 

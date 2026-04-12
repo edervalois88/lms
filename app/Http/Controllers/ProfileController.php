@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\University;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,8 +14,18 @@ class ProfileController extends Controller
 {
     public function edit(Request $request): Response
     {
+        $user = $request->user()->load('major.campus.university');
+
         return Inertia::render('Profile/Edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'universities' => University::query()
+                ->select(['id', 'name', 'acronym'])
+                ->with([
+                    'campuses:id,university_id,name',
+                    'campuses.majors:id,campus_id,name',
+                ])
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 
@@ -31,6 +42,7 @@ class ProfileController extends Controller
                 'max:255',
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
+            'major_id' => ['nullable', 'exists:majors,id'],
         ]);
 
         $user->fill($validated);

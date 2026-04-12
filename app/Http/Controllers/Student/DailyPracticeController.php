@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\Question;
 use App\Models\UserTopicMastery;
+use App\Services\Learning\ExamAreaResolver;
 use App\Services\Learning\SpacedRepetitionService;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,6 +18,7 @@ class DailyPracticeController extends Controller
 
     public function __construct(
         protected SpacedRepetitionService $srs,
+        protected ExamAreaResolver $areaResolver,
     ) {}
 
     public function index(): Response
@@ -38,6 +40,8 @@ class DailyPracticeController extends Controller
             ->unique('id')
             ->take(self::DAILY_LIMIT)
             ->values();
+
+        request()->session()->put('daily_practice.question_ids', $questions->pluck('id')->all());
 
         return Inertia::render('Student/DailyPractice', [
             'questions'  => $questions,
@@ -73,7 +77,7 @@ class DailyPracticeController extends Controller
             $remaining = $needed - $questions->count();
             $filledIds = $excludeIds->merge($questions->pluck('id'));
 
-            $majorArea = $user->major?->exam_area;
+            $majorArea = $this->areaResolver->fromUser($user);
 
             $extra = Question::when($majorArea, function ($q) use ($majorArea) {
                     $q->whereHas('topic.subject', function ($s) use ($majorArea) {

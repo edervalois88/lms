@@ -36,10 +36,10 @@ class ClaudeService
         $response = $this->callClaude($prompt, "Genera la pregunta ahora.");
 
         if (!$response) {
-            return $this->getMockQuestion($subject, $topic);
+            return $this->getFallbackQuestion($subject, $topic);
         }
 
-        return json_decode($response, true) ?? $this->getMockQuestion($subject, $topic);
+        return json_decode($response, true) ?? $this->getFallbackQuestion($subject, $topic);
     }
 
     public function analyzeProfile(array $performanceData): array
@@ -48,10 +48,10 @@ class ClaudeService
         $response = $this->callClaude($prompt, "Analiza el perfil.");
 
         if (!$response) {
-            return $this->getMockAnalysis($performanceData);
+            return $this->getFallbackAnalysis($performanceData);
         }
 
-        return json_decode($response, true) ?? $this->getMockAnalysis($performanceData);
+        return json_decode($response, true) ?? $this->getFallbackAnalysis($performanceData);
     }
 
     public function explainAnswer(string $questionBody, array $options, int $correctIndex, int $selectedIndex): string
@@ -104,18 +104,45 @@ class ClaudeService
         }
     }
 
-    private function getMockQuestion(string $subject, string $topic): array
+    private function getFallbackQuestion(string $subject, string $topic): array
     {
+        $topicLabel = mb_strtolower($topic);
+
+        if (str_contains($topicLabel, 'álgebra') || str_contains($topicLabel, 'algebra')) {
+            return [
+                'body' => 'Si 2x + 3 = 11, ¿cuál es el valor de x?',
+                'options' => ['4', '3', '5', '2'],
+                'correct_index' => 0,
+                'explanation' => 'Restamos 3 a ambos lados: 2x = 8. Dividimos entre 2: x = 4.',
+                'concept' => 'Ecuaciones lineales',
+            ];
+        }
+
+        if (str_contains($topicLabel, 'cinemática') || str_contains($topicLabel, 'cinematica')) {
+            return [
+                'body' => 'Un objeto recorre 100 m en 20 s. ¿Cuál es su velocidad promedio?',
+                'options' => ['5 m/s', '4 m/s', '10 m/s', '2 m/s'],
+                'correct_index' => 0,
+                'explanation' => 'La velocidad promedio se calcula como distancia entre tiempo: 100/20 = 5 m/s.',
+                'concept' => 'Velocidad promedio',
+            ];
+        }
+
         return [
-            'body' => "¿Cual es el resultado de resolver la ecuación 2x + 5 = 15?",
-            'options' => ["x = 5", "x = 10", "x = 7.5", "x = 2"],
+            'body' => "¿Cuál enunciado describe mejor un concepto central de {$topic} en {$subject}?",
+            'options' => [
+                'La opción que coincide con la definición formal del tema',
+                'Una afirmación parcialmente correcta sin sustento conceptual',
+                'Una idea que contradice el marco teórico de la materia',
+                'Una frase ambigua sin relación directa con el temario',
+            ],
             'correct_index' => 0,
-            'explanation' => "Restamos 5 de ambos lados: 2x = 10. Luego dividimos entre 2: x = 5.",
-            'concept' => "Ecuaciones de primer grado"
+            'explanation' => "La opción correcta es la que respeta la definición académica aceptada para {$topic} y su aplicación en reactivos tipo UNAM.",
+            'concept' => $topic,
         ];
     }
 
-    private function getMockAnalysis(array $data): array
+    private function getFallbackAnalysis(array $data): array
     {
         return [
             'subject_mastery' => [['subject' => 'Matemáticas', 'score' => 85]],

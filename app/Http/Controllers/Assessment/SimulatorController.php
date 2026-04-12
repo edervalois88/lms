@@ -11,6 +11,7 @@ use App\Jobs\GenerateQuestionBatch;
 use App\Models\Exam;
 use App\Models\ExamAnswer;
 use App\Models\Question;
+use App\Models\Subject;
 use App\Models\Topic;
 use App\Services\Learning\StudyStreakService;
 use Carbon\Carbon;
@@ -71,14 +72,7 @@ class SimulatorController extends Controller
         if ($exam->questions()->exists()) {
             $questions = $exam->questions()->with('topic.subject')->get();
         } else {
-            $subjects = Subject::whereJsonContains('exam_areas', $exam->exam_area)->pluck('id');
-
-            $questions = Question::whereHas('topic', function ($q) use ($subjects) {
-                    $q->whereIn('subject_id', $subjects);
-                })
-                ->inRandomOrder()
-                ->limit($exam->total_questions)
-                ->get();
+            $questions = $this->buildRealExamQuestionSet($exam->exam_area, $exam->total_questions);
 
             if ($questions->isEmpty()) {
                 return redirect()
@@ -245,5 +239,138 @@ class SimulatorController extends Controller
                 $batchSize
             );
         }
+    }
+
+    private function buildRealExamQuestionSet(int $area, int $totalQuestions)
+    {
+        $subjects = Subject::query()->byArea($area)->get()->keyBy('name');
+        $blueprint = $this->scaledBlueprint($area, $totalQuestions);
+
+        $selected = collect();
+
+        foreach ($blueprint as $subjectName => $quota) {
+            if ($quota <= 0) {
+                continue;
+            }
+
+            $subject = $subjects->get($subjectName);
+            if (! $subject) {
+                continue;
+            }
+
+            $slice = Question::query()
+                ->where('is_active', true)
+                ->whereHas('topic', function ($query) use ($subject) {
+                    $query->where('subject_id', $subject->id);
+                })
+                ->whereNotIn('id', $selected->pluck('id'))
+                ->inRandomOrder()
+                ->limit($quota)
+                ->get();
+
+            $selected = $selected->merge($slice);
+        }
+
+        if ($selected->count() < $totalQuestions) {
+            $remaining = $totalQuestions - $selected->count();
+            $subjectIds = $subjects->pluck('id')->all();
+
+            $fill = Question::query()
+                ->where('is_active', true)
+                ->whereHas('topic', function ($query) use ($subjectIds) {
+                    $query->whereIn('subject_id', $subjectIds);
+                })
+                ->whereNotIn('id', $selected->pluck('id'))
+                ->inRandomOrder()
+                ->limit($remaining)
+                ->get();
+
+            $selected = $selected->merge($fill);
+        }
+
+        return $selected->take($totalQuestions)->values();
+    }
+
+    private function scaledBlueprint(int $area, int $totalQuestions): array
+    {
+        $base = $this->blueprintByArea($area);
+        $baseTotal = max(1, array_sum($base));
+
+        $scaled = [];
+        $fractions = [];
+
+        foreach ($base as $subject => $count) {
+            $exact = ($count / $baseTotal) * $totalQuestions;
+            $scaled[$subject] = (int) floor($exact);
+            $fractions[$subject] = $exact - $scaled[$subject];
+        }
+
+        $assigned = array_sum($scaled);
+        $left = $totalQuestions - $assigned;
+
+        if ($left > 0) {
+            arsort($fractions);
+            foreach (array_keys($fractions) as $subject) {
+                if ($left <= 0) {
+                    break;
+                }
+
+                $scaled[$subject]++;
+                $left--;
+            }
+        }
+
+        return $scaled;
+    }
+
+    private function blueprintByArea(int $area): array
+    {
+        return match ($area) {
+            // Blueprint base de 120 reactivos (estilo UNAM)
+            1 => [
+                'Español' => 18,
+                'Literatura' => 10,
+                'Matemáticas' => 26,
+                'Física' => 24,
+                'Química' => 10,
+                'Biología' => 10,
+                'Historia Universal' => 10,
+                'Historia de México' => 10,
+                'Geografía' => 2,
+            ],
+            2 => [
+                'Español' => 18,
+                'Literatura' => 10,
+                'Matemáticas' => 22,
+                'Física' => 18,
+                'Química' => 22,
+                'Biología' => 22,
+                'Historia Universal' => 10,
+                'Historia de México' => 10,
+                'Geografía' => 8,
+            ],
+            3 => [
+                'Español' => 24,
+                'Literatura' => 12,
+                'Matemáticas' => 14,
+                'Física' => 8,
+                'Química' => 8,
+                'Biología' => 8,
+                'Historia Universal' => 18,
+                'Historia de México' => 18,
+                'Geografía' => 10,
+            ],
+            default => [
+                'Español' => 24,
+                'Literatura' => 20,
+                'Matemáticas' => 12,
+                'Física' => 6,
+                'Química' => 6,
+                'Biología' => 8,
+                'Historia Universal' => 18,
+                'Historia de México' => 18,
+                'Geografía' => 8,
+            ],
+        };
     }
 }

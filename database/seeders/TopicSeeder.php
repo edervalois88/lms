@@ -85,10 +85,12 @@ class TopicSeeder extends Seeder
             
             if ($subject) {
                 foreach ($topics as $index => $topicName) {
+                    $subjectDescription = (string) ($subject->description ?? '');
                     Topic::updateOrCreate(
                         ['subject_id' => $subject->id, 'name' => $topicName],
                         [
                             'slug' => Str::slug($topicName),
+                            'description' => "{$topicName}: subtema clave de {$subject->name}. {$subjectDescription}",
                             'difficulty_base' => rand(2, 4),
                             'sort_order' => $index + 1,
                         ]
