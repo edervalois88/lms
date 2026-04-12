@@ -1,6 +1,9 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { computed, onMounted } from 'vue';
+import { animate, spring, stagger } from 'motion';
+import { playSound } from '@/Utils/SoundService';
+import { useTheme } from '@/Composables/useTheme';
 
 const props = defineProps({
     major: Object,
@@ -10,180 +13,337 @@ const props = defineProps({
     subject_mastery: Array,
 });
 
-const mission = computed(() => {
-    const projected = Number(props.stats?.projection?.projected_score ?? 0);
-    const gap = Number(props.stats?.projection?.gap_to_goal ?? 0);
-    const target = projected + Math.max(0, gap);
-    const pct = target > 0 ? Math.min(100, Math.round((projected / target) * 100)) : 0;
+const page = usePage();
+const { theme, initializeTheme, toggleTheme } = useTheme();
 
-    return {
-        university: props.major?.campus?.university?.acronym ?? 'SIN OBJETIVO',
-        campus: props.major?.campus?.name ?? 'Define campus en perfil',
-        career: props.major?.name ?? 'Define tu carrera objetivo',
-        projected,
-        target,
-        gap,
-        progress: pct,
-    };
+const isAdmin = computed(() => Boolean(page.props?.auth?.is_admin));
+
+// Access global shared gamification state
+const gamification = computed(() => props.auth?.gamification || { current: 1, xp: 0, progress: 0, rank: 'Novato' });
+
+const progressPercentage = computed(() => {
+    if (!props.stats.projection.projected_score || !authMajor.value) return 0;
+    return Math.min(100, Math.round((props.stats.projection.projected_score / authMajor.value.min_score) * 100));
 });
 
-const pathNodes = computed(() => {
-    const levels = (props.subject_mastery ?? []).map((item) => {
-        const score = Math.round(Number(item.mastery_score ?? 0) * 10);
+const authMajor = computed(() => props.stats.projection.goal_name !== 'No definida' ? {
+    name: props.stats.projection.goal_name,
+    min_score: props.stats.projection.projected_score + (props.stats.projection.gap_to_goal || 0)
+} : null);
 
-        let status = 'pending';
-        if (score >= 80) status = 'done';
-        else if (score >= 45) status = 'active';
+const gapStatus = computed(() => {
+    const gap = props.stats.projection.gap_to_goal;
+    if (gap === null) return { text: 'NODO INACTIVO', color: 'text-gray-500', bg: 'bg-white/5' };
+    if (gap <= 0) return { text: 'ZONA DE INGRESO', color: 'text-green-400', bg: 'bg-green-400/10' };
+    if (gap <= 10) return { text: 'META PRÓXIMA', color: 'text-orange-400', bg: 'bg-orange-400/10' };
+    return { text: 'BRECHA CRÍTICA', color: 'text-red-400', bg: 'bg-red-400/10' };
+});
 
-        return {
-            subject: item.subject,
-            score,
-            status,
-            topics: item.topics_count ?? 5,
-        };
+onMounted(() => {
+    initializeTheme();
+
+    animate(".hud-element", { opacity: [0, 1], y: [20, 0] }, { 
+        delay: stagger(0.1),
+        duration: 0.8,
+        easing: spring() 
     });
 
-    if (levels.length === 0) {
-        return [
-            { subject: 'Matemáticas', score: 0, status: 'active', topics: 5 },
-            { subject: 'Física', score: 0, status: 'pending', topics: 5 },
-            { subject: 'Química', score: 0, status: 'pending', topics: 5 },
-            { subject: 'Español', score: 0, status: 'pending', topics: 5 },
-        ];
-    }
-
-    return levels;
+    animate(".progress-orb", { scale: [0, 1] }, { duration: 1, easing: spring() });
 });
-
-const activeNode = computed(() => {
-    return pathNodes.value.find((node) => node.status === 'active') ?? pathNodes.value[0];
-});
-
-const rank = computed(() => props?.stats?.streak ? (props.stats.streak >= 30 ? 'ÉLITE' : props.stats.streak >= 10 ? 'AVANZADO' : 'EN PROGRESO') : 'INICIANDO');
-
-const lessonTitle = computed(() => `Completa el reto de ${activeNode.value?.subject ?? 'hoy'}`);
-const lessonPrompt = computed(() => `${activeNode.value?.subject ?? 'Tema'} y práctica, por favor.`);
 </script>
 
 <template>
-    <Head title="Dashboard - NexusEdu" />
+    <Head title="Command Center - NexusEdu" />
 
-    <div class="min-h-screen bg-midnight text-white">
-        <div class="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-            <section class="lg:col-span-8 space-y-6">
-                <div class="rounded-3xl border border-white/10 bg-white/3 p-5 md:p-7">
-                    <div class="flex items-center gap-4">
-                        <button type="button" class="w-9 h-9 rounded-full border border-white/15 text-gray-300 hover:text-white hover:border-white/30">✕</button>
-                        <div class="flex-1 h-3 rounded-full bg-white/10 border border-white/10 overflow-hidden">
-                            <div class="h-full bg-linear-to-r from-lime-400 to-emerald-500" :style="{ width: mission.progress + '%' }"></div>
-                        </div>
-                        <span class="text-xs font-black text-gray-300">{{ mission.progress }}%</span>
-                    </div>
-
-                    <div class="mt-8 mx-auto max-w-2xl bg-[#e5e5e5] text-[#3e3e3e] rounded-3xl border border-[#d4d4d4] p-6 md:p-8 shadow-inner">
-                        <h2 class="text-3xl md:text-4xl font-black text-center tracking-tight">{{ lessonTitle }}</h2>
-
-                        <div class="mt-6 flex items-center gap-4">
-                            <div class="w-16 h-16 rounded-2xl bg-amber-700 text-white flex items-center justify-center text-2xl font-black">N</div>
-                            <div class="rounded-2xl border border-[#cfcfcf] bg-[#efefef] px-4 py-2 text-lg">
-                                {{ lessonPrompt }}
-                            </div>
-                        </div>
-
-                        <div class="mt-6 rounded-2xl border border-[#cfcfcf] bg-[#ececec] p-4">
-                            <p class="text-lg text-[#4b4b4b]">{{ activeNode?.subject }} y <span class="border-b-4 border-sky-400 px-6"></span>.</p>
-                            <p class="mt-6 text-sm text-[#686868]">Objetivo: subir dominio de {{ activeNode?.score ?? 0 }}% a {{ Math.min(100, (activeNode?.score ?? 0) + 10) }}%.</p>
-                        </div>
-                    </div>
-
-                    <div class="mt-8 flex items-center justify-between gap-4">
-                        <Link :href="route('practice.daily')" class="rounded-2xl border border-white/20 px-6 py-3 text-sm font-black uppercase text-gray-300 hover:text-white hover:border-white/40">Saltar</Link>
-                        <Link :href="route('quiz.index')" class="rounded-2xl bg-orange-600 hover:bg-orange-500 px-8 py-3 text-sm font-black uppercase">Comprobar</Link>
+    <div class="min-h-screen bg-midnight text-white font-sans selection:bg-orange-500/30">
+        
+        <!-- Top Immersive Status Bar -->
+        <div class="bg-cyber-gray/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-xl font-black shadow-orange-glow">N</div>
+                    <div class="hidden md:block">
+                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Status: Operador | GPA: {{ props.user_gpa || '---' }}</p>
+                        <p class="text-sm font-black">{{ $page.props.auth.user.name }}</p>
                     </div>
                 </div>
 
-                <div class="rounded-3xl border border-white/10 bg-white/3 p-5 md:p-7">
-                    <div class="flex flex-wrap items-center justify-between gap-3">
-                        <p class="text-[11px] font-black uppercase tracking-wider text-blue-400">Ruta de entrenamiento</p>
-                        <p class="text-sm text-gray-400">{{ mission.university }} • {{ mission.campus }}</p>
+                <!-- Global XP Bar -->
+                <div class="flex-grow max-w-md mx-10 hidden lg:block">
+                    <div class="flex justify-between items-end mb-1 px-1">
+                        <span class="text-[10px] font-black text-orange-500 uppercase tracking-widest">{{ $page.props.auth.gamification?.rank || 'Novato' }}</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">NIVEL {{ $page.props.auth.gamification?.current || 1 }}</span>
                     </div>
-
-                    <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div class="rounded-2xl bg-white/3 border border-white/10 p-4">
-                            <p class="text-[10px] uppercase tracking-wider text-gray-400 font-black">Aciertos proyectados</p>
-                            <p class="text-2xl font-black text-white mt-1">{{ mission.projected }}</p>
-                        </div>
-                        <div class="rounded-2xl bg-white/3 border border-white/10 p-4">
-                            <p class="text-[10px] uppercase tracking-wider text-gray-400 font-black">Meta de ingreso</p>
-                            <p class="text-2xl font-black text-orange-400 mt-1">{{ mission.target }}</p>
-                        </div>
-                        <div class="rounded-2xl bg-white/3 border border-white/10 p-4">
-                            <p class="text-[10px] uppercase tracking-wider text-gray-400 font-black">Brecha</p>
-                            <p class="text-2xl font-black mt-1" :class="mission.gap <= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ mission.gap }}</p>
-                        </div>
-                    </div>
-
-                    <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div v-for="(node, idx) in pathNodes.slice(0, 4)" :key="node.subject + idx" class="rounded-xl border border-white/10 bg-white/2 p-3">
-                            <div class="flex items-center justify-between">
-                                <p class="font-black text-white">{{ node.subject }}</p>
-                                <span class="text-xs font-black px-2 py-1 rounded-full"
-                                    :class="node.status === 'done' ? 'bg-emerald-500/20 text-emerald-300' : node.status === 'active' ? 'bg-orange-500/20 text-orange-300' : 'bg-gray-500/20 text-gray-300'">
-                                    {{ node.score }}%
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <aside class="lg:col-span-4 space-y-6">
-                <div class="rounded-3xl border border-white/10 bg-white/3 p-5">
-                    <p class="text-[11px] font-black uppercase tracking-wider text-gray-400">Estado del operador</p>
-                    <div class="mt-3 grid grid-cols-3 gap-3 text-center">
-                        <div class="rounded-xl bg-white/4 p-3 border border-white/10">
-                            <p class="text-[10px] text-gray-400 uppercase font-black">Racha</p>
-                            <p class="text-xl font-black text-orange-400 mt-1">{{ stats.streak }}</p>
-                        </div>
-                        <div class="rounded-xl bg-white/4 p-3 border border-white/10">
-                            <p class="text-[10px] text-gray-400 uppercase font-black">Precisión</p>
-                            <p class="text-xl font-black text-blue-300 mt-1">{{ stats.accuracy }}%</p>
-                        </div>
-                        <div class="rounded-xl bg-white/4 p-3 border border-white/10">
-                            <p class="text-[10px] text-gray-400 uppercase font-black">Rango</p>
-                            <p class="text-xl font-black text-emerald-300 mt-1">{{ rank }}</p>
-                        </div>
+                    <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                        <div 
+                            class="bg-orange-500 h-full shadow-orange-glow transition-all duration-1000"
+                            :style="{ width: ($page.props.auth.gamification?.progress || 0) + '%' }"
+                        ></div>
                     </div>
                 </div>
 
-                <div class="rounded-3xl border border-white/10 bg-white/3 p-5">
-                    <p class="text-[11px] font-black uppercase tracking-wider text-orange-400">Acciones rápidas</p>
-                    <div class="mt-4 space-y-3">
-                        <Link :href="route('simulator.index')" class="block rounded-xl bg-orange-600 hover:bg-orange-500 px-4 py-3 font-black text-sm text-center">Iniciar simulacro</Link>
-                        <Link :href="route('practice.daily')" class="block rounded-xl bg-emerald-600/80 hover:bg-emerald-500 px-4 py-3 font-black text-sm text-center">Completar Daily XP</Link>
-                        <Link :href="route('profile.edit')" class="block rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-3 font-black text-sm text-center">Ajustar objetivo</Link>
+                <div class="flex items-center gap-6">
+                    <button
+                        type="button"
+                        @click="toggleTheme()"
+                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors border border-white/10"
+                        :title="theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+                    >
+                        <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+                    </button>
+
+                    <Link
+                        v-if="isAdmin"
+                        :href="route('admin.index')"
+                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors border border-white/10"
+                        title="Panel admin"
+                    >
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </Link>
+
+                    <Link
+                        :href="route('profile.edit')"
+                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors border border-white/10"
+                        title="Perfil"
+                    >
+                        <i class="fa-solid fa-user-gear"></i>
+                    </Link>
+
+                    <Link
+                        :href="route('logout')"
+                        method="post"
+                        as="button"
+                        class="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-colors border border-red-500/20"
+                        title="Cerrar sesión"
+                    >
+                        <i class="fa-solid fa-power-off"></i>
+                    </Link>
+
+                    <div class="flex items-center gap-2 px-4 py-2 bg-orange-500/10 rounded-xl border border-orange-500/20 group cursor-help">
+                        <i class="fa-solid fa-fire text-orange-500 group-hover:animate-bounce"></i>
+                        <span class="font-black text-sm">{{ stats.streak }} DÍAS</span>
                     </div>
+                    <button class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                        <i class="fa-solid fa-bell"></i>
+                    </button>
                 </div>
-
-                <div class="rounded-3xl border border-white/10 bg-white/3 p-5">
-                    <div class="flex items-center justify-between">
-                        <p class="text-[11px] font-black uppercase tracking-wider text-gray-400">Últimos simulacros</p>
-                        <span class="text-xs text-gray-500">{{ recent_exams?.length || 0 }}</span>
-                    </div>
-
-                    <div class="mt-4 space-y-3" v-if="recent_exams?.length">
-                        <div v-for="exam in recent_exams" :key="exam.id" class="rounded-xl border border-white/10 bg-white/2 p-3">
-                            <div class="flex items-center justify-between">
-                                <p class="text-sm font-black text-white">Simulacro #{{ exam.id }}</p>
-                                <p class="text-sm font-black text-orange-300">{{ exam.score ?? 0 }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <p v-else class="mt-4 text-sm text-gray-400">Aún no tienes simulacros registrados.</p>
-                </div>
-            </aside>
+            </div>
         </div>
+
+        <div class="py-12 px-6">
+            <div class="max-w-7xl mx-auto space-y-12">
+                
+                <!-- Main HUD Wrap -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    
+                    <!-- Primary Mission HUD -->
+                    <div class="lg:col-span-8 space-y-10">
+                        <div class="glass-morphism-dark p-10 rounded-[3rem] border border-white/5 relative overflow-hidden hud-element shadow-2xl">
+                            <!-- Background HUD Lines -->
+                            <div class="absolute inset-0 opacity-[0.03] pointer-events-none">
+                                <div class="grid grid-cols-6 h-full border-x border-white"></div>
+                            </div>
+
+                            <div class="relative z-10 space-y-12">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                    <div>
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-blue-glow"></span>
+                                            <p class="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em]">Misión de Ingreso Activa: {{ major?.campus?.university?.acronym }}</p>
+                                        </div>
+                                        <h2 class="text-5xl font-black uppercase italic tracking-tighter">{{ authMajor?.name || 'Sector no Definido' }}</h2>
+                                        <p class="text-gray-500 font-bold uppercase tracking-widest text-xs mt-2">{{ major?.campus?.name || 'Protocolo de Onboarding Requerido' }}</p>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-2">
+                                        <div :class="['px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border shadow-2xl', gapStatus.bg, gapStatus.color, gapStatus.color.replace('text', 'border').replace('400', '400/20')]">
+                                            {{ gapStatus.text }}
+                                        </div>
+                                        <div v-if="major" class="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-500 font-black text-[9px] rounded uppercase tracking-widest">
+                                            AMENAZA: {{ major.difficulty_category }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                                    <div class="space-y-6">
+                                        <div class="flex justify-between items-end">
+                                            <div>
+                                                <p class="text-6xl font-black text-white glow-text">{{ stats.projection.projected_score }}</p>
+                                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Aciertos Proyectados</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-2xl font-black text-orange-500">{{ authMajor?.min_score || '---' }}</p>
+                                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Meta Nivel</p>
+                                            </div>
+                                        </div>
+                                        <!-- Big Progress HUD -->
+                                        <div class="relative pt-4">
+                                            <div class="w-full bg-white/5 h-4 rounded-2xl overflow-hidden p-1 border border-white/5">
+                                                <div 
+                                                    class="h-full bg-gradient-to-r from-orange-600 to-red-500 rounded-xl transition-all duration-[2s] shadow-orange-glow progress-fill"
+                                                    :style="{ width: progressPercentage + '%' }"
+                                                ></div>
+                                            </div>
+                                            <div class="flex justify-between mt-4 text-[9px] font-black text-gray-600 uppercase tracking-[0.3em]">
+                                                <span>Frontera Inicial</span>
+                                                <span class="text-orange-500">{{ progressPercentage }}% Eficacia</span>
+                                                <span>Victoria</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- AI Strategy Box -->
+                                    <div class="bg-white/5 border border-white/5 rounded-[2.5rem] p-8 relative group hover:bg-white/[0.08] transition-all cursor-pointer">
+                                        <div class="absolute -top-4 -left-4 w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center text-white shadow-orange-glow transform -rotate-12">
+                                            <i class="fa-solid fa-robot"></i>
+                                        </div>
+                                        <p class="text-sm font-bold text-gray-300 italic leading-relaxed pl-4">
+                                            "Protocolo detectado: Para neutralizar los <span class="text-orange-500">{{ stats.projection.gap_to_goal }} aciertos</span> restantes, debemos priorizar el módulo de <b>Física Cuántica</b>. El algoritmo estima éxito en 14 sesiones."
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Modules -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 hud-element">
+                            <Link 
+                                :href="route('simulator.index')" 
+                                class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
+                                @click="playSound('success')"
+                            >
+                                <div class="bg-midnight rounded-[2.3rem] p-8 flex items-center gap-8 border border-white/5 group-hover:border-orange-500/30 transition-colors">
+                                    <div class="w-20 h-20 bg-orange-500/10 rounded-3xl flex items-center justify-center text-4xl text-orange-500 shadow-orange-glow group-hover:rotate-12 transition-transform duration-500">
+                                        <i class="fa-solid fa-graduation-cap"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-2xl font-black uppercase tracking-tighter italic">Simulacro</h3>
+                                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Ejecutar 120 Reactivos</p>
+                                    </div>
+                                </div>
+                            </Link>
+                            
+                            <Link 
+                                :href="route('quiz.index')" 
+                                class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
+                                @click="playSound('success')"
+                            >
+                                <div class="bg-midnight rounded-[2.3rem] p-8 flex items-center gap-8 border border-white/5 group-hover:border-blue-500/30 transition-colors">
+                                    <div class="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center text-4xl text-blue-400 shadow-blue-glow group-hover:rotate-12 transition-transform duration-500">
+                                        <i class="fa-solid fa-bolt-lightning"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-2xl font-black uppercase tracking-tighter italic">Práctica</h3>
+                                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Entrenamiento Focalizado</p>
+                                    </div>
+                                </div>
+                            </Link>
+
+                            <Link
+                                :href="route('practice.daily')"
+                                class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
+                                @click="playSound('success')"
+                            >
+                                <div class="bg-midnight rounded-[2.3rem] p-8 flex items-center gap-8 border border-white/5 group-hover:border-green-500/30 transition-colors">
+                                    <div class="w-20 h-20 bg-green-500/10 rounded-3xl flex items-center justify-center text-4xl text-green-400 group-hover:rotate-12 transition-transform duration-500">
+                                        <i class="fa-solid fa-fire"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-2xl font-black uppercase tracking-tighter italic">Daily XP</h3>
+                                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Racha + Recompensas</p>
+                                    </div>
+                                </div>
+                            </Link>
+                        </div>
+                    </div>
+
+                    <!-- Side HUD: Rankings & Mastery -->
+                    <div class="lg:col-span-4 space-y-10 hud-element">
+                        <!-- Stats Mini HUD -->
+                        <div class="glass-morphism-dark p-8 rounded-[3rem] border border-white/5 space-y-8">
+                            <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                                <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Puntaje Global</h3>
+                                <i class="fa-solid fa-chart-simple text-orange-500"></i>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="text-center flex-grow">
+                                    <p class="text-5xl font-black text-white glow-text">{{ stats.accuracy }}%</p>
+                                    <p class="text-[9px] font-black text-green-400 uppercase mt-2 tracking-widest"><i class="fa-solid fa-arrow-up"></i> +4.2% Eficiencia</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mastery Levels -->
+                        <div class="glass-morphism-dark p-8 rounded-[3rem] border border-white/5">
+                            <h3 class="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-8 border-l-4 border-orange-500 pl-4">Zonas de Dominio</h3>
+                            <div class="space-y-6">
+                                <div v-for="item in subject_mastery.slice(0, 5)" :key="item.subject" class="space-y-2 group cursor-pointer">
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-xs font-black text-gray-300 group-hover:text-white transition-colors uppercase italic">{{ item.subject }}</span>
+                                        <span class="text-[10px] font-black text-orange-500">{{ Math.round(item.mastery_score * 10) }}%</span>
+                                    </div>
+                                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                        <div class="bg-orange-500 h-full group-hover:shadow-orange-glow transition-all duration-1000" :style="{ width: (item.mastery_score * 10) + '%' }"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Profile Info -->
+                        <div class="bg-gradient-to-br from-orange-600 to-orange-900 p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+                           <div class="relative z-10 flex items-center gap-6">
+                               <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-3xl font-black backdrop-blur-md border border-white/20">
+                                   {{ $page.props.auth.gamification?.current || 1 }}
+                               </div>
+                               <div>
+                                   <p class="text-[10px] font-black text-orange-200 uppercase tracking-widest">Rango Actual</p>
+                                   <p class="text-xl font-black italic uppercase tracking-tighter">{{ $page.props.auth.gamification?.rank || 'Novato' }}</p>
+                               </div>
+                           </div>
+                           <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-colors"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Notification Feed (Floating) -->
+        <div class="fixed bottom-10 right-10 z-40 space-y-4 max-w-xs hidden xl:block">
+            <div class="glass-morphism p-5 rounded-2xl border border-white/5 animate-float shadow-2xl flex items-start gap-4">
+                <div class="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center text-green-500">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Logro Desbloqueado</p>
+                    <p class="text-xs font-bold">¡Primer paso dado! Completaste el Onboarding.</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 </template>
+
+<style scoped>
+.italic-glow {
+    text-shadow: 0 0 30px rgba(255, 107, 0, 0.2);
+}
+
+.shadow-orange-glow {
+    box-shadow: 0 0 40px rgba(255, 107, 0, 0.3);
+}
+
+.shadow-blue-glow {
+    box-shadow: 0 0 40px rgba(0, 209, 255, 0.2);
+}
+
+@keyframes animate-pulse-glow {
+    0%, 100% { opacity: 1; filter: brightness(1); }
+    50% { opacity: 0.8; filter: brightness(1.5); }
+}
+
+.glow-text {
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+</style>
