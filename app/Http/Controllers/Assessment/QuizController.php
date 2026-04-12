@@ -156,7 +156,7 @@ class QuizController extends Controller
         $data = $request->validate([
             'question_id' => ['required', 'integer', 'exists:questions,id'],
             'selected_index' => ['required', 'integer', 'min:0', 'max:3'],
-            'texto_duda' => ['required', 'string', 'max:1000'],
+            'texto_duda' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $question = Question::query()
@@ -171,15 +171,11 @@ class QuizController extends Controller
         $selectedAnswer = (string) ($selected[(int) $data['selected_index']] ?? '');
         $correctAnswer = (string) ($question->correct_answer ?? '');
 
-        $tutor = $this->groq->tutorStateless([
-            'materia' => (string) ($question->topic?->subject?->name ?? ''),
-            'tema' => (string) ($question->topic?->name ?? ''),
-            'texto_pregunta' => (string) ($question->stem ?? ''),
-            'respuesta_correcta' => $correctAnswer,
-            'explicacion_oficial' => (string) ($question->explanation ?? ''),
-            'respuesta_alumno' => $selectedAnswer,
-            'texto_duda' => (string) $data['texto_duda'],
-        ]);
+        $tutor = $this->groq->getTutorExplanation(
+            $question,
+            $selectedAnswer,
+            (string) ($data['texto_duda'] ?? ''),
+        );
 
         if (! is_array($tutor)) {
             $tutor = [

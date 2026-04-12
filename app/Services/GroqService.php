@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\AiTutorCache;
+use App\Models\Question;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -130,6 +132,56 @@ PROMPT;
             Log::warning('Groq Tutor request failed', ['error' => $exception->getMessage()]);
             return null;
         }
+    }
+
+    public function getTutorExplanation(Question $pregunta, string $respuestaAlumno, ?string $dudaUsuario = null): ?array
+    {
+        $duda = trim((string) $dudaUsuario);
+        $canUseCache = $duda === '';
+
+        if ($canUseCache) {
+            $cachedResponse = AiTutorCache::query()
+                ->where('question_id', $pregunta->id)
+                ->where('respuesta_incorrecta', $respuestaAlumno)
+                ->first();
+
+            if ($cachedResponse) {
+                return [
+                    'respuesta_directa' => (string) $cachedResponse->explicacion_ia,
+                    'es_fuera_de_contexto' => false,
+                ];
+            }
+        }
+
+        $response = $this->tutorStateless([
+            'materia' => (string) ($pregunta->topic?->subject?->name ?? ''),
+            'tema' => (string) ($pregunta->topic?->name ?? ''),
+            'texto_pregunta' => (string) ($pregunta->stem ?? ''),
+            'respuesta_correcta' => (string) ($pregunta->correct_answer ?? ''),
+            'explicacion_oficial' => (string) ($pregunta->explanation ?? ''),
+            'respuesta_alumno' => $respuestaAlumno,
+            'texto_duda' => $duda,
+        ]);
+
+        if (
+            $canUseCache
+            && is_array($response)
+            && isset($response['respuesta_directa'])
+            && trim((string) $response['respuesta_directa']) !== ''
+            && !((bool) ($response['es_fuera_de_contexto'] ?? false))
+        ) {
+            AiTutorCache::updateOrCreate(
+                [
+                    'question_id' => $pregunta->id,
+                    'respuesta_incorrecta' => $respuestaAlumno,
+                ],
+                [
+                    'explicacion_ia' => (string) $response['respuesta_directa'],
+                ]
+            );
+        }
+
+        return $response;
     }
 
     private function buildPrompt(array $payload): string

@@ -24,7 +24,7 @@ const emit = defineEmits(['ask']);
 const message = ref('');
 
 const submit = () => {
-    if (!props.enabled || props.loading || !message.value.trim()) {
+    if (!props.enabled || props.loading) {
         return;
     }
 
