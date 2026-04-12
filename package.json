@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "build": "node scripts/build-and-populate.js",
         "build:assets": "vite build"
     },
     "dependencies": {
