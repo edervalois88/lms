@@ -13,11 +13,14 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles;
 
+    private const BASELINE_ANSWER_THRESHOLD = 25;
+
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
+        'is_premium',
         'preferences',
         'onboarded_at',
         'streak_days',
@@ -37,6 +40,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => Role::class,
+            'is_premium' => 'boolean',
             'preferences' => 'array',
             'onboarded_at' => 'datetime',
             'last_study_at' => 'datetime',
@@ -87,5 +91,30 @@ class User extends Authenticatable
     public function rewardPurchases(): HasMany
     {
         return $this->hasMany(RewardPurchase::class);
+    }
+
+    public function isPremium(): bool
+    {
+        return (bool) $this->is_premium;
+    }
+
+    public function isFree(): bool
+    {
+        return ! $this->isPremium();
+    }
+
+    public function hasCompletedBaseline(): bool
+    {
+        $hasCompletedExam = $this->exams()->where('status', 'completed')->exists();
+        if ($hasCompletedExam) {
+            return true;
+        }
+
+        $answerCount = $this->exams()
+            ->join('exam_answers', 'exam_answers.exam_id', '=', 'exams.id')
+            ->where('exams.user_id', $this->id)
+            ->count();
+
+        return $answerCount >= self::BASELINE_ANSWER_THRESHOLD;
     }
 }

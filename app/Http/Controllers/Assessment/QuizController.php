@@ -8,6 +8,7 @@ use App\Models\ExamAnswer;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\Topic;
+use App\Services\FreemiumLimitService;
 use App\Services\GroqService;
 use App\Services\AI\QuestionGeneratorService;
 use App\Services\Learning\AdaptiveExamPipelineService;
@@ -15,6 +16,7 @@ use App\Services\Learning\AdaptiveDifficultyService;
 use App\Services\Learning\GamificationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
@@ -28,6 +30,7 @@ class QuizController extends Controller
         protected AdaptiveExamPipelineService $adaptivePipeline,
         protected GroqService $groq,
         protected GamificationService $gamification,
+        protected FreemiumLimitService $freemium,
     ) {}
 
     public function index(): Response
@@ -209,6 +212,9 @@ class QuizController extends Controller
             ->findOrFail($data['question_id']);
         $user = auth()->user();
 
+        $this->freemium->assertCanUseAiTutor($user);
+        $this->freemium->registerAiTutorUsage($user);
+
         if ((int) $question->topic?->subject_id !== (int) $subject->id) {
             return response()->json(['message' => 'Pregunta no válida para la materia seleccionada.'], 422);
         }
@@ -270,6 +276,94 @@ class QuizController extends Controller
     public function tutorHealth(): JsonResponse
     {
         return response()->json($this->groq->tutorHealthCheck());
+    }
+
+    public function onboardingDiagnostic(): Response|RedirectResponse
+    {
+        $user = auth()->user();
+
+        if ($user->hasCompletedBaseline()) {
+            return redirect()->route('dashboard');
+        }
+
+        return Inertia::render('Onboarding/DiagnosticStart', [
+            'estimated_minutes' => 30,
+            'question_target' => 36,
+        ]);
+    }
+
+    public function startOnboardingDiagnostic(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->hasCompletedBaseline()) {
+            return redirect()->route('dashboard');
+        }
+
+        $targetQuestionCount = 36;
+        $minimumQuestionCount = 30;
+
+        $subjectIds = Subject::query()
+            ->whereHas('topics.questions', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->inRandomOrder()
+            ->pluck('id');
+
+        $questions = collect();
+
+        foreach ($subjectIds as $subjectId) {
+            if ($questions->count() >= $targetQuestionCount) {
+                break;
+            }
+
+            $remaining = $targetQuestionCount - $questions->count();
+            $perSubjectQuota = min(2, $remaining);
+
+            $slice = Question::query()
+                ->where('is_active', true)
+                ->whereHas('topic', function ($query) use ($subjectId) {
+                    $query->where('subject_id', $subjectId);
+                })
+                ->whereNotIn('id', $questions->pluck('id'))
+                ->inRandomOrder()
+                ->limit($perSubjectQuota)
+                ->get();
+
+            $questions = $questions->merge($slice);
+        }
+
+        if ($questions->count() < $targetQuestionCount) {
+            $fill = Question::query()
+                ->where('is_active', true)
+                ->whereNotIn('id', $questions->pluck('id'))
+                ->inRandomOrder()
+                ->limit($targetQuestionCount - $questions->count())
+                ->get();
+
+            $questions = $questions->merge($fill);
+        }
+
+        if ($questions->count() < $minimumQuestionCount) {
+            return back()->with('error', 'No hay suficientes reactivos para iniciar el diagnóstico en este momento.');
+        }
+
+        $finalCount = min($targetQuestionCount, $questions->count());
+        $selected = $questions->take($finalCount)->values();
+
+        $exam = Exam::create([
+            'user_id' => $user->id,
+            'type' => 'diagnostic',
+            'exam_area' => null,
+            'total_questions' => $finalCount,
+            'time_limit_minutes' => 30,
+            'status' => 'in_progress',
+            'started_at' => now(),
+        ]);
+
+        $exam->questions()->syncWithoutDetaching($selected->pluck('id')->all());
+
+        return redirect()->route('simulator.show', $exam);
     }
 
     public function startBootcamp(Request $request)

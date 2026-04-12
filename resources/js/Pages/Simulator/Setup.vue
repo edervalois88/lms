@@ -1,7 +1,9 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
+import axios from 'axios'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import UpgradeModal from '@/Components/UI/UpgradeModal.vue'
 
 defineProps({ areas: Array })
 
@@ -18,12 +20,58 @@ const examTypes = [
 
 const selectedType = computed(() => examTypes.find(t => t.id === form.type))
 
-const submit = () => form.post(route('simulator.store'))
+const requestError = ref('')
+const showUpgradeModal = ref(false)
+const blockedFeature = ref('simulation')
+
+const csrfToken = () =>
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
+
+const submit = async () => {
+    requestError.value = ''
+
+    try {
+        form.processing = true
+
+        const response = await axios.post(route('simulator.store'), {
+            area: form.area,
+            type: form.type,
+        }, {
+            headers: {
+                'X-CSRF-TOKEN': csrfToken(),
+                Accept: 'application/json',
+            },
+        })
+
+        const redirectUrl = response?.data?.redirect_url
+        if (typeof redirectUrl === 'string' && redirectUrl !== '') {
+            window.location.href = redirectUrl
+            return
+        }
+
+        requestError.value = 'No se pudo iniciar el simulacro en este momento.'
+    } catch (error) {
+        if (error?.response?.status === 403 && error?.response?.data?.error === 'freemium_limit_reached') {
+            blockedFeature.value = error?.response?.data?.feature || 'simulation'
+            showUpgradeModal.value = true
+            return
+        }
+
+        const serverMessage = error?.response?.data?.message
+        requestError.value = typeof serverMessage === 'string' && serverMessage !== ''
+            ? serverMessage
+            : 'No se pudo iniciar el simulacro en este momento.'
+    } finally {
+        form.processing = false
+    }
+}
 </script>
 
 <template>
     <Head title="Configurar Simulacro — NexusEdu" />
     <AuthenticatedLayout>
+        <UpgradeModal :show="showUpgradeModal" :feature="blockedFeature" @close="showUpgradeModal = false" />
+
         <template #header>
             <h2 class="text-xl font-semibold text-gray-800">Simulacro UNAM</h2>
         </template>
@@ -39,6 +87,10 @@ const submit = () => form.post(route('simulator.store'))
                 </div>
 
                 <form @submit.prevent="submit" class="space-y-6">
+
+                    <div v-if="requestError" class="bg-rose-50 border border-rose-300 text-rose-700 rounded-xl px-4 py-3 font-semibold text-sm">
+                        {{ requestError }}
+                    </div>
 
                     <div class="bg-white p-6 rounded-2xl border border-gray-200">
                         <h2 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">

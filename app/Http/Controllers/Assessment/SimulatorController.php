@@ -13,6 +13,7 @@ use App\Models\ExamAnswer;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\Topic;
+use App\Services\FreemiumLimitService;
 use App\Services\GroqService;
 use App\Services\Learning\GamificationService;
 use App\Services\Learning\StudyStreakService;
@@ -32,6 +33,7 @@ class SimulatorController extends Controller
         protected StudyStreakService $streakService,
         protected GamificationService $gamification,
         protected GroqService $groq,
+        protected FreemiumLimitService $freemium,
     ) {}
 
     public function index(): Response
@@ -44,12 +46,16 @@ class SimulatorController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
             'area' => 'required|integer|between:1,4',
             'type' => 'required|in:diagnostic,practice,simulation',
         ]);
+
+        if ($request->input('type') === 'simulation') {
+            $this->freemium->assertCanStartSimulation($request->user());
+        }
 
         $config = [
             'diagnostic' => ['questions' => 30,  'minutes' => 45, 'type' => ExamType::Diagnostic],
@@ -66,6 +72,12 @@ class SimulatorController extends Controller
             'status'             => ExamStatus::InProgress,
             'started_at'         => now(),
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'redirect_url' => route('simulator.show', $exam),
+            ]);
+        }
 
         return redirect()->route('simulator.show', $exam);
     }
@@ -337,6 +349,10 @@ class SimulatorController extends Controller
     public function reviewTutor(Exam $exam, Request $request): JsonResponse
     {
         abort_if($exam->user_id !== auth()->id(), 403);
+
+        $user = $request->user();
+        $this->freemium->assertCanUseAiTutor($user);
+        $this->freemium->registerAiTutorUsage($user);
 
         $data = $request->validate([
             'question_id' => ['required', 'integer', 'exists:questions,id'],

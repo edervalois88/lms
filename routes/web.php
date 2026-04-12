@@ -10,6 +10,7 @@ use App\Http\Controllers\Progress\SpacedRepetitionController;
 use App\Http\Controllers\Rewards\RewardStoreController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +33,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
     Route::post('/onboarding/vocational', [OnboardingController::class, 'submitVocationalTest'])->name('onboarding.vocational.submit');
+    Route::get('/onboarding/diagnostic', [QuizController::class, 'onboardingDiagnostic'])->name('onboarding.diagnostic');
+    Route::post('/onboarding/diagnostic/start', [QuizController::class, 'startOnboardingDiagnostic'])->name('onboarding.diagnostic.start');
+
+    // Checkout (Stripe)
+    Route::post('/checkout', [CheckoutController::class, 'createSession'])->name('checkout.create');
+    Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
 
     // Rutas protegidas por Onboarding
     Route::middleware(['onboarded'])->group(function () {
@@ -80,7 +88,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.index');
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/curation', [AdminDashboardController::class, 'curationIndex'])->name('admin.curation.index');
+    Route::get('/curation/search', [AdminDashboardController::class, 'searchQuestion'])->name('admin.curation.search');
+    Route::put('/curation/questions/{id}', [AdminDashboardController::class, 'updateQuestionAndCache'])->name('admin.curation.update');
 });
+
+// Stripe Webhook (public)
+Route::post('/stripe/webhook', [CheckoutController::class, 'webhook'])->name('stripe.webhook');
 
 if (app()->environment('local')) {
     Route::get('/debug-nexus', function () {

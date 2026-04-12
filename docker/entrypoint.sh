@@ -83,6 +83,48 @@ fi
 
 php artisan storage:link || true
 
+# Poblacion automatica opcional (runtime) para Railway/produccion.
+AUTO_POPULATE_COMIPEMS_RUNTIME_VALUE="${AUTO_POPULATE_COMIPEMS_RUNTIME:-false}"
+AUTO_POPULATE_LOTES_VALUE="${AUTO_POPULATE_LOTES:-2}"
+AUTO_POPULATE_MATERIAS_VALUE="${AUTO_POPULATE_MATERIAS:-Matemáticas,Física,Química,Biología,Historia Universal,Historia de México,Español,Geografía,Formación Cívica y Ética}"
+AUTO_POPULATE_MIN_ACTIVE_QUESTIONS_VALUE="${AUTO_POPULATE_MIN_ACTIVE_QUESTIONS:-1500}"
+
+if [ "$AUTO_POPULATE_COMIPEMS_RUNTIME_VALUE" = "true" ]; then
+  CURRENT_QUESTIONS_RAW="$(php artisan tinker --execute="echo App\\Models\\Question::query()->where('is_active', true)->count();" 2>/dev/null || echo 0)"
+  CURRENT_QUESTIONS_VALUE="$(echo "$CURRENT_QUESTIONS_RAW" | tr -dc '0-9')"
+
+  if [ -z "$CURRENT_QUESTIONS_VALUE" ]; then
+    CURRENT_QUESTIONS_VALUE=0
+  fi
+
+  if [ "$CURRENT_QUESTIONS_VALUE" -ge "$AUTO_POPULATE_MIN_ACTIVE_QUESTIONS_VALUE" ]; then
+    echo "⏭️ Ya hay suficientes reactivos activos ($CURRENT_QUESTIONS_VALUE >= $AUTO_POPULATE_MIN_ACTIVE_QUESTIONS_VALUE). Se omite poblacion automatica."
+  else
+    echo "🧠 AUTO_POPULATE_COMIPEMS_RUNTIME=true, iniciando poblacion automatica..."
+    echo "📊 Reactivos activos actuales: $CURRENT_QUESTIONS_VALUE | Minimo objetivo: $AUTO_POPULATE_MIN_ACTIVE_QUESTIONS_VALUE"
+
+    OLD_IFS="$IFS"
+    IFS=','
+
+    for MATERIA in $AUTO_POPULATE_MATERIAS_VALUE; do
+      MATERIA_TRIMMED="$(echo "$MATERIA" | sed 's/^ *//;s/ *$//')"
+
+      if [ -z "$MATERIA_TRIMMED" ]; then
+        continue
+      fi
+
+      echo "📚 Poblando materia: $MATERIA_TRIMMED (lotes: $AUTO_POPULATE_LOTES_VALUE)"
+      if ! php artisan db:populate-comipems "$MATERIA_TRIMMED" "$AUTO_POPULATE_LOTES_VALUE"; then
+        echo "⚠️ Fallo al poblar '$MATERIA_TRIMMED'. Continuando..."
+      fi
+    done
+
+    IFS="$OLD_IFS"
+  fi
+else
+  echo "⏭️ AUTO_POPULATE_COMIPEMS_RUNTIME=false, se omite poblacion automatica."
+fi
+
 # Worker auto-gestionado (opcional)
 mkdir -p /etc/supervisor/conf.d
 ENABLE_QUEUE_WORKER_VALUE="${ENABLE_QUEUE_WORKER:-false}"

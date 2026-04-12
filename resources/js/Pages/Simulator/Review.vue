@@ -4,6 +4,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Card from '@/Components/UI/Card.vue';
+import UpgradeModal from '@/Components/UI/UpgradeModal.vue';
 
 const props = defineProps({
     exam: Object,
@@ -19,6 +20,8 @@ const tutorMessage = ref('');
 const tutorResponse = ref('');
 const tutorMeta = ref({ from_cache: false, tokens_saved: 0 });
 const requestError = ref('');
+const showUpgradeModal = ref(false);
+const blockedFeature = ref('ai_tutor');
 
 const current = computed(() => props.incorrect_questions[index.value] || null);
 const total = computed(() => props.incorrect_questions.length);
@@ -53,6 +56,12 @@ const askTutor = async () => {
         };
         tutorMessage.value = '';
     } catch (error) {
+        if (error?.response?.status === 403 && error?.response?.data?.error === 'freemium_limit_reached') {
+            blockedFeature.value = error?.response?.data?.feature || 'ai_tutor';
+            showUpgradeModal.value = true;
+            return;
+        }
+
         const msg = error?.response?.data?.message;
         requestError.value = typeof msg === 'string' && msg !== ''
             ? msg
@@ -83,6 +92,8 @@ const goPrev = () => {
     <Head title="Revisión Táctica - NexusEdu" />
 
     <AuthenticatedLayout>
+        <UpgradeModal :show="showUpgradeModal" :feature="blockedFeature" @close="showUpgradeModal = false" />
+
         <template #header>
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>

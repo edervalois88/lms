@@ -5,6 +5,7 @@ import axios from 'axios';
 import QuestionCard from '@/Components/Quiz/QuestionCard.vue';
 import FeedbackPanel from '@/Components/Quiz/FeedbackPanel.vue';
 import TutorChat from '@/Components/Quiz/TutorChat.vue';
+import UpgradeModal from '@/Components/UI/UpgradeModal.vue';
 
 const props = defineProps({
     subject: Object,
@@ -25,6 +26,8 @@ const tutorLoading = ref(false);
 const xpToast = ref('');
 const showLevelModal = ref(false);
 const levelModalData = ref({ level: 1, badges: [] });
+const showUpgradeModal = ref(false);
+const blockedFeature = ref('ai_tutor');
 
 const csrfToken = () =>
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -155,6 +158,12 @@ const handleTutorAsk = async (message) => {
             },
         };
     } catch (_error) {
+        if (_error?.response?.status === 403 && _error?.response?.data?.error === 'freemium_limit_reached') {
+            blockedFeature.value = _error?.response?.data?.feature || 'ai_tutor';
+            showUpgradeModal.value = true;
+            return;
+        }
+
         const serverMessage = _error?.response?.data?.message;
         requestError.value = typeof serverMessage === 'string' && serverMessage !== ''
             ? serverMessage
@@ -169,6 +178,8 @@ const handleTutorAsk = async (message) => {
     <Head :title="`Quiz: ${subject.name}`" />
 
     <div class="min-h-screen bg-gray-50 flex flex-col">
+        <UpgradeModal :show="showUpgradeModal" :feature="blockedFeature" @close="showUpgradeModal = false" />
+
         <div v-if="xpToast" class="fixed top-5 right-5 z-50 rounded-xl bg-emerald-600 text-white px-4 py-2 text-sm font-black shadow-lg animate-fade-in">
             {{ xpToast }}
         </div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Services\Learning\AdaptiveExamPipelineService;
 use App\Services\Learning\ProgressCalculatorService;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,9 +17,13 @@ class DashboardController extends Controller
         protected AdaptiveExamPipelineService $adaptivePipeline,
     ) {}
 
-    public function index(): Response
+    public function index(): Response|RedirectResponse
     {
         $user = auth()->user()->load('major.campus.university');
+
+        if (! $user->hasCompletedBaseline()) {
+            return redirect()->route('onboarding.diagnostic');
+        }
         
         return Inertia::render('Dashboard', [
             'major' => $user->major,
