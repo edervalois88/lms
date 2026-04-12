@@ -7,29 +7,40 @@ use Illuminate\Support\Facades\Log;
 
 class GroqService
 {
+    private const STATELESS_TUTOR_SYSTEM_PROMPT = "Eres un tutor académico experto. Resuelve dudas o explica errores basándote ÚNICAMENTE en la 'Respuesta Correcta' y la 'Explicación Oficial' proporcionadas. Escribe máximo 80 palabras. Usa un tono motivador, ve directo al grano (sin saludos largos) y usa negritas para conceptos clave.";
+
     private const SYSTEM_PROMPT = <<<'PROMPT'
-Actúa como Tutor Académico Adaptativo.
-Tu única fuente de información veraz es CONTEXTO_TECNICO y los datos del reactivo.
+Eres un tutor académico experto y empático, especializado en preparar a estudiantes para exámenes de admisión (COMIPEMS, UNAM, IPN).
 
-Objetivo:
-1) Evaluar por qué la respuesta del estudiante fue correcta o incorrecta con precisión.
-2) Entregar feedback pedagógico breve, accionable y sin ambiguedad.
-3) Responder dudas del estudiante solo dentro del contexto del tema actual.
+Tu objetivo es resolver dudas o explicar errores de manera clara, concisa y motivadora.
 
-Reglas críticas:
-- Si la DUDA_USUARIO está fuera del tema del reactivo, marca es_fuera_de_contexto=true y responde exactamente: "Solo puedo asesorarte sobre el tema del examen actual".
-- Si está dentro de contexto, es_fuera_de_contexto=false y ofrece una respuesta clara y concreta.
-- No inventes teoría fuera de CONTEXTO_TECNICO.
-- No uses Markdown, ni texto fuera del JSON.
+REGLAS ESTRICTAS PARA chat.respuesta_directa:
+1) BASADO EN DATOS: Basa tu explicación ÚNICAMENTE en "Respuesta Correcta" y "Explicación Oficial" del contexto. No inventes procedimientos alternativos ni alucines información.
+2) CONCISIÓN: chat.respuesta_directa no debe superar 80 palabras.
+3) PEDAGOGÍA: Si el alumno se equivocó, no lo regañes; explica por qué la opción correcta es correcta y señala sutilmente el posible error del alumno según su respuesta.
+4) FORMATO: Usa negritas para conceptos clave. No uses saludos largos ni despedidas.
 
-Responde exclusivamente en JSON estricto con EXACTAMENTE esta estructura:
+Si la duda del alumno está fuera del tema actual, marca chat.es_fuera_de_contexto=true y usa exactamente este texto en chat.respuesta_directa:
+"Solo puedo asesorarte sobre el tema del examen actual"
+
+Si está dentro del tema, chat.es_fuera_de_contexto=false.
+
+Responde EXCLUSIVAMENTE JSON válido, sin texto adicional, con EXACTAMENTE esta estructura:
 {
-    "evaluacion": { "feedback_especifico": "string", "semblanza_tema": "string" },
-  "chat": { "respuesta_directa": "string", "es_fuera_de_contexto": "boolean" },
-  "metadatos": { "nivel_sugerido": "string" }
+    "evaluacion": {
+        "feedback_especifico": "string",
+        "semblanza_tema": "string"
+    },
+    "chat": {
+        "respuesta_directa": "string",
+        "es_fuera_de_contexto": false
+    },
+    "metadatos": {
+        "nivel_sugerido": "subir"
+    }
 }
 
-Donde metadatos.nivel_sugerido solo puede ser: "subir", "mantener" o "bajar".
+metadatos.nivel_sugerido solo puede ser "subir", "mantener" o "bajar".
 PROMPT;
 
     public function generateFeedback(array $payload): ?array
@@ -44,8 +55,9 @@ PROMPT;
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ])->post(rtrim((string) config('services.groq.base_url', 'https://api.groq.com/openai/v1'), '/') . '/chat/completions', [
-                'model' => (string) config('services.groq.model', 'llama-3.3-70b-versatile'),
-                'temperature' => 0.2,
+                'model' => (string) config('services.groq.model', 'llama-3.1-8b-instant'),
+                'temperature' => 0.3,
+                'max_tokens' => 300,
                 'response_format' => ['type' => 'json_object'],
                 'messages' => [
                     ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
@@ -67,27 +79,83 @@ PROMPT;
         }
     }
 
+    public function tutorStateless(array $payload): ?array
+    {
+        $apiKey = (string) config('services.groq.key');
+        if ($apiKey === '') {
+            return null;
+        }
+
+        $userPrompt = "Analiza la siguiente situación y resuelve la duda basándote en este contexto estricto:\n"
+            . "[Contexto]: Materia: " . (string) ($payload['materia'] ?? '')
+            . ", Tema: " . (string) ($payload['tema'] ?? '')
+            . ", Pregunta: " . (string) ($payload['texto_pregunta'] ?? '')
+            . ", Respuesta Correcta: " . (string) ($payload['respuesta_correcta'] ?? '')
+            . ", Explicación Oficial: " . (string) ($payload['explicacion_oficial'] ?? '')
+            . ".\n"
+            . "[Situación del Alumno]: Respondió: " . (string) ($payload['respuesta_alumno'] ?? '')
+            . ". Su duda es: " . (string) ($payload['texto_duda'] ?? '')
+            . ".\n"
+            . "Explica el concepto de forma clara y directa.";
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->post(rtrim((string) config('services.groq.base_url', 'https://api.groq.com/openai/v1'), '/') . '/chat/completions', [
+                'model' => (string) config('services.groq.model', 'llama-3.1-8b-instant'),
+                'temperature' => 0.3,
+                'max_tokens' => 300,
+                'messages' => [
+                    ['role' => 'system', 'content' => self::STATELESS_TUTOR_SYSTEM_PROMPT],
+                    ['role' => 'user', 'content' => $userPrompt],
+                ],
+            ]);
+
+            if (! $response->ok()) {
+                Log::warning('Groq Tutor API error', ['status' => $response->status(), 'body' => $response->body()]);
+                return null;
+            }
+
+            $text = trim((string) data_get($response->json(), 'choices.0.message.content', ''));
+            if ($text === '') {
+                return null;
+            }
+
+            return [
+                'respuesta_directa' => $text,
+                'es_fuera_de_contexto' => $text === 'Solo puedo asesorarte sobre el tema del examen actual',
+            ];
+        } catch (\Throwable $exception) {
+            Log::warning('Groq Tutor request failed', ['error' => $exception->getMessage()]);
+            return null;
+        }
+    }
+
     private function buildPrompt(array $payload): string
     {
         $datosExamen = $payload['datos_examen'] ?? [];
+
         $materia = (string) ($datosExamen['materia'] ?? 'N/A');
         $tema = (string) ($datosExamen['tema'] ?? 'N/A');
-        $subtema = (string) ($datosExamen['subtema'] ?? 'N/A');
-        $dificultad = (string) ($datosExamen['dificultad_actual'] ?? 'N/A');
+        $pregunta = (string) ($payload['pregunta'] ?? '');
+        $respuestaCorrecta = (string) ($payload['correcta'] ?? '');
+        $explicacionOficial = (string) ($payload['explicacion_oficial'] ?? $payload['contexto_tecnico'] ?? '');
+        $respuestaAlumno = (string) ($payload['usuario'] ?? '');
+        $dudaAlumno = (string) ($payload['duda_usuario'] ?? '');
 
         return ""
-            . "DATOS_EXAMEN:\n"
-            . "- Materia: " . $materia . "\n"
-            . "- Tema: " . $tema . "\n"
-            . "- Subtema: " . $subtema . "\n"
-            . "- Dificultad actual: " . $dificultad . "\n"
-            . "Pregunta: " . (string) ($payload['pregunta'] ?? '') . "\n"
-            . "Respuesta Correcta: " . (string) ($payload['correcta'] ?? '') . "\n"
-            . "Respuesta Usuario: " . (string) ($payload['usuario'] ?? '') . "\n"
-            . "Resultado: " . (string) ($payload['resultado'] ?? 'ERROR') . "\n"
-            . "DUDA_USUARIO: " . (string) ($payload['duda_usuario'] ?? 'N/A') . "\n"
-            . "CONTEXTO_TECNICO:\n" . (string) ($payload['contexto_tecnico'] ?? 'Sin contexto técnico') . "\n"
-            . "Regla de enfoque: si la duda está fuera del tema actual, marca es_fuera_de_contexto=true y responde solo: Solo puedo asesorarte sobre el tema del examen actual";
+            . "Analiza la siguiente situación del estudiante y resuelve su duda basándote en este contexto estricto:\n\n"
+            . "--- CONTEXTO DE LA PREGUNTA ---\n"
+            . "Materia: " . $materia . "\n"
+            . "Tema: " . $tema . "\n"
+            . "Pregunta: \"" . $pregunta . "\"\n"
+            . "Respuesta Correcta: \"" . $respuestaCorrecta . "\"\n"
+            . "Explicación Oficial: \"" . $explicacionOficial . "\"\n\n"
+            . "--- SITUACIÓN DEL ALUMNO ---\n"
+            . "Lo que el alumno respondió: \"" . $respuestaAlumno . "\"\n"
+            . "Duda o comentario del alumno: \"" . $dudaAlumno . "\"\n\n"
+            . "Por favor, explica el concepto y resuelve la duda de forma clara y directa siguiendo tus instrucciones.";
     }
 
     private function extractJson(string $content): ?array

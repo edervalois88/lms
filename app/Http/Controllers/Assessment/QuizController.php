@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\Topic;
+use App\Services\GroqService;
 use App\Services\AI\QuestionGeneratorService;
 use App\Services\Learning\AdaptiveExamPipelineService;
 use App\Services\Learning\AdaptiveDifficultyService;
@@ -21,6 +22,7 @@ class QuizController extends Controller
         protected AdaptiveDifficultyService $difficultyService,
         protected QuestionGeneratorService $questionGenerator,
         protected AdaptiveExamPipelineService $adaptivePipeline,
+        protected GroqService $groq,
     ) {}
 
     public function index(): Response
@@ -104,7 +106,6 @@ class QuizController extends Controller
         $data = $request->validate([
             'question_id' => ['required', 'integer', 'exists:questions,id'],
             'selected_index' => ['required', 'integer', 'min:0', 'max:3'],
-            'duda_usuario' => ['nullable', 'string', 'max:1000'],
             'skip_adaptation' => ['nullable', 'boolean'],
         ]);
 
@@ -140,7 +141,7 @@ class QuizController extends Controller
             $question,
             (int) $data['selected_index'],
             $streak,
-            (string) ($data['duda_usuario'] ?? ''),
+            null,
             ! $skip,
         );
 
@@ -148,6 +149,51 @@ class QuizController extends Controller
         data_set($payload, 'metadatos.racha_aciertos', $streak);
 
         return response()->json($payload);
+    }
+
+    public function tutor(Request $request, Subject $subject): JsonResponse
+    {
+        $data = $request->validate([
+            'question_id' => ['required', 'integer', 'exists:questions,id'],
+            'selected_index' => ['required', 'integer', 'min:0', 'max:3'],
+            'texto_duda' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $question = Question::query()
+            ->with('topic.subject')
+            ->findOrFail($data['question_id']);
+
+        if ((int) $question->topic?->subject_id !== (int) $subject->id) {
+            return response()->json(['message' => 'Pregunta no válida para la materia seleccionada.'], 422);
+        }
+
+        $selected = (array) ($question->options ?? []);
+        $selectedAnswer = (string) ($selected[(int) $data['selected_index']] ?? '');
+        $correctAnswer = (string) ($question->correct_answer ?? '');
+
+        $tutor = $this->groq->tutorStateless([
+            'materia' => (string) ($question->topic?->subject?->name ?? ''),
+            'tema' => (string) ($question->topic?->name ?? ''),
+            'texto_pregunta' => (string) ($question->stem ?? ''),
+            'respuesta_correcta' => $correctAnswer,
+            'explicacion_oficial' => (string) ($question->explanation ?? ''),
+            'respuesta_alumno' => $selectedAnswer,
+            'texto_duda' => (string) $data['texto_duda'],
+        ]);
+
+        if (! is_array($tutor)) {
+            $tutor = [
+                'respuesta_directa' => 'No pude generar la explicación en este momento. Revisa la respuesta correcta y la explicación oficial del reactivo.',
+                'es_fuera_de_contexto' => false,
+            ];
+        }
+
+        return response()->json([
+            'chat' => [
+                'respuesta_directa' => (string) ($tutor['respuesta_directa'] ?? ''),
+                'es_fuera_de_contexto' => (bool) ($tutor['es_fuera_de_contexto'] ?? false),
+            ],
+        ]);
     }
 
     private function streakSessionKey(Subject $subject, Topic $topic): string

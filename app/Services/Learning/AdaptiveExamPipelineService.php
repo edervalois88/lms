@@ -5,14 +5,12 @@ namespace App\Services\Learning;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\User;
-use App\Services\GroqService;
 use App\Services\RAG\VectorSearchService;
 
 class AdaptiveExamPipelineService
 {
     public function __construct(
         protected AdaptiveDifficultyService $difficultyService,
-        protected GroqService $groq,
         protected VectorSearchService $vector,
     ) {}
 
@@ -38,22 +36,7 @@ class AdaptiveExamPipelineService
         $nivel = $isCorrect && $correctStreak >= 3 ? 'subir' : ($isCorrect ? 'mantener' : 'bajar');
         $context = $this->vector->technicalContextForQuestion($question);
 
-        $ai = $this->groq->generateFeedback([
-            'pregunta' => (string) $question->stem,
-            'correcta' => $correct,
-            'usuario' => $selected,
-            'resultado' => $isCorrect ? 'ACIERTO' : 'ERROR',
-            'contexto_tecnico' => $context,
-            'duda_usuario' => $dudaUsuario,
-            'datos_examen' => [
-                'materia' => (string) ($subject->name ?? ''),
-                'tema' => (string) ($question->topic?->name ?? ''),
-                'subtema' => (string) ($question->topic?->description ?? ''),
-                'dificultad_actual' => (int) ($question->difficulty ?? 0),
-            ],
-        ]);
-
-        return $this->normalizeOutput($ai, $isCorrect, $nivel, $question, $context, $dudaUsuario);
+        return $this->normalizeOutput(null, $isCorrect, $nivel, $question, $context, $dudaUsuario);
     }
 
     private function normalizeOutput(?array $ai, bool $isCorrect, string $nivel, Question $question, string $context, ?string $dudaUsuario): array
@@ -75,7 +58,6 @@ class AdaptiveExamPipelineService
         ];
 
         if (! is_array($ai)) {
-            $default['chat']['respuesta_directa'] = 'Servicio IA no disponible temporalmente. Mostrando orientación basada en reglas locales del sistema.';
             return $default;
         }
 

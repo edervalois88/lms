@@ -51,21 +51,19 @@ const fetchQuestion = async (topic) => {
 };
 
 const handleAnswer = (selectedIndex) => {
-    submitEvaluation(selectedIndex, '');
+    submitEvaluation(selectedIndex);
 };
 
-const submitEvaluation = async (answerIndex, dudaUsuario, skipAdaptation = false) => {
+const submitEvaluation = async (answerIndex) => {
     if (!currentQuestion.value) return;
 
     requestError.value = '';
-    tutorLoading.value = true;
 
     try {
         const response = await axios.post(route('quiz.evaluate', props.subject.slug), {
             question_id: currentQuestion.value.id,
             selected_index: answerIndex,
-            duda_usuario: dudaUsuario || null,
-            skip_adaptation: skipAdaptation,
+            skip_adaptation: false,
         }, {
             headers: {
                 'X-CSRF-TOKEN': csrfToken(),
@@ -80,17 +78,13 @@ const submitEvaluation = async (answerIndex, dudaUsuario, skipAdaptation = false
         const isCorrect = answerIndex === currentQuestion.value.correct_index;
         lastAnswerCorrect.value = isCorrect;
 
-        if (!skipAdaptation) {
-            totalAnswered.value++;
-            if (isCorrect) {
-                score.value++;
-            }
-            showFeedback.value = true;
+        totalAnswered.value++;
+        if (isCorrect) {
+            score.value++;
         }
+        showFeedback.value = true;
     } catch (_error) {
         requestError.value = 'No se pudo procesar el feedback adaptativo. Intenta nuevamente.';
-    } finally {
-        tutorLoading.value = false;
     }
 };
 
@@ -111,7 +105,35 @@ const exitQuiz = () => {
 
 const handleTutorAsk = async (message) => {
     if (selectedIndex.value === null) return;
-    await submitEvaluation(selectedIndex.value, message, true);
+
+    tutorLoading.value = true;
+    requestError.value = '';
+
+    try {
+        const response = await axios.post(route('quiz.tutor', props.subject.slug), {
+            question_id: currentQuestion.value.id,
+            selected_index: selectedIndex.value,
+            texto_duda: message,
+        }, {
+            headers: {
+                'X-CSRF-TOKEN': csrfToken(),
+                'Accept': 'application/json',
+            },
+        });
+
+        const chat = response.data?.chat || {};
+        adaptiveFeedback.value = {
+            ...(adaptiveFeedback.value || {}),
+            chat: {
+                respuesta_directa: chat.respuesta_directa || '',
+                es_fuera_de_contexto: Boolean(chat.es_fuera_de_contexto),
+            },
+        };
+    } catch (_error) {
+        requestError.value = 'No se pudo obtener respuesta del Tutor IA. Intenta nuevamente.';
+    } finally {
+        tutorLoading.value = false;
+    }
 };
 </script>
 
