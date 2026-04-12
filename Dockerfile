@@ -28,7 +28,8 @@ RUN apk add --no-cache \
     unzip \
     nginx \
     supervisor \
-    netcat-openbsd
+    netcat-openbsd \
+    mysql-client
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql gd zip intl opcache bcmath pcntl posix

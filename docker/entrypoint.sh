@@ -28,21 +28,37 @@ apply_secure_permissions() {
 
 apply_secure_permissions
 
-# Función para esperar a la base de datos
+# Función para esperar a la base de datos con reintentos
 wait_for_db() {
   DB_HOST_VALUE="${DB_HOST:-}"
   DB_PORT_VALUE="${DB_PORT:-3306}"
+  DB_USER_VALUE="${DB_USERNAME:-}"
+  DB_PASS_VALUE="${DB_PASSWORD:-}"
 
   if [ -z "$DB_HOST_VALUE" ]; then
     echo "⏭️ DB_HOST no definido, se omite espera de base de datos."
     return 0
   fi
 
-  echo "⏳ Esperando a que MySQL responda..."
-  while ! nc -z "$DB_HOST_VALUE" "$DB_PORT_VALUE"; do
-    sleep 2
+  echo "⏳ Esperando a que MySQL responda en ${DB_HOST_VALUE}:${DB_PORT_VALUE}..."
+  
+  MAX_ATTEMPTS=30
+  ATTEMPT=1
+  
+  while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+    # Intentar conectar directamente con MySQL
+    if mysql -h "$DB_HOST_VALUE" -P "$DB_PORT_VALUE" -u "$DB_USER_VALUE" -p"$DB_PASS_VALUE" -e "SELECT 1" >/dev/null 2>&1; then
+      echo "✅ MySQL está LISTO en intento $ATTEMPT"
+      return 0
+    fi
+    
+    echo "⏳ Intento $ATTEMPT/$MAX_ATTEMPTS: MySQL no está listo aún..."
+    sleep 3
+    ATTEMPT=$((ATTEMPT + 1))
   done
-  echo "✅ ¡Base de Datos detectada!"
+  
+  echo "⚠️ Timeout esperando a MySQL después de $MAX_ATTEMPTS intentos. Continuando de todas formas..."
+  return 1
 }
 
 if [ "${DB_CONNECTION:-mysql}" != "sqlite" ]; then
