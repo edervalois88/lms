@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
+import axios from 'axios';
 import QuestionCard from '@/Components/Quiz/QuestionCard.vue';
-import AnswerFeedback from '@/Components/Quiz/AnswerFeedback.vue';
+import FeedbackPanel from '@/Components/Quiz/FeedbackPanel.vue';
+import TutorChat from '@/Components/Quiz/TutorChat.vue';
 
 const props = defineProps({
     subject: Object,
@@ -17,6 +19,10 @@ const lastAnswerCorrect = ref(false);
 const score = ref(0);
 const totalAnswered = ref(0);
 const requestError = ref('');
+const correctStreak = ref(0);
+const selectedIndex = ref(null);
+const adaptiveFeedback = ref(null);
+const tutorLoading = ref(false);
 
 const csrfToken = () =>
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -27,21 +33,16 @@ const fetchQuestion = async (topic) => {
     requestError.value = '';
 
     try {
-        const response = await fetch(route('quiz.question', props.subject.slug), {
-            method: 'POST',
+        const response = await axios.post(route('quiz.question', props.subject.slug), {
+            topic_id: topic.id,
+        }, {
             headers: {
-                'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken(),
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ topic_id: topic.id }),
         });
 
-        if (!response.ok) {
-            throw new Error('No se pudo cargar una pregunta real.');
-        }
-
-        currentQuestion.value = await response.json();
+        currentQuestion.value = response.data;
     } catch (_error) {
         requestError.value = 'No se pudo obtener una pregunta del banco real. Intenta nuevamente.';
         currentQuestion.value = null;
@@ -51,14 +52,57 @@ const fetchQuestion = async (topic) => {
 };
 
 const handleAnswer = (selectedIndex) => {
-    lastAnswerCorrect.value = selectedIndex === currentQuestion.value.correct_index;
-    if (lastAnswerCorrect.value) score.value++;
-    totalAnswered.value++;
-    showFeedback.value = true;
+    submitEvaluation(selectedIndex, '');
+};
+
+const submitEvaluation = async (answerIndex, dudaUsuario, skipAdaptation = false) => {
+    if (!currentQuestion.value) return;
+
+    requestError.value = '';
+    tutorLoading.value = true;
+
+    try {
+        const response = await axios.post(route('quiz.evaluate', props.subject.slug), {
+            question_id: currentQuestion.value.id,
+            selected_index: answerIndex,
+            correct_streak: correctStreak.value,
+            duda_usuario: dudaUsuario || null,
+            skip_adaptation: skipAdaptation,
+        }, {
+            headers: {
+                'X-CSRF-TOKEN': csrfToken(),
+                'Accept': 'application/json',
+            },
+        });
+
+        const payload = response.data;
+        adaptiveFeedback.value = payload;
+        selectedIndex.value = answerIndex;
+
+        const isCorrect = answerIndex === currentQuestion.value.correct_index;
+        lastAnswerCorrect.value = isCorrect;
+
+        if (!skipAdaptation) {
+            totalAnswered.value++;
+            if (isCorrect) {
+                score.value++;
+                correctStreak.value++;
+            } else {
+                correctStreak.value = 0;
+            }
+            showFeedback.value = true;
+        }
+    } catch (_error) {
+        requestError.value = 'No se pudo procesar el feedback adaptativo. Intenta nuevamente.';
+    } finally {
+        tutorLoading.value = false;
+    }
 };
 
 const nextQuestion = () => {
     showFeedback.value = false;
+    adaptiveFeedback.value = null;
+    selectedIndex.value = null;
     fetchQuestion(activeTopic.value);
 };
 
@@ -66,6 +110,13 @@ const exitQuiz = () => {
     activeTopic.value = null;
     currentQuestion.value = null;
     showFeedback.value = false;
+    adaptiveFeedback.value = null;
+    selectedIndex.value = null;
+};
+
+const handleTutorAsk = async (message) => {
+    if (selectedIndex.value === null) return;
+    await submitEvaluation(selectedIndex.value, message, true);
 };
 </script>
 
@@ -153,13 +204,20 @@ const exitQuiz = () => {
                         />
                         
                         <div v-if="showFeedback" class="mt-6 animate-fade-in">
-                            <AnswerFeedback 
-                                :correct="lastAnswerCorrect"
-                                :explanation="currentQuestion.explanation"
-                                :concept="currentQuestion.concept"
-                                :topic-detail="currentQuestion.topic_detail"
+                            <FeedbackPanel
+                                :feedback="adaptiveFeedback"
                                 @next="nextQuestion"
                             />
+
+                            <div class="mt-4">
+                                <TutorChat
+                                    :enabled="showFeedback"
+                                    :loading="tutorLoading"
+                                    :response="adaptiveFeedback?.chat?.respuesta_directa || ''"
+                                    :blocked="Boolean(adaptiveFeedback?.chat?.es_fuera_de_contexto)"
+                                    @ask="handleTutorAsk"
+                                />
+                            </div>
                         </div>
                     </div>
 

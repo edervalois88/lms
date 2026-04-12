@@ -12,6 +12,7 @@
         "@inertiajs/core": "^2.0",
         "@inertiajs/vue3": "^2.0",
         "@vueuse/core": "^10.0",
+        "axios": "^1.15.0",
         "chart.js": "^4.4",
         "motion": "^12.38.0",
         "pinia": "^2.1",

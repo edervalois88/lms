@@ -40,4 +40,17 @@ return [
         'model' => env('ANTHROPIC_MODEL', 'claude-3-sonnet-20240229'),
     ],
 
+    'groq' => [
+        'key' => env('GROQ_API_KEY'),
+        'model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+        'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
+    ],
+
+    'vector' => [
+        'provider' => env('VECTOR_PROVIDER', 'qdrant'),
+        'url' => env('VECTOR_URL'),
+        'api_key' => env('VECTOR_API_KEY'),
+        'collection' => env('VECTOR_COLLECTION', 'exam_context'),
+    ],
+
 ];

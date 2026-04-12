@@ -7,6 +7,7 @@ use App\Models\Question;
 use App\Models\Subject;
 use App\Models\Topic;
 use App\Services\AI\QuestionGeneratorService;
+use App\Services\Learning\AdaptiveExamPipelineService;
 use App\Services\Learning\AdaptiveDifficultyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ class QuizController extends Controller
     public function __construct(
         protected AdaptiveDifficultyService $difficultyService,
         protected QuestionGeneratorService $questionGenerator,
+        protected AdaptiveExamPipelineService $adaptivePipeline,
     ) {}
 
     public function index(): Response
@@ -105,5 +107,41 @@ class QuizController extends Controller
             'topic_detail' => $question->topic?->description,
             'subject_name' => $question->topic?->subject?->name,
         ]);
+    }
+
+    public function evaluate(Request $request, Subject $subject): JsonResponse
+    {
+        $data = $request->validate([
+            'question_id' => ['required', 'integer', 'exists:questions,id'],
+            'selected_index' => ['required', 'integer', 'min:0', 'max:3'],
+            'correct_streak' => ['nullable', 'integer', 'min:0'],
+            'duda_usuario' => ['nullable', 'string', 'max:1000'],
+            'skip_adaptation' => ['nullable', 'boolean'],
+        ]);
+
+        $user = auth()->user();
+
+        $question = Question::query()
+            ->with('topic.subject')
+            ->findOrFail($data['question_id']);
+
+        if ((int) $question->topic?->subject_id !== (int) $subject->id) {
+            return response()->json(['message' => 'Pregunta no válida para la materia seleccionada.'], 422);
+        }
+
+        $streak = (int) ($data['correct_streak'] ?? 0);
+        $skip = (bool) ($data['skip_adaptation'] ?? false);
+
+        $payload = $this->adaptivePipeline->evaluate(
+            $user,
+            $subject,
+            $question,
+            (int) $data['selected_index'],
+            $streak,
+            (string) ($data['duda_usuario'] ?? ''),
+            ! $skip,
+        );
+
+        return response()->json($payload);
     }
 }
