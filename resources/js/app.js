@@ -2,6 +2,7 @@ import { createApp, h } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 import { createPinia } from 'pinia'
+import { useTheme } from './Composables/useTheme'
 import '../css/app.css'
 
 createInertiaApp({
@@ -11,6 +12,9 @@ createInertiaApp({
         import.meta.glob('./Pages/**/*.vue')
     ),
     setup({ el, App, props, plugin }) {
+        const { initializeTheme } = useTheme()
+        initializeTheme()
+
         const pinia = createPinia()
         
         const app = createApp({ render: () => h(App, props) })

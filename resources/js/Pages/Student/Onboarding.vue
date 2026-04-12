@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { animate, spring, stagger } from 'motion';
 import { playSound } from '@/Utils/SoundService';
 import MajorTrendsModal from '@/Components/Modals/MajorTrendsModal.vue';
+import { useTheme } from '@/Composables/useTheme';
 
 const props = defineProps({
     universities: Array,
@@ -20,6 +21,7 @@ const selectedUni = ref(null);
 const selectedCampus = ref(null);
 const searchQuery = ref('');
 const showTrendsModal = ref(false);
+const { theme, initializeTheme, toggleTheme } = useTheme();
 
 const form = useForm({
     major_id: null,
@@ -33,6 +35,16 @@ const goToStep = (step) => {
     playSound('pop');
     animate(".step-content", { opacity: [0, 1], x: [20, 0] }, { duration: 0.5, easing: spring() });
 };
+
+const animateCards = () => {
+    animate('.motion-card', { opacity: [0, 1], y: [14, 0], scale: [0.98, 1] }, {
+        duration: 0.45,
+        delay: stagger(0.04),
+        easing: spring(),
+    });
+};
+
+const logoUrl = (path) => (path ? `/${path}` : null);
 
 const selectUni = (uni) => {
     selectedUni.value = uni;
@@ -82,14 +94,30 @@ const selectedMajorData = computed(() => {
 });
 
 onMounted(() => {
+    initializeTheme();
     animate(".onboarding-container", { opacity: [0, 1], scale: [0.98, 1] }, { duration: 0.8 });
+    nextTick(() => animateCards());
+});
+
+watch(currentStep, async () => {
+    await nextTick();
+    animateCards();
 });
 </script>
 
 <template>
     <Head title="Misión: Onboarding - NexusEdu" />
 
-    <div class="min-h-screen bg-midnight text-white selection:bg-orange-500/30 flex items-center justify-center p-6 font-sans">
+    <div class="min-h-screen bg-midnight text-white selection:bg-orange-500/30 flex items-center justify-center p-6 font-sans relative">
+        <button
+            type="button"
+            @click="toggleTheme()"
+            class="absolute top-6 right-6 w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white"
+            :title="theme === 'dark' ? 'Modo claro' : 'Modo oscuro'"
+        >
+            <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+        </button>
+
         <div class="max-w-4xl w-full onboarding-container">
             
             <!-- Welcome Step -->
@@ -189,9 +217,10 @@ onMounted(() => {
                         v-for="uni in universities" 
                         :key="uni.id"
                         @click="selectUni(uni)"
-                        class="glass-morphism-dark p-8 rounded-[2.5rem] border border-white/5 hover:border-orange-500/40 transition-all group flex flex-col items-center gap-6"
+                        class="glass-morphism-dark p-8 rounded-[2.5rem] border border-white/5 hover:border-orange-500/40 transition-all group flex flex-col items-center gap-6 motion-card"
                     >
-                        <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-3xl font-black group-hover:scale-110 transition-transform">
+                        <img v-if="logoUrl(uni.logo_path)" :src="logoUrl(uni.logo_path)" :alt="`${uni.acronym} logo`" class="w-16 h-16 rounded-2xl object-cover border border-white/10 group-hover:scale-110 transition-transform" />
+                        <div v-else class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-3xl font-black group-hover:scale-110 transition-transform">
                             {{ uni.acronym[0] }}
                         </div>
                         <div class="text-center">
@@ -210,8 +239,9 @@ onMounted(() => {
                         v-for="campus in selectedUni.campuses" 
                         :key="campus.id"
                         @click="selectCampus(campus)"
-                        class="p-6 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all font-bold text-center"
+                        class="p-6 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all font-bold text-center motion-card"
                     >
+                        <img v-if="logoUrl(campus.logo_path)" :src="logoUrl(campus.logo_path)" :alt="`${campus.name} logo`" class="w-12 h-12 mx-auto mb-3 rounded-xl object-cover border border-white/10" />
                         {{ campus.name }}
                     </button>
                 </div>
@@ -232,7 +262,7 @@ onMounted(() => {
                         :key="major.id"
                         @click="selectMajor(major.id)"
                         :class="['flex items-center justify-between p-6 rounded-2xl border transition-all text-left', 
-                            form.major_id === major.id ? 'border-orange-500 bg-orange-500/10' : 'border-white/5 bg-white/5 hover:bg-white/10']"
+                            form.major_id === major.id ? 'border-orange-500 bg-orange-500/10' : 'border-white/5 bg-white/5 hover:bg-white/10', 'motion-card']"
                     >
                         <div>
                             <p class="font-black text-lg">{{ major.name }}</p>
@@ -300,7 +330,7 @@ onMounted(() => {
                             v-for="rec in recommendations" 
                             :key="rec.id"
                             @click="selectUni(rec.campus.university); selectCampus(rec.campus); selectMajor(rec.id); showTrendsModal = false"
-                            class="w-full flex items-center justify-between p-6 rounded-2xl border border-white/5 bg-white/5 hover:border-blue-500/40 transition-all text-left group"
+                            class="w-full flex items-center justify-between p-6 rounded-2xl border border-white/5 bg-white/5 hover:border-blue-500/40 transition-all text-left group motion-card"
                         >
                             <div>
                                 <p class="font-black text-lg">{{ rec.name }}</p>

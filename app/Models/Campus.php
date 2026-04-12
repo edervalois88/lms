@@ -16,6 +16,7 @@ class Campus extends Model
         'name',
         'slug',
         'location',
+        'logo_path',
     ];
 
     public function university(): BelongsTo

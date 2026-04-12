@@ -6,6 +6,8 @@ import { animate, spring, stagger } from 'motion';
 import { playSound } from '@/Utils/SoundService';
 
 const props = defineProps({
+    major: Object,
+    user_gpa: [Number, String, null],
     stats: Object,
     recent_exams: Array,
     subject_mastery: Array,
@@ -54,7 +56,7 @@ onMounted(() => {
                 <div class="flex items-center gap-4">
                     <div class="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-xl font-black shadow-orange-glow">N</div>
                     <div class="hidden md:block">
-                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Status: Operador | GPA: {{ user_gpa || '---' }}</p>
+                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Status: Operador | GPA: {{ props.user_gpa || '---' }}</p>
                         <p class="text-sm font-black">{{ $page.props.auth.user.name }}</p>
                     </div>
                 </div>
@@ -161,7 +163,7 @@ onMounted(() => {
                         </div>
 
                         <!-- Action Modules -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 hud-element">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 hud-element">
                             <Link 
                                 :href="route('simulator.index')" 
                                 class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
@@ -190,6 +192,22 @@ onMounted(() => {
                                     <div>
                                         <h3 class="text-2xl font-black uppercase tracking-tighter italic">Práctica</h3>
                                         <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Entrenamiento Focalizado</p>
+                                    </div>
+                                </div>
+                            </Link>
+
+                            <Link
+                                :href="route('practice.daily')"
+                                class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
+                                @click="playSound('success')"
+                            >
+                                <div class="bg-midnight rounded-[2.3rem] p-8 flex items-center gap-8 border border-white/5 group-hover:border-green-500/30 transition-colors">
+                                    <div class="w-20 h-20 bg-green-500/10 rounded-3xl flex items-center justify-center text-4xl text-green-400 group-hover:rotate-12 transition-transform duration-500">
+                                        <i class="fa-solid fa-fire"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-2xl font-black uppercase tracking-tighter italic">Daily XP</h3>
+                                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Racha + Recompensas</p>
                                     </div>
                                 </div>
                             </Link>

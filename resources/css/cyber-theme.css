@@ -8,16 +8,34 @@
     --shadow-blue-glow: 0 0 15px rgba(0, 209, 255, 0.3);
 }
 
+:root {
+    --app-bg: #050505;
+    --app-text: #ffffff;
+    --app-card: rgba(255, 255, 255, 0.03);
+    --app-card-border: rgba(255, 255, 255, 0.08);
+}
+
+.theme-light {
+    --color-midnight: #f3f6fb;
+    --color-cyber-gray: #ffffff;
+    --color-cyber-orange: #f97316;
+    --color-cyber-blue: #0284c7;
+    --app-bg: #f3f6fb;
+    --app-text: #0f172a;
+    --app-card: rgba(255, 255, 255, 0.8);
+    --app-card-border: rgba(15, 23, 42, 0.08);
+}
+
 .glass-morphism {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--app-card);
     backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--app-card-border);
 }
 
 .glass-morphism-dark {
-    background: rgba(0, 0, 0, 0.4);
+    background: color-mix(in srgb, var(--app-bg) 85%, #000 15%);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--app-card-border);
 }
 
 @keyframes float {
@@ -39,13 +57,30 @@
     width: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: #050505;
+    background: var(--app-bg);
 }
 ::-webkit-scrollbar-thumb {
-    background: #121212;
+    background: color-mix(in srgb, var(--app-text) 20%, transparent 80%);
     border-radius: 10px;
-    border: 2px solid #050505;
+    border: 2px solid var(--app-bg);
 }
 ::-webkit-scrollbar-thumb:hover {
     background: #ff6b00;
+}
+
+.theme-light .text-white {
+    color: #0f172a !important;
+}
+
+.theme-light .text-gray-500 {
+    color: #475569 !important;
+}
+
+.theme-light .bg-white\/5 {
+    background-color: rgba(15, 23, 42, 0.05) !important;
+}
+
+.theme-light .border-white\/5,
+.theme-light .border-white\/10 {
+    border-color: rgba(15, 23, 42, 0.1) !important;
 }

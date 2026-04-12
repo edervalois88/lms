@@ -19,6 +19,7 @@ class CampusFactory extends Factory
             'name'          => $name,
             'slug'          => Str::slug($name) . '-' . Str::random(4),
             'location'      => fake()->city(),
+            'logo_path'     => null,
         ];
     }
 }

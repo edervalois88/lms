@@ -1,14 +1,21 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { playSound } from '@/Utils/SoundService';
+import { useTheme } from '@/Composables/useTheme';
 
 const showingNavigationDropdown = ref(false);
+const { theme, initializeTheme, toggleTheme } = useTheme();
+
+onMounted(() => {
+    initializeTheme();
+});
 
 const navItems = [
     { name: 'NODO CENTRAL', route: 'dashboard', icon: 'fa-solid fa-house' },
     { name: 'SIMULACRO', route: 'simulator.index', icon: 'fa-solid fa-graduation-cap' },
     { name: 'ENTRENAMIENTO', route: 'quiz.index', icon: 'fa-solid fa-bolt-lightning' },
+    { name: 'DAILY XP', route: 'practice.daily', icon: 'fa-solid fa-fire' },
     { name: 'ANALÍTICA', route: 'progress.index', icon: 'fa-solid fa-chart-line' },
     { name: 'REPETICIÓN', route: 'review.index', icon: 'fa-solid fa-repeat' },
 ];
@@ -47,6 +54,15 @@ const navItems = [
                     </div>
 
                     <div class="hidden sm:flex sm:items-center sm:ms-6 gap-6">
+                        <button
+                            type="button"
+                            @click="toggleTheme()"
+                            class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5"
+                            :title="theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+                        >
+                            <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+                        </button>
+
                         <!-- User Sector -->
                         <div class="flex items-center gap-4 bg-white/5 px-6 py-2 rounded-2xl border border-white/5">
                             <div class="text-right hidden lg:block">
