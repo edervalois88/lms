@@ -88,6 +88,13 @@ class SpacedRepetitionController extends Controller
             ->map(fn ($id) => (int) $id)
             ->all();
 
+        // If the session key is missing (e.g. after a deploy/restart), fall back to
+        // checking that the question simply exists and is active. This avoids blocking
+        // legitimate users who kept the tab open across a deployment.
+        if (empty($dailyIds)) {
+            return Question::where('id', $questionId)->where('is_active', true)->exists();
+        }
+
         return in_array($questionId, $dailyIds, true);
     }
 

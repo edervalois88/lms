@@ -21,8 +21,14 @@ class CheckoutController extends Controller
     public function createSession(Request $request): JsonResponse
     {
         $user = $request->user();
+        $stripeSecret = (string) config('services.stripe.secret', '');
 
-        Stripe::setApiKey((string) config('services.stripe.secret', env('STRIPE_SECRET')));
+        if ($stripeSecret === '') {
+            Log::error('Stripe checkout blocked: STRIPE_SECRET is not configured.');
+            return response()->json(['message' => 'Stripe is not configured.'], 503);
+        }
+
+        Stripe::setApiKey($stripeSecret);
 
         $successUrl = route('checkout.success') . '?session_id={CHECKOUT_SESSION_ID}';
         $cancelUrl = route('checkout.cancel');
@@ -58,15 +64,16 @@ class CheckoutController extends Controller
     {
         $payload = $request->getContent();
         $signature = (string) $request->header('Stripe-Signature', '');
-        $secret = (string) config('services.stripe.webhook_secret', env('STRIPE_WEBHOOK_SECRET'));
+        $secret = (string) config('services.stripe.webhook_secret', '');
+
+        if ($secret === '') {
+            Log::error('Stripe webhook blocked: STRIPE_WEBHOOK_SECRET is not configured.');
+            return response()->json(['ok' => false], 503);
+        }
 
         try {
-            if ($secret !== '') {
-                $event = Webhook::constructEvent($payload, $signature, $secret);
-            } else {
-                $event = json_decode($payload, false, 512, JSON_THROW_ON_ERROR);
-            }
-        } catch (UnexpectedValueException|SignatureVerificationException|\JsonException $exception) {
+            $event = Webhook::constructEvent($payload, $signature, $secret);
+        } catch (UnexpectedValueException|SignatureVerificationException $exception) {
             Log::warning('Stripe webhook rejected', ['error' => $exception->getMessage()]);
             return response()->json(['ok' => false], 400);
         }

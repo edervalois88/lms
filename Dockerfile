@@ -60,7 +60,8 @@ RUN mkdir -p storage/logs && \
     mkdir -p /etc/supervisor/conf.d
 
 RUN chown -R www-data:www-data storage bootstrap/cache public/build
-RUN chmod -R 777 storage bootstrap/cache
+RUN find storage bootstrap/cache -type d -exec chmod 775 {} \; \
+    && find storage bootstrap/cache -type f -exec chmod 664 {} \;
 
 # Nginx config
 COPY ./docker/nginx.conf /etc/nginx/http.d/default.conf

@@ -3,20 +3,13 @@ set -eu
 
 echo "🚀 Iniciando Protocolo de Despegue NexusEdu (v11.1 Alpine-Compatible)..."
 
-# 1. Inyectando variables de entorno en el .env físico
-echo "📝 Inyectando variables de entorno..."
-env | grep -E '^(DB_|APP_|REDIS_|MAIL_|QUEUE_|VITE_|ANTHROPIC_|GROQ_|VECTOR_|SESSION_|CACHE_|LOG_|ENABLE_QUEUE_WORKER|QUEUE_WORKER_)' > .env || true
-
-# Defaults seguros (respetan variables explícitas definidas en Railway)
-SESSION_DRIVER_VALUE="${SESSION_DRIVER:-database}"
-CACHE_STORE_VALUE="${CACHE_STORE:-database}"
-QUEUE_CONNECTION_VALUE="${QUEUE_CONNECTION:-database}"
-
-# Garantiza que Laravel tenga estos valores en el .env generado
-echo "LOG_CHANNEL=errorlog" >> .env
-echo "CACHE_STORE=${CACHE_STORE_VALUE}" >> .env
-echo "SESSION_DRIVER=${SESSION_DRIVER_VALUE}" >> .env
-echo "QUEUE_CONNECTION=${QUEUE_CONNECTION_VALUE}" >> .env
+# 1. Defaults seguros por variables de entorno (sin materializar secretos en .env)
+echo "📝 Aplicando defaults de entorno en memoria..."
+: "${LOG_CHANNEL:=errorlog}"
+: "${SESSION_DRIVER:=database}"
+: "${CACHE_STORE:=database}"
+: "${QUEUE_CONNECTION:=database}"
+export LOG_CHANNEL SESSION_DRIVER CACHE_STORE QUEUE_CONNECTION
 
 # 2. Creación EXPLÍCITA de carpetas (Sin usar llaves {} para compatibilidad con Alpine sh)
 echo "📂 Asegurando directorios de sistema..."
@@ -26,9 +19,14 @@ mkdir -p storage/framework/sessions
 mkdir -p storage/framework/views
 mkdir -p bootstrap/cache
 
-# 3. Permisos Totales
-chmod -R 777 storage bootstrap/cache
-chown -R www-data:www-data storage bootstrap/cache
+# 3. Permisos seguros
+apply_secure_permissions() {
+  chown -R www-data:www-data storage bootstrap/cache
+  find storage bootstrap/cache -type d -exec chmod 775 {} \;
+  find storage bootstrap/cache -type f -exec chmod 664 {} \;
+}
+
+apply_secure_permissions
 
 # Función para esperar a la base de datos
 wait_for_db() {
@@ -154,7 +152,7 @@ else
 fi
 
 # Re-aplicar permisos tras los comandos de artisan
-chmod -R 777 storage bootstrap/cache
+apply_secure_permissions
 
 echo "✅ NexusEdu está LIVE."
 exec /usr/bin/supervisord -c /etc/supervisord.conf
