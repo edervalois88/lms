@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
+use App\Services\Learning\AdaptiveExamPipelineService;
 use App\Services\Learning\ProgressCalculatorService;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -11,7 +12,8 @@ use Inertia\Response;
 class DashboardController extends Controller
 {
     public function __construct(
-        protected ProgressCalculatorService $progress
+        protected ProgressCalculatorService $progress,
+        protected AdaptiveExamPipelineService $adaptivePipeline,
     ) {}
 
     public function index(): Response
@@ -32,6 +34,7 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get(),
             'subject_mastery' => $this->progress->getSubjectMastery($user),
+            'bootcamp_recommendation' => $this->adaptivePipeline->getBootcampRecommendation($user),
         ]);
     }
 }

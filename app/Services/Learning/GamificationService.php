@@ -15,6 +15,7 @@ class GamificationService
     public const XP_CONSISTENCY_BONUS = 200;
     public const XP_TUTOR_HINT_COST = 20;
     public const XP_SIMULATION_COMPLETE = 150;
+    public const XP_BOOTCAMP_ADAPTIVE = 30;
 
     public function getCurrentXp(User $user): int
     {
@@ -119,6 +120,13 @@ class GamificationService
     public function awardSimulationCompletion(User $user, int $examId): array
     {
         return $this->earnXp($user, self::XP_SIMULATION_COMPLETE, 'simulation_completion', [
+            'exam_id' => $examId,
+        ]);
+    }
+
+    public function awardAdaptiveBootcampCompletion(User $user, int $examId): array
+    {
+        return $this->earnXp($user, self::XP_BOOTCAMP_ADAPTIVE, 'adaptive_bootcamp_completion', [
             'exam_id' => $examId,
         ]);
     }

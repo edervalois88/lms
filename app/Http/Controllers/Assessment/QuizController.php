@@ -272,6 +272,18 @@ class QuizController extends Controller
         return response()->json($this->groq->tutorHealthCheck());
     }
 
+    public function startBootcamp(Request $request)
+    {
+        $user = $request->user();
+        $exam = $this->adaptivePipeline->generateTargetedBootcamp($user);
+
+        if (! $exam) {
+            return back()->with('error', 'No fue posible crear el bootcamp táctico en este momento. Intenta nuevamente.');
+        }
+
+        return redirect()->route('simulator.show', $exam)->with('success', 'Bootcamp táctico generado: 10 reactivos personalizados.');
+    }
+
     private function buildTutorFallback(Question $question, string $respuestaAlumno, string $respuestaCorrecta): string
     {
         $explicacion = trim((string) ($question->explanation ?? ''));

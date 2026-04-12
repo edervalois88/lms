@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Quiz
         Route::get('/quiz', [QuizController::class, 'index'])->name('quiz.index');
+        Route::post('/quiz/bootcamp/start', [QuizController::class, 'startBootcamp'])->name('quiz.bootcamp.start');
         Route::get('/quiz/{subject:slug}', [QuizController::class, 'show'])->name('quiz.show');
         Route::post('/quiz/{subject:slug}/question', [QuizController::class, 'question'])->name('quiz.question');
         Route::post('/quiz/{subject:slug}/evaluate', [QuizController::class, 'evaluate'])->name('quiz.evaluate');

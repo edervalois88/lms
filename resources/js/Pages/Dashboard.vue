@@ -11,6 +11,7 @@ const props = defineProps({
     stats: Object,
     recent_exams: Array,
     subject_mastery: Array,
+    bootcamp_recommendation: Object,
 });
 
 const page = usePage();
@@ -49,6 +50,23 @@ const gapStatus = computed(() => {
     if (gap <= 0) return { text: 'ZONA DE INGRESO', color: 'text-green-400', bg: 'bg-green-400/10' };
     if (gap <= 10) return { text: 'META PRÓXIMA', color: 'text-orange-400', bg: 'bg-orange-400/10' };
     return { text: 'BRECHA CRÍTICA', color: 'text-red-400', bg: 'bg-red-400/10' };
+});
+
+const bootcampSubjects = computed(() => {
+    const subjects = props.bootcamp_recommendation?.subjects || [];
+    return subjects.map((item) => item.name).filter(Boolean).slice(0, 2);
+});
+
+const bootcampProtocolText = computed(() => {
+    if (bootcampSubjects.value.length >= 2) {
+        return `Protocolo de refuerzo necesario en: ${bootcampSubjects.value[0]} y ${bootcampSubjects.value[1]}.`;
+    }
+
+    if (bootcampSubjects.value.length === 1) {
+        return `Protocolo de refuerzo necesario en: ${bootcampSubjects.value[0]}.`;
+    }
+
+    return 'Protocolo de refuerzo en generación. Ejecuta misión táctica para calibrar tu perfil.';
 });
 
 onMounted(() => {
@@ -214,6 +232,29 @@ onMounted(() => {
                                         <p class="text-sm font-bold text-gray-300 italic leading-relaxed pl-4">
                                             "Protocolo detectado: Para neutralizar los <span class="text-orange-500">{{ stats.projection.gap_to_goal }} aciertos</span> restantes, debemos priorizar el módulo de <b>Física Cuántica</b>. El algoritmo estima éxito en 14 sesiones."
                                         </p>
+                                    </div>
+                                </div>
+
+                                <div class="rounded-[2.5rem] border border-red-500/35 bg-linear-to-br from-red-500/12 via-orange-500/8 to-transparent p-8 shadow-[0_0_35px_rgba(249,115,22,0.22)]">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                        <div>
+                                            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-red-300">Bootcamp Táctico Recomendado</p>
+                                            <h3 class="text-2xl md:text-3xl font-black uppercase italic tracking-tight mt-2">Misión de Rescate Adaptativa</h3>
+                                            <p class="text-sm font-bold text-orange-200/90 mt-3">{{ bootcampProtocolText }}</p>
+                                            <p v-if="props.bootcamp_recommendation?.is_fallback" class="text-[10px] font-black uppercase tracking-widest text-orange-300/80 mt-3">
+                                                Modo calibración activo: seleccionadas materias estratégicas por fallback.
+                                            </p>
+                                        </div>
+
+                                        <Link
+                                            :href="route('quiz.bootcamp.start')"
+                                            method="post"
+                                            as="button"
+                                            class="px-8 py-4 rounded-2xl bg-linear-to-r from-orange-500 to-red-500 text-white font-black uppercase tracking-wider shadow-[0_0_20px_rgba(249,115,22,0.45)] hover:scale-[1.02] transition-transform"
+                                            @click="playSound('success')"
+                                        >
+                                            Iniciar Misión Táctica (10 Reactivos)
+                                        </Link>
                                     </div>
                                 </div>
                             </div>

@@ -189,6 +189,8 @@ class SimulatorController extends Controller
 
             if ($lockedExam->type === ExamType::Simulation) {
                 $this->gamification->awardSimulationCompletion($lockedExam->user, (int) $lockedExam->id);
+            } elseif ($lockedExam->type === ExamType::Practice && (int) $lockedExam->exam_area === 0) {
+                $this->gamification->awardAdaptiveBootcampCompletion($lockedExam->user, (int) $lockedExam->id);
             }
         });
 
@@ -259,6 +261,13 @@ class SimulatorController extends Controller
             default           => '¡No te rindas! Cada simulacro te hace más fuerte.',
         };
 
+        $xpAwarded = 0;
+        if ($exam->type === ExamType::Simulation) {
+            $xpAwarded = GamificationService::XP_SIMULATION_COMPLETE;
+        } elseif ($exam->type === ExamType::Practice && (int) $exam->exam_area === 0) {
+            $xpAwarded = GamificationService::XP_BOOTCAMP_ADAPTIVE;
+        }
+
         return Inertia::render('Simulator/Results', [
             'exam'       => $exam,
             'correct'    => $correct,
@@ -267,7 +276,7 @@ class SimulatorController extends Controller
             'message'    => $message,
             'goal'       => $user->major,
             'ai_suggestions' => $suggestions,
-            'xp_awarded' => $exam->type === ExamType::Simulation ? GamificationService::XP_SIMULATION_COMPLETE : 0,
+            'xp_awarded' => $xpAwarded,
             'subject_breakdown' => $subjectBreakdown,
             'incorrect_answers_count' => $incorrectAnswersCount,
         ]);
