@@ -5,14 +5,28 @@ namespace App\Services\Learning;
 use App\Models\User;
 use App\Models\Subject;
 use App\Models\ExamAnswer;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 class AdaptiveDifficultyService
 {
+    private const DEFAULT_DIFFICULTY = 5;
+
     public function getCurrentDifficulty(User $user, Subject $subject): int
     {
         $key = "difficulty:{$user->id}:{$subject->id}";
-        return (int) Redis::get($key) ?: 5;
+
+        try {
+            return (int) Redis::get($key) ?: self::DEFAULT_DIFFICULTY;
+        } catch (\Throwable $exception) {
+            Log::warning('Redis unavailable; using default adaptive difficulty.', [
+                'user_id' => $user->id,
+                'subject_id' => $subject->id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return self::DEFAULT_DIFFICULTY;
+        }
     }
 
     public function adjustDifficulty(User $user, Subject $subject, bool $wasCorrect): int
@@ -48,7 +62,16 @@ class AdaptiveDifficultyService
         }
 
         $key = "difficulty:{$user->id}:{$subject->id}";
-        Redis::setex($key, 86400, $currentDifficulty);
+        try {
+            Redis::setex($key, 86400, $currentDifficulty);
+        } catch (\Throwable $exception) {
+            Log::warning('Redis unavailable; adaptive difficulty was not persisted.', [
+                'user_id' => $user->id,
+                'subject_id' => $subject->id,
+                'difficulty' => $currentDifficulty,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         return $currentDifficulty;
     }

@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -232,12 +233,22 @@ class SimulatorController extends Controller
         $batchSize = max(1, (int) ceil($missingCount / $topics->count()));
 
         foreach ($topics as $topic) {
-            GenerateQuestionBatch::dispatch(
-                $exam->user,
-                $topic,
-                random_int(4, 7),
-                $batchSize
-            );
+            try {
+                GenerateQuestionBatch::dispatch(
+                    $exam->user,
+                    $topic,
+                    random_int(4, 7),
+                    $batchSize
+                );
+            } catch (\Throwable $exception) {
+                // Fail-open: never block the simulator if queue infrastructure is unavailable.
+                Log::warning('Question replenishment dispatch failed; continuing without queue.', [
+                    'exam_id' => $exam->id,
+                    'topic_id' => $topic->id,
+                    'missing_count' => $missingCount,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
         }
     }
 
