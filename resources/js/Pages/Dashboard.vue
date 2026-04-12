@@ -261,7 +261,7 @@ onMounted(() => {
                         </div>
 
                         <!-- Action Modules -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 hud-element">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hud-element">
                             <Link 
                                 :href="route('simulator.index')" 
                                 class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
@@ -280,7 +280,7 @@ onMounted(() => {
                             
                             <Link 
                                 :href="route('quiz.index')" 
-                                class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
+                                            class="px-8 py-4 min-h-11 rounded-2xl bg-linear-to-r from-orange-500 to-red-500 text-white font-black uppercase tracking-wider shadow-[0_0_20px_rgba(249,115,22,0.45)] hover:scale-[1.02] transition-transform"
                                 @click="playSound('success')"
                             >
                                 <div class="bg-midnight rounded-[2.3rem] p-8 flex items-center gap-8 border border-white/5 group-hover:border-blue-500/30 transition-colors">
@@ -402,3 +402,4 @@ onMounted(() => {
     text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
 }
 </style>
+

@@ -132,9 +132,9 @@ onUnmounted(() => {
             </div>
         </template>
 
-        <div class="flex h-[calc(100vh-160px)] overflow-hidden">
+        <div class="flex flex-col md:flex-row h-auto md:h-[calc(100vh-160px)] overflow-hidden">
             <!-- Sidebar Navigation -->
-            <aside class="w-72 bg-white border-r border-gray-200 flex flex-col">
+            <aside class="w-full md:w-72 bg-white border-b md:border-b-0 md:border-r border-gray-200 flex flex-col">
                 <div class="p-6 border-b border-gray-100 bg-gray-50">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Tu Progreso</p>
                     <p class="text-lg font-black text-gray-900">{{ Object.keys(answers).length }} / {{ questions.length }}</p>
@@ -142,12 +142,12 @@ onUnmounted(() => {
                         <div class="bg-orange-500 h-full transition-all" :style="{ width: (Object.keys(answers).length / questions.length * 100) + '%' }"></div>
                     </div>
                 </div>
-                <div class="grow overflow-y-auto p-4 grid grid-cols-5 gap-2 content-start">
+                <div class="grow overflow-y-auto p-4 grid grid-cols-6 sm:grid-cols-8 md:grid-cols-5 gap-2 content-start">
                     <button 
                         v-for="(q, index) in questions" 
                         :key="index"
                         @click="currentQuestionIndex = index; questionStartTime = Date.now();"
-                        class="w-10 h-10 rounded-lg text-xs font-bold transition-all border-2"
+                        class="w-10 h-10 min-h-11 rounded-lg text-xs font-bold transition-all border-2"
                         :class="[
                             currentQuestionIndex === index ? 'border-orange-500 bg-orange-50 text-orange-600' : 
                             answers[index] ? 'border-green-500 bg-green-500 text-white' : 'border-gray-100 bg-white text-gray-400'
@@ -159,7 +159,7 @@ onUnmounted(() => {
                 <div class="p-4 bg-gray-50 border-t border-gray-100">
                     <button 
                         @click="submitExam(false)"
-                        class="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors"
+                        class="w-full bg-gray-900 text-white py-3 min-h-11 rounded-xl font-bold hover:bg-gray-800 transition-colors"
                     >
                         Finalizar Examen
                     </button>
@@ -204,7 +204,7 @@ onUnmounted(() => {
                         <button 
                             @click="prevQuestion"
                             :disabled="currentQuestionIndex === 0"
-                            class="flex items-center gap-2 text-gray-500 font-bold hover:text-gray-900 disabled:opacity-30"
+                            class="flex items-center gap-2 text-gray-500 font-bold min-h-11 hover:text-gray-900 disabled:opacity-30"
                         >
                             <i class="fa-solid fa-arrow-left"></i> Anterior
                         </button>
@@ -212,7 +212,7 @@ onUnmounted(() => {
                         <button 
                             v-if="currentQuestionIndex < questions.length - 1"
                             @click="nextQuestion"
-                            class="bg-white text-gray-900 px-8 py-3 rounded-xl font-bold border border-gray-200 shadow-sm hover:shadow-md transition-all"
+                            class="bg-white text-gray-900 px-8 py-3 min-h-11 rounded-xl font-bold border border-gray-200 shadow-sm hover:shadow-md transition-all"
                         >
                             Siguiente
                         </button>
@@ -234,7 +234,7 @@ onUnmounted(() => {
                 <div class="mt-6 flex justify-end">
                     <button
                         type="button"
-                        class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-400 text-white font-black text-sm uppercase tracking-wider"
+                        class="px-4 py-2 min-h-11 rounded-lg bg-red-500 hover:bg-red-400 text-white font-black text-sm uppercase tracking-wider"
                         @click="showVisibilityAlert = false"
                     >
                         Entendido
@@ -244,3 +244,4 @@ onUnmounted(() => {
         </div>
     </AuthenticatedLayout>
 </template>
+

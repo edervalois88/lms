@@ -123,14 +123,14 @@ onMounted(() => {
 
                     <Link
                         :href="route('simulator.review', exam.id)"
-                        class="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-orange-500 py-4 text-sm font-black uppercase tracking-wider text-black shadow-[0_0_15px_rgba(255,165,0,0.5)] hover:bg-orange-400 transition-colors"
+                        class="mt-6 inline-flex w-full items-center justify-center rounded-2xl min-h-11 bg-orange-500 py-4 text-sm font-black uppercase tracking-wider text-black shadow-[0_0_15px_rgba(255,165,0,0.5)] hover:bg-orange-400 transition-colors"
                     >
                         Entrar a Revisión Táctica
                     </Link>
 
                     <Link
                         :href="route('simulator.index')"
-                        class="mt-3 inline-flex w-full items-center justify-center rounded-2xl border border-white/20 py-3 text-sm font-bold text-gray-200 hover:bg-white/5"
+                        class="mt-3 inline-flex w-full items-center justify-center rounded-2xl min-h-11 border border-white/20 py-3 text-sm font-bold text-gray-200 hover:bg-white/5"
                     >
                         Nuevo simulacro
                     </Link>
@@ -201,3 +201,4 @@ onMounted(() => {
     }
 }
 </style>
+

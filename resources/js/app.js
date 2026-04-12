@@ -3,7 +3,12 @@ import { createInertiaApp } from '@inertiajs/vue3'
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 import { createPinia } from 'pinia'
 import { useTheme } from './Composables/useTheme'
+import { registerSW } from 'virtual:pwa-register'
 import '../css/app.css'
+
+registerSW({
+    immediate: true,
+})
 
 createInertiaApp({
     title: (title) => title ? `${title} — NexusEdu` : 'NexusEdu — AI Powered Education',

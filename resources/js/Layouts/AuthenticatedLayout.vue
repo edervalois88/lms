@@ -50,6 +50,22 @@ const themePalette = computed(() => {
 const avatarMetadata = computed(() => equippedCosmetics.value?.avatar?.metadata || {});
 const avatarIcon = computed(() => avatarMetadata.value.icon_class || 'fa-solid fa-user');
 const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.metadata?.label || null);
+
+const mobileQuickNav = computed(() => {
+    const items = [
+        { name: 'Inicio', route: 'dashboard', icon: 'fa-solid fa-house' },
+        { name: 'Simulacro', route: 'simulator.index', icon: 'fa-solid fa-graduation-cap' },
+        { name: 'Entrena', route: 'quiz.index', icon: 'fa-solid fa-bolt-lightning' },
+        { name: 'Progreso', route: 'progress.index', icon: 'fa-solid fa-chart-line' },
+        { name: 'Perfil', route: 'profile.edit', icon: 'fa-solid fa-user-gear' },
+    ];
+
+    if (Boolean(page.props?.auth?.is_admin)) {
+        items[3] = { name: 'Admin', route: 'admin.index', icon: 'fa-solid fa-shield-halved' };
+    }
+
+    return items;
+});
 </script>
 
 <template>
@@ -69,13 +85,13 @@ const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.meta
                         </div>
 
                         <!-- Navigation Links -->
-                        <div class="hidden space-x-8 sm:-my-px sm:flex h-full">
+                        <div class="hidden space-x-8 md:-my-px md:flex h-full">
                             <Link 
                                 v-for="item in navItems" 
                                 :key="item.name"
                                 :href="route(item.route)"
                                 @click="playSound('click')"
-                                class="inline-flex items-center px-1 pt-1 border-b-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
+                                class="inline-flex items-center px-1 pt-1 min-h-11 border-b-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
                                 :class="route().current(item.route + '*') ? 'border-orange-500 text-white glow-text' : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-white/10'"
                             >
                                 <i :class="item.icon" class="mr-3 text-[10px]"></i>
@@ -84,11 +100,11 @@ const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.meta
                         </div>
                     </div>
 
-                    <div class="hidden sm:flex sm:items-center sm:ms-6 gap-6">
+                    <div class="hidden md:flex md:items-center md:ms-6 gap-6">
                         <button
                             type="button"
                             @click="toggleTheme()"
-                            class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5"
+                            class="w-12 h-12 min-h-11 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5"
                             :title="theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
                         >
                             <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
@@ -106,26 +122,26 @@ const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.meta
                         </div>
 
                         <div class="flex items-center gap-3">
-                            <Link :href="route('profile.edit')" class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5">
+                            <Link :href="route('profile.edit')" class="w-12 h-12 min-h-11 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-white/5">
                                 <i class="fa-solid fa-gear"></i>
                             </Link>
-                            <Link :href="route('logout')" method="post" as="button" class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all border border-red-500/20">
+                            <Link :href="route('logout')" method="post" as="button" class="w-12 h-12 min-h-11 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all border border-red-500/20">
                                 <i class="fa-solid fa-power-off"></i>
                             </Link>
                         </div>
                     </div>
 
                     <!-- Mobile Trigger -->
-                    <div class="-me-2 flex items-center gap-2 sm:hidden">
+                    <div class="-me-2 flex items-center gap-2 md:hidden">
                         <button
                             type="button"
                             @click="toggleTheme()"
-                            class="inline-flex items-center justify-center p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition duration-150 ease-in-out"
+                            class="inline-flex items-center justify-center min-h-11 min-w-11 p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition duration-150 ease-in-out"
                             :title="theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
                         >
                             <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
                         </button>
-                        <button @click="showingNavigationDropdown = !showingNavigationDropdown" class="inline-flex items-center justify-center p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition duration-150 ease-in-out">
+                        <button @click="showingNavigationDropdown = !showingNavigationDropdown" class="inline-flex items-center justify-center min-h-11 min-w-11 p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition duration-150 ease-in-out">
                             <i :class="showingNavigationDropdown ? 'fa-solid fa-xmark' : 'fa-solid fa-bars-staggered'"></i>
                         </button>
                     </div>
@@ -133,14 +149,14 @@ const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.meta
             </div>
 
             <!-- Responsive Menu -->
-            <div :class="{ block: showingNavigationDropdown, hidden: !showingNavigationDropdown }" class="sm:hidden bg-cyber-gray border-t border-white/5">
+            <div :class="{ block: showingNavigationDropdown, hidden: !showingNavigationDropdown }" class="md:hidden bg-cyber-gray border-t border-white/5">
                 <div class="pt-4 pb-6 space-y-2 px-4 text-center">
                     <Link 
                         v-for="item in navItems" 
                         :key="item.name"
                         :href="route(item.route)"
                         @click="playSound('click')"
-                        class="block w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] transition-all"
+                        class="block w-full py-4 min-h-11 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] transition-all"
                         :class="route().current(item.route + '*') ? 'bg-orange-500 text-white shadow-orange-glow' : 'text-gray-500 hover:bg-white/5'"
                     >
                         {{ item.name }}
@@ -149,7 +165,7 @@ const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.meta
                     <div class="pt-3 grid grid-cols-3 gap-3">
                         <Link
                             :href="route('profile.edit')"
-                            class="py-3 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white"
+                            class="py-3 min-h-11 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white"
                         >
                             Perfil
                         </Link>
@@ -157,14 +173,14 @@ const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.meta
                             :href="route('logout')"
                             method="post"
                             as="button"
-                            class="py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-black uppercase tracking-widest text-red-400"
+                            class="py-3 min-h-11 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-black uppercase tracking-widest text-red-400"
                         >
                             Salir
                         </Link>
                         <button
                             type="button"
                             @click="toggleTheme()"
-                            class="py-3 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white"
+                            class="py-3 min-h-11 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white"
                         >
                             {{ theme === 'dark' ? 'Claro' : 'Oscuro' }}
                         </button>
@@ -181,9 +197,26 @@ const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.meta
         </header>
 
         <!-- Main Workspace -->
-        <main class="relative z-10 pb-32">
+        <main class="relative z-10 pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-32">
             <slot />
         </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="fixed bottom-0 inset-x-0 z-50 md:hidden border-t border-white/10 bg-cyber-gray/95 backdrop-blur-xl" style="padding-bottom: env(safe-area-inset-bottom);">
+            <div class="grid grid-cols-5 gap-1 px-2 py-2">
+                <Link
+                    v-for="item in mobileQuickNav"
+                    :key="item.name"
+                    :href="route(item.route)"
+                    @click="playSound('click')"
+                    class="min-h-11 rounded-xl flex flex-col items-center justify-center text-[10px] font-black uppercase tracking-wide"
+                    :class="route().current(item.route + '*') ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40' : 'text-gray-400 hover:bg-white/5'"
+                >
+                    <i :class="item.icon"></i>
+                    <span class="mt-1 leading-none">{{ item.name }}</span>
+                </Link>
+            </div>
+        </nav>
 
         <!-- Global Footer -->
         <footer class="bg-cyber-gray/50 border-t border-white/5 py-16 relative z-10">
@@ -210,3 +243,4 @@ const profileTitle = computed(() => equippedCosmetics.value?.profile_title?.meta
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
 }
 </style>
+
