@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class GroqService
 {
+    private const ESTIMATED_TOKENS_SAVED_PER_CACHE_HIT = 350;
+
     private const STATELESS_TUTOR_SYSTEM_PROMPT = "Eres un tutor académico experto. Resuelve dudas o explica errores basándote ÚNICAMENTE en la 'Respuesta Correcta' y la 'Explicación Oficial' proporcionadas. Escribe máximo 80 palabras. Usa un tono motivador, ve directo al grano (sin saludos largos) y usa negritas para conceptos clave.";
 
     private const SYSTEM_PROMPT = <<<'PROMPT'
@@ -149,6 +151,8 @@ PROMPT;
                 return [
                     'respuesta_directa' => (string) $cachedResponse->explicacion_ia,
                     'es_fuera_de_contexto' => false,
+                    'from_cache' => true,
+                    'tokens_saved' => self::ESTIMATED_TOKENS_SAVED_PER_CACHE_HIT,
                 ];
             }
         }
@@ -180,6 +184,13 @@ PROMPT;
                 ]
             );
         }
+
+        if (! is_array($response)) {
+            return null;
+        }
+
+        $response['from_cache'] = false;
+        $response['tokens_saved'] = 0;
 
         return $response;
     }

@@ -18,6 +18,14 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    fromCache: {
+        type: Boolean,
+        default: false,
+    },
+    tokensSaved: {
+        type: Number,
+        default: 0,
+    },
 });
 
 const emit = defineEmits(['ask']);
@@ -47,6 +55,9 @@ const submit = () => {
                 {{ response || 'Haz una pregunta sobre el reactivo para profundizar en el tema.' }}
             </p>
             <p v-if="blocked" class="text-xs font-bold text-red-600 mt-2">Solo puedo asesorarte sobre el tema del examen actual.</p>
+            <p v-if="fromCache" class="text-xs font-bold text-emerald-700 mt-2">
+                Respuesta instantánea desde caché. Tokens ahorrados: {{ tokensSaved }}
+            </p>
         </div>
 
         <form class="mt-3 flex gap-2" @submit.prevent="submit">

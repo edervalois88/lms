@@ -181,13 +181,20 @@ class QuizController extends Controller
             $tutor = [
                 'respuesta_directa' => 'No pude generar la explicación en este momento. Revisa la respuesta correcta y la explicación oficial del reactivo.',
                 'es_fuera_de_contexto' => false,
+                'from_cache' => false,
+                'tokens_saved' => 0,
             ];
         }
 
         return response()->json([
+            'explicacion' => (string) ($tutor['respuesta_directa'] ?? ''),
+            'from_cache' => (bool) ($tutor['from_cache'] ?? false),
+            'tokens_saved' => (int) ($tutor['tokens_saved'] ?? 0),
             'chat' => [
                 'respuesta_directa' => (string) ($tutor['respuesta_directa'] ?? ''),
                 'es_fuera_de_contexto' => (bool) ($tutor['es_fuera_de_contexto'] ?? false),
+                'from_cache' => (bool) ($tutor['from_cache'] ?? false),
+                'tokens_saved' => (int) ($tutor['tokens_saved'] ?? 0),
             ],
         ]);
     }

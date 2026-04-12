@@ -127,6 +127,8 @@ const handleTutorAsk = async (message) => {
             chat: {
                 respuesta_directa: chat.respuesta_directa || '',
                 es_fuera_de_contexto: Boolean(chat.es_fuera_de_contexto),
+                from_cache: Boolean(chat.from_cache ?? response.data?.from_cache),
+                tokens_saved: Number(chat.tokens_saved ?? response.data?.tokens_saved ?? 0),
             },
         };
     } catch (_error) {
@@ -232,6 +234,8 @@ const handleTutorAsk = async (message) => {
                                     :loading="tutorLoading"
                                     :response="adaptiveFeedback?.chat?.respuesta_directa || ''"
                                     :blocked="Boolean(adaptiveFeedback?.chat?.es_fuera_de_contexto)"
+                                    :from-cache="Boolean(adaptiveFeedback?.chat?.from_cache)"
+                                    :tokens-saved="Number(adaptiveFeedback?.chat?.tokens_saved || 0)"
                                     @ask="handleTutorAsk"
                                 />
                             </div>
