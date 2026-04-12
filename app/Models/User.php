@@ -22,6 +22,8 @@ class User extends Authenticatable
         'onboarded_at',
         'streak_days',
         'last_study_at',
+        'major_id',
+        'gpa',
     ];
 
     protected $hidden = [
@@ -38,7 +40,13 @@ class User extends Authenticatable
             'preferences' => 'array',
             'onboarded_at' => 'datetime',
             'last_study_at' => 'datetime',
+            'gpa' => 'float',
         ];
+    }
+
+    public function major(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Major::class);
     }
 
     public function exams(): HasMany
