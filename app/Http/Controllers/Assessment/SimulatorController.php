@@ -13,9 +13,11 @@ use App\Models\ExamAnswer;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\Topic;
+use App\Services\GroqService;
 use App\Services\Learning\GamificationService;
 use App\Services\Learning\StudyStreakService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +31,7 @@ class SimulatorController extends Controller
     public function __construct(
         protected StudyStreakService $streakService,
         protected GamificationService $gamification,
+        protected GroqService $groq,
     ) {}
 
     public function index(): Response
@@ -194,10 +197,53 @@ class SimulatorController extends Controller
 
     public function results(Exam $exam): Response
     {
+        abort_if($exam->user_id !== auth()->id(), 403);
+
         $user = auth()->user()->load('major');
         $total      = $exam->total_questions;
         $correct    = $exam->score;
         $percentage = $total > 0 ? round(($correct / $total) * 100) : 0;
+
+        $questions = $exam->questions()->with('topic.subject')->get()->keyBy('id');
+        $answers = $exam->examAnswers()->get()->keyBy('question_id');
+
+        $subjectBreakdown = [];
+        $incorrectAnswersCount = 0;
+
+        foreach ($questions as $questionId => $question) {
+            $subjectName = (string) ($question->topic?->subject?->name ?? 'General');
+
+            if (! isset($subjectBreakdown[$subjectName])) {
+                $subjectBreakdown[$subjectName] = [
+                    'subject' => $subjectName,
+                    'correct' => 0,
+                    'total' => 0,
+                    'accuracy' => 0,
+                    'status' => 'opportunity',
+                ];
+            }
+
+            $subjectBreakdown[$subjectName]['total']++;
+
+            $answer = $answers->get($questionId);
+            $isCorrect = (bool) ($answer?->is_correct ?? false);
+
+            if ($isCorrect) {
+                $subjectBreakdown[$subjectName]['correct']++;
+            } else {
+                $incorrectAnswersCount++;
+            }
+        }
+
+        $subjectBreakdown = collect($subjectBreakdown)
+            ->map(function (array $row) {
+                $accuracy = $row['total'] > 0 ? (int) round(($row['correct'] / $row['total']) * 100) : 0;
+                $row['accuracy'] = $accuracy;
+                $row['status'] = $accuracy >= 70 ? 'mastered' : 'opportunity';
+
+                return $row;
+            })
+            ->values();
 
         $aiService = app(\App\Services\AI\ClaudeService::class);
         $suggestions = [];
@@ -222,6 +268,122 @@ class SimulatorController extends Controller
             'goal'       => $user->major,
             'ai_suggestions' => $suggestions,
             'xp_awarded' => $exam->type === ExamType::Simulation ? GamificationService::XP_SIMULATION_COMPLETE : 0,
+            'subject_breakdown' => $subjectBreakdown,
+            'incorrect_answers_count' => $incorrectAnswersCount,
+        ]);
+    }
+
+    public function review(Exam $exam): Response
+    {
+        abort_if($exam->user_id !== auth()->id(), 403);
+
+        $exam->load([
+            'examAnswers.question.topic.subject',
+            'questions.topic.subject',
+        ]);
+
+        $answersByQuestionId = $exam->examAnswers->keyBy('question_id');
+
+        $incorrectQuestions = $exam->questions
+            ->map(function ($question) use ($answersByQuestionId) {
+                $answer = $answersByQuestionId->get($question->id);
+                $isCorrect = (bool) ($answer?->is_correct ?? false);
+
+                if ($isCorrect) {
+                    return null;
+                }
+
+                $selectedRaw = $answer?->user_answer;
+                $selectedIndex = null;
+
+                if (is_numeric($selectedRaw)) {
+                    $selectedIndex = (int) $selectedRaw;
+                } elseif (is_string($selectedRaw) && $selectedRaw !== '') {
+                    $idx = array_search($selectedRaw, (array) $question->options, true);
+                    $selectedIndex = $idx === false ? null : (int) $idx;
+                }
+
+                return [
+                    'id' => (int) $question->id,
+                    'body' => (string) $question->body,
+                    'options' => (array) $question->options,
+                    'correct_index' => (int) $question->correct_index,
+                    'correct_answer' => (string) $question->correct_answer,
+                    'selected_index' => $selectedIndex,
+                    'selected_answer' => $selectedIndex !== null ? ((array) $question->options)[$selectedIndex] ?? null : null,
+                    'explanation' => (string) ($question->explanation ?? ''),
+                    'topic_name' => (string) ($question->topic?->name ?? ''),
+                    'subject_name' => (string) ($question->topic?->subject?->name ?? 'General'),
+                ];
+            })
+            ->filter()
+            ->values();
+
+        return Inertia::render('Simulator/Review', [
+            'exam' => $exam,
+            'incorrect_questions' => $incorrectQuestions,
+        ]);
+    }
+
+    public function reviewTutor(Exam $exam, Request $request): JsonResponse
+    {
+        abort_if($exam->user_id !== auth()->id(), 403);
+
+        $data = $request->validate([
+            'question_id' => ['required', 'integer', 'exists:questions,id'],
+            'texto_duda' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $question = $exam->questions()
+            ->where('questions.id', (int) $data['question_id'])
+            ->with('topic.subject')
+            ->first();
+
+        if (! $question) {
+            return response()->json([
+                'message' => 'La pregunta no pertenece a este simulacro.',
+            ], 422);
+        }
+
+        $answer = ExamAnswer::query()
+            ->where('exam_id', $exam->id)
+            ->where('question_id', $question->id)
+            ->first();
+
+        $selectedRaw = (string) ($answer?->user_answer ?? '');
+        $selectedAnswer = '';
+
+        if ($selectedRaw !== '' && is_numeric($selectedRaw)) {
+            $selectedAnswer = (string) (((array) $question->options)[(int) $selectedRaw] ?? '');
+        } elseif ($selectedRaw !== '') {
+            $selectedAnswer = $selectedRaw;
+        }
+
+        $tutor = $this->groq->getTutorExplanation(
+            $question,
+            $selectedAnswer,
+            (string) ($data['texto_duda'] ?? ''),
+        );
+
+        if (! is_array($tutor)) {
+            $fallback = trim((string) ($question->explanation ?? ''));
+            $tutor = [
+                'respuesta_directa' => $fallback !== ''
+                    ? ('Respuesta correcta: **' . (string) $question->correct_answer . '**. ' . $fallback)
+                    : ('Respuesta correcta: **' . (string) $question->correct_answer . '**. Revisa el concepto central del reactivo y por que los distractores son incorrectos.'),
+                'es_fuera_de_contexto' => false,
+                'from_cache' => false,
+                'tokens_saved' => 0,
+            ];
+        }
+
+        return response()->json([
+            'chat' => [
+                'respuesta_directa' => (string) ($tutor['respuesta_directa'] ?? ''),
+                'es_fuera_de_contexto' => (bool) ($tutor['es_fuera_de_contexto'] ?? false),
+                'from_cache' => (bool) ($tutor['from_cache'] ?? false),
+                'tokens_saved' => (int) ($tutor['tokens_saved'] ?? 0),
+            ],
         ]);
     }
 

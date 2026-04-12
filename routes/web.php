@@ -54,6 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/simulator/{exam}', [SimulatorController::class, 'show'])->name('simulator.show');
         Route::post('/simulator/{exam}/submit', [SimulatorController::class, 'submit'])->name('simulator.submit');
         Route::get('/simulator/{exam}/results', [SimulatorController::class, 'results'])->name('simulator.results');
+        Route::get('/simulator/{exam}/review', [SimulatorController::class, 'review'])->name('simulator.review');
+        Route::post('/simulator/{exam}/review/tutor', [SimulatorController::class, 'reviewTutor'])->name('simulator.review.tutor');
 
         // Progress & Review
         Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');

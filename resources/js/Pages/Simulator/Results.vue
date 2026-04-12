@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { animate, spring, stagger } from 'motion';
+import Card from '@/Components/UI/Card.vue';
 import { playSound } from '@/Utils/SoundService';
 
 const props = defineProps({
@@ -11,42 +12,53 @@ const props = defineProps({
     percentage: Number,
     message: String,
     goal: Object,
-    ai_suggestions: Array
+    ai_suggestions: {
+        type: Array,
+        default: () => [],
+    },
+    xp_awarded: {
+        type: Number,
+        default: 0,
+    },
+    subject_breakdown: {
+        type: Array,
+        default: () => [],
+    },
+    incorrect_answers_count: {
+        type: Number,
+        default: 0,
+    },
 });
+
+const showHero = ref(false);
+const confettiPieces = computed(() => Array.from({ length: 22 }, (_, i) => i));
+
+const ringStyle = computed(() => ({
+    background: `conic-gradient(#22c55e ${props.percentage}%, rgba(148,163,184,0.22) ${props.percentage}% 100%)`,
+}));
 
 const scoreCategory = computed(() => {
-    if (props.percentage >= 80) return { color: 'text-green-500', bg: 'bg-green-50', icon: 'fa-solid fa-award', sound: 'success' };
-    if (props.percentage >= 60) return { color: 'text-blue-500', bg: 'bg-blue-50', icon: 'fa-solid fa-chart-line', sound: 'success' };
-    if (props.percentage >= 40) return { color: 'text-orange-500', bg: 'bg-orange-50', icon: 'fa-solid fa-fire', sound: 'pop' };
-    return { color: 'text-red-500', bg: 'bg-red-50', icon: 'fa-solid fa-book-open', sound: 'error' };
+    if (props.percentage >= 80) return { color: 'text-emerald-300', glow: 'green' };
+    if (props.percentage >= 60) return { color: 'text-cyan-300', glow: 'orange' };
+    if (props.percentage >= 40) return { color: 'text-orange-300', glow: 'orange' };
+    return { color: 'text-rose-300', glow: 'red' };
 });
 
-const isGoalReached = computed(() => props.goal && props.correct >= props.goal.min_score);
-const gapToGoal = computed(() => props.goal ? (props.goal.min_score - props.correct) : null);
+const tacticalLabel = (row) => row.status === 'mastered' ? 'Dominada' : 'Área de oportunidad';
 
-const timeTaken = computed(() => {
-    if (!props.exam.started_at || !props.exam.completed_at) return '00:00:00';
-    
-    const start = new Date(props.exam.started_at);
-    const end = new Date(props.exam.completed_at);
-    const diff = Math.abs(end - start) / 1000; 
-
-    const h = Math.floor(diff / 3600);
-    const m = Math.floor((diff % 3600) / 60);
-    const s = Math.floor(diff % 60);
-
-    return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
-});
+const tacticalClass = (row) => row.status === 'mastered'
+    ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-100'
+    : 'border-orange-400/50 bg-orange-500/10 text-orange-100';
 
 onMounted(() => {
-    playSound(scoreCategory.value.sound);
-    
-    animate(".result-header", { opacity: [0, 1], scale: [0.8, 1], rotate: [-5, 0] }, { duration: 0.8, easing: spring() });
-    animate(".stat-pill", { opacity: [0, 1], y: [20, 0] }, { delay: stagger(0.1), duration: 0.5, easing: spring() });
-    
-    if (props.ai_suggestions.length > 0) {
-        animate(".ai-card", { opacity: [0, 1], x: [50, 0] }, { delay: 1, duration: 0.8, easing: spring() });
-        animate(".suggestion-item", { opacity: [0, 1], scale: [0.95, 1] }, { delay: stagger(0.1, { start: 1.2 }), duration: 0.4 });
+    showHero.value = true;
+    playSound(props.percentage >= 60 ? 'success' : 'pop');
+
+    animate('.end-screen-fade', { opacity: [0, 1], y: [20, 0] }, { duration: 0.55, easing: spring() });
+    animate('.metric-card', { opacity: [0, 1], y: [18, 0] }, { delay: stagger(0.08), duration: 0.45, easing: spring() });
+
+    if (props.xp_awarded > 0) {
+        animate('.xp-hero', { opacity: [0, 1], scale: [0.85, 1] }, { duration: 0.7, easing: spring({ stiffness: 160, damping: 16 }) });
     }
 });
 </script>
@@ -54,128 +66,138 @@ onMounted(() => {
 <template>
     <Head title="Resultados del Simulacro - NexusEdu" />
 
-    <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-8">
-        <div class="max-w-3xl w-full space-y-8">
-            
-            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 result-header">
-                
-                <!-- Confetti/Celebration Header -->
-                <div class="p-10 text-center relative overflow-hidden" :class="scoreCategory.bg">
-                    <div 
-                        class="w-20 h-20 rounded-2xl mx-auto flex items-center justify-center mb-6 text-3xl shadow-lg transform score-icon"
-                        :class="scoreCategory.color.replace('text', 'bg').replace('500', '600') + ' text-white'"
+    <div class="min-h-screen text-white px-4 py-10 md:px-8 end-screen-fade bg-[radial-gradient(circle_at_20%_0%,#1f2937_0%,#0b0f1a_45%,#020617_100%)]">
+        <div class="max-w-7xl mx-auto space-y-8 relative">
+            <div v-if="xp_awarded > 0 && showHero" class="pointer-events-none absolute inset-0 overflow-hidden">
+                <span
+                    v-for="n in confettiPieces"
+                    :key="n"
+                    class="confetti-piece"
+                    :style="{
+                        left: `${(n * 13) % 100}%`,
+                        animationDelay: `${(n % 8) * 0.12}s`,
+                        background: n % 2 ? '#fb923c' : '#34d399',
+                    }"
+                />
+            </div>
+
+            <Card v-if="xp_awarded > 0" glow="orange" class="xp-hero relative overflow-hidden">
+                <div class="absolute -top-24 -right-20 h-48 w-48 rounded-full bg-orange-500/25 blur-3xl" />
+                <div class="absolute -bottom-20 -left-16 h-48 w-48 rounded-full bg-emerald-500/20 blur-3xl" />
+
+                <div class="relative z-10 text-center">
+                    <p class="text-xs uppercase tracking-[0.25em] font-black text-orange-300">Simulacro estricto completado</p>
+                    <h1 class="text-3xl md:text-5xl font-black mt-2 text-white">¡Misión Completada! +{{ xp_awarded }} XP</h1>
+                    <p class="mt-3 text-gray-300 font-semibold">{{ message }}</p>
+                </div>
+            </Card>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card :glow="scoreCategory.glow" class="metric-card lg:col-span-2">
+                    <p class="text-xs uppercase tracking-[0.22em] font-black text-gray-300">Puntaje final</p>
+                    <div class="mt-4 flex flex-col md:flex-row md:items-center gap-8">
+                        <div class="relative w-44 h-44 mx-auto md:mx-0 rounded-full p-3" :style="ringStyle">
+                            <div class="w-full h-full rounded-full bg-gray-950 border border-white/10 grid place-items-center">
+                                <div class="text-center">
+                                    <p class="text-4xl font-black" :class="scoreCategory.color">{{ percentage }}%</p>
+                                    <p class="text-xs uppercase tracking-[0.2em] text-gray-400 font-black mt-1">Precisión</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <p class="text-2xl md:text-3xl font-black text-white">{{ correct }} / {{ total }} <span class="text-gray-400 text-xl">({{ percentage }}%)</span></p>
+                            <p class="text-sm text-gray-300">Errores detectados: <span class="font-black text-orange-300">{{ incorrect_answers_count }}</span></p>
+                            <p v-if="goal" class="text-sm text-gray-400">
+                                Meta UNAM/IPN: <span class="text-white font-bold">{{ goal.name }}</span>
+                                · mínimo histórico: <span class="font-black">{{ goal.min_score }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card glow="green" class="metric-card">
+                    <p class="text-xs uppercase tracking-[0.22em] font-black text-emerald-300">Revisión táctica</p>
+                    <h3 class="mt-3 text-2xl font-black text-white">Convierte tus errores en puntos</h3>
+                    <p class="mt-2 text-sm text-gray-300">Analiza solo lo que fallaste y activa el Tutor IA para cerrar brechas de conocimiento.</p>
+
+                    <Link
+                        :href="route('simulator.review', exam.id)"
+                        class="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-orange-500 py-4 text-sm font-black uppercase tracking-wider text-black shadow-[0_0_15px_rgba(255,165,0,0.5)] hover:bg-orange-400 transition-colors"
                     >
-                        <i :class="scoreCategory.icon"></i>
-                    </div>
-                    <h1 class="text-3xl font-black text-gray-900 mb-2">¡Simulacro Completado!</h1>
-                    <p class="text-lg font-bold" :class="scoreCategory.color">{{ message }}</p>
+                        Entrar a Revisión Táctica
+                    </Link>
 
-                    <!-- Particle Decoration -->
-                    <div class="absolute -top-4 -left-4 w-12 h-12 bg-white/20 rounded-full blur-xl"></div>
-                    <div class="absolute bottom-4 right-4 w-20 h-20 bg-white/20 rounded-full blur-2xl"></div>
-                </div>
-
-                <div class="p-10 space-y-10">
-                    
-                    <!-- Goal Analysis Section -->
-                    <div v-if="goal" class="bg-gray-50 p-8 rounded-3xl border-2 border-dashed border-gray-100 stat-pill">
-                        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                            <div class="text-center md:text-left">
-                                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Tu Meta en UNAM</p>
-                                <h2 class="text-2xl font-black text-gray-900">{{ goal.name }}</h2>
-                                <p class="text-sm text-gray-400 font-medium">{{ goal.school_name }}</p>
-                            </div>
-                            <div class="text-center bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-100 transform hover:rotate-3 transition-transform">
-                                <p class="text-3xl font-black" :class="isGoalReached ? 'text-green-500' : 'text-orange-500'">
-                                    {{ correct }} <span class="text-sm text-gray-400 font-bold">/ {{ goal.min_score }}</span>
-                                </p>
-                                <p class="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-1">Aciertos vs Meta</p>
-                            </div>
-                        </div>
-
-                        <div class="mt-8">
-                            <div v-if="isGoalReached" class="bg-green-100 text-green-700 p-4 rounded-xl flex items-center gap-3 animate-pulse shadow-sm">
-                                <i class="fa-solid fa-check-circle text-xl"></i>
-                                <p class="font-bold">¡Lo lograste! Con este puntaje entrarías a tu carrera objetivo.</p>
-                            </div>
-                            <div v-else class="bg-orange-100 text-orange-700 p-4 rounded-xl flex items-center gap-3 shadow-sm">
-                                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                                <p class="font-bold">Te faltan <span class="text-2xl underline">{{ gapToGoal }}</span> aciertos para alcanzar el mínimo histórico.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Statistics Grid -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-center stat-pill">
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Precisión</p>
-                            <p class="text-3xl font-black text-gray-900">{{ percentage }}%</p>
-                        </div>
-                        <div class="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-center stat-pill">
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Tiempo</p>
-                            <p class="text-3xl font-black text-gray-900">{{ timeTaken }}</p> 
-                        </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="flex flex-col sm:flex-row gap-4 stat-pill">
-                        <Link 
-                            :href="route('dashboard')"
-                            @click="playSound('click')"
-                            class="flex-grow order-2 sm:order-1 bg-gray-100 text-gray-700 px-8 py-4 rounded-2xl font-black text-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
-                        >
-                            Ir al Panel
-                        </Link>
-                        <Link 
-                            :href="route('simulator.index')"
-                            @click="playSound('success')"
-                            class="flex-grow order-1 sm:order-2 bg-orange-500 text-white px-8 py-4 rounded-2xl font-black text-lg hover:bg-orange-600 transition-all shadow-lg transform hover:scale-105 active:scale-95 flex items-center justify-center"
-                        >
-                            Intentar de Nuevo
-                            <i class="fa-solid fa-redo ml-3 text-sm"></i>
-                        </Link>
-                    </div>
-                </div>
+                    <Link
+                        :href="route('simulator.index')"
+                        class="mt-3 inline-flex w-full items-center justify-center rounded-2xl border border-white/20 py-3 text-sm font-bold text-gray-200 hover:bg-white/5"
+                    >
+                        Nuevo simulacro
+                    </Link>
+                </Card>
             </div>
 
-            <!-- AI Alternative Careers -->
-            <div v-if="!isGoalReached && ai_suggestions.length > 0" class="bg-gray-900 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden ai-card">
-                <div class="relative z-10">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
-                            <i class="fa-solid fa-robot"></i>
+            <Card glow="orange" class="metric-card">
+                <p class="text-xs uppercase tracking-[0.22em] font-black text-orange-300">Desglose táctico por materia</p>
+
+                <div class="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div
+                        v-for="row in subject_breakdown"
+                        :key="row.subject"
+                        class="rounded-2xl border p-4"
+                        :class="tacticalClass(row)"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="font-black text-lg leading-tight">{{ row.subject }}</p>
+                            <span class="text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-full border border-current/40">
+                                {{ tacticalLabel(row) }}
+                            </span>
                         </div>
-                        <h3 class="text-xl font-black tracking-tight">Opciones estratégicas de la IA</h3>
-                    </div>
-                    
-                    <p class="text-gray-400 mb-8 font-medium">Dado que tu puntaje objetivo es alto, Claude sugiere estas carreras alternativas con planes de estudio similares en la UNAM:</p>
-                    
-                    <div class="grid gap-4">
-                        <div 
-                            v-for="suggest in ai_suggestions" 
-                            :key="suggest.name"
-                            class="p-5 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors suggestion-item"
-                        >
-                            <p class="font-black text-orange-400 mb-1">{{ suggest.name }}</p>
-                            <p class="text-sm text-gray-400">{{ suggest.reason }}</p>
+
+                        <p class="mt-3 text-sm font-bold">{{ row.correct }} / {{ row.total }} · {{ row.accuracy }}%</p>
+
+                        <div class="mt-3 h-2 rounded-full bg-black/20 overflow-hidden">
+                            <div class="h-full rounded-full" :style="{ width: `${row.accuracy}%`, background: row.status === 'mastered' ? '#34d399' : '#fb923c' }" />
                         </div>
                     </div>
                 </div>
-                <!-- Abstract BG -->
-                <div class="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl"></div>
-            </div>
+            </Card>
 
+            <Card v-if="ai_suggestions.length > 0" glow="red" class="metric-card">
+                <p class="text-xs uppercase tracking-[0.22em] font-black text-rose-300">Sugerencias estratégicas IA</p>
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div v-for="suggest in ai_suggestions" :key="suggest.name" class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <p class="text-lg font-black text-white">{{ suggest.name }}</p>
+                        <p class="mt-2 text-sm text-gray-300">{{ suggest.reason }}</p>
+                    </div>
+                </div>
+            </Card>
         </div>
     </div>
 </template>
 
-<style>
-.score-icon {
-    animation: bounce 3s infinite;
+<style scoped>
+.confetti-piece {
+    position: absolute;
+    top: -20px;
+    width: 8px;
+    height: 18px;
+    border-radius: 999px;
+    opacity: 0;
+    animation: fall 2.4s linear forwards;
 }
 
-@keyframes bounce {
-    0%, 100% { transform: translateY(0) rotate(12deg); }
-    50% { transform: translateY(-10px) rotate(15deg); }
+@keyframes fall {
+    0% {
+        opacity: 0;
+        transform: translateY(0) rotate(0deg);
+    }
+    12% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(90vh) rotate(540deg);
+    }
 }
 </style>
