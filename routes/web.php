@@ -10,6 +10,7 @@ use App\Http\Controllers\Progress\SpacedRepetitionController;
 use App\Http\Controllers\Rewards\RewardStoreController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AiMetricsController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -88,6 +89,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin.index');
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/ai-metrics', AiMetricsController::class)->name('admin.ai-metrics');
     Route::get('/curation', [AdminDashboardController::class, 'curationIndex'])->name('admin.curation.index');
     Route::get('/curation/search', [AdminDashboardController::class, 'searchQuestion'])->name('admin.curation.search');
     Route::put('/curation/questions/{id}', [AdminDashboardController::class, 'updateQuestionAndCache'])->name('admin.curation.update');

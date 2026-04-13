@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AiTutorCache;
 use App\Models\Question;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -143,6 +144,7 @@ PROMPT;
 
             if ($cachedResponse) {
                 $cachedResponse->increment('hit_count');
+                $this->recordTutorCacheMetric(true);
 
                 return [
                     'respuesta_directa' => (string) $cachedResponse->explicacion_ia,
@@ -151,6 +153,8 @@ PROMPT;
                     'tokens_saved' => self::ESTIMATED_TOKENS_SAVED_PER_CACHE_HIT,
                 ];
             }
+
+            $this->recordTutorCacheMetric(false);
         }
 
         $response = $this->tutorStateless([
@@ -279,7 +283,46 @@ PROMPT;
             ]);
         }
 
+        $this->recordTutorRequestMetric(
+            (int) data_get($response->json(), 'usage.total_tokens', 0),
+            (bool) $response->ok()
+        );
+
         return $response;
+    }
+
+    private function recordTutorCacheMetric(bool $hit): void
+    {
+        $day = now()->format('Ymd');
+        $type = $hit ? 'cache_hits' : 'cache_misses';
+        $this->incrementMetric("ai:metrics:{$day}:tutor:{$type}");
+    }
+
+    private function recordTutorRequestMetric(int $tokens, bool $ok): void
+    {
+        $day = now()->format('Ymd');
+        $minute = now()->format('YmdHi');
+
+        $this->incrementMetric("ai:metrics:{$day}:tutor:requests_total");
+        $this->incrementMetric("ai:metrics:{$day}:requests_total");
+        $this->incrementMetric("ai:metrics:minute:{$minute}:requests_total", 1, 180);
+
+        if ($tokens > 0) {
+            $this->incrementMetric("ai:metrics:{$day}:tutor:tokens_total", $tokens);
+            $this->incrementMetric("ai:metrics:{$day}:tokens_total", $tokens);
+            $this->incrementMetric("ai:metrics:minute:{$minute}:tokens_total", $tokens, 180);
+        }
+
+        if (! $ok) {
+            $this->incrementMetric("ai:metrics:{$day}:tutor:errors_total");
+            $this->incrementMetric("ai:metrics:{$day}:errors_total");
+        }
+    }
+
+    private function incrementMetric(string $key, int $by = 1, int $ttlSeconds = 172800): void
+    {
+        Cache::add($key, 0, $ttlSeconds);
+        Cache::increment($key, $by);
     }
 
     private function buildPrompt(array $payload): string

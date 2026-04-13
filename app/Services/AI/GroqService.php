@@ -19,14 +19,14 @@ class GroqService
         $cacheKey = sprintf('groq:alternatives:%s', md5(json_encode([$majorName, $targetScore, $currentScore])));
         $ttl = (int) config('services.groq.cache_ttl_seconds', 900);
 
-        return Cache::remember($cacheKey, $ttl, function () use ($majorName, $targetScore, $currentScore) {
+        return $this->rememberWithMetrics($cacheKey, $ttl, 'alternatives', function () use ($majorName, $targetScore, $currentScore) {
         $prompt = str_replace(
             ['{target_major}', '{target_score}', '{current_score}'],
             [$majorName, $targetScore, $currentScore],
             self::ALTERNATIVE_CAREERS_PROMPT
         );
 
-        $response = $this->callGroq($prompt, 'Sugiere alternativas.', (int) config('services.groq.max_tokens_small', 140));
+        $response = $this->callGroq($prompt, 'Sugiere alternativas.', (int) config('services.groq.max_tokens_small', 140), 'alternatives');
 
         return json_decode($response, true) ?? [
             ['name' => 'Carrera similar en FES', 'reason' => 'Suele tener puntajes de corte más accesibles conservando el mismo plan de estudios.'],
@@ -38,7 +38,7 @@ class GroqService
     public function generateQuestion(string $subject, string $topic, int $difficulty): array
     {
         $prompt = str_replace(['{subject}', '{topic}', '{difficulty}'], [$subject, $topic, $difficulty], self::QUESTION_GENERATION_PROMPT);
-        $response = $this->callGroq($prompt, 'Genera la pregunta ahora.', (int) config('services.groq.max_tokens_medium', 220));
+        $response = $this->callGroq($prompt, 'Genera la pregunta ahora.', (int) config('services.groq.max_tokens_medium', 220), 'question_generation');
 
         if (! $response) {
             return $this->getFallbackQuestion($subject, $topic);
@@ -52,9 +52,9 @@ class GroqService
         $cacheKey = sprintf('groq:analyze-profile:%s', md5(json_encode($performanceData, JSON_UNESCAPED_UNICODE)));
         $ttl = (int) config('services.groq.cache_ttl_seconds', 900);
 
-        return Cache::remember($cacheKey, $ttl, function () use ($performanceData) {
+        return $this->rememberWithMetrics($cacheKey, $ttl, 'analyze_profile', function () use ($performanceData) {
             $prompt = str_replace('{data}', json_encode($performanceData, JSON_UNESCAPED_UNICODE), self::PROFILE_ANALYSIS_PROMPT);
-            $response = $this->callGroq($prompt, 'Analiza el perfil.', (int) config('services.groq.max_tokens_medium', 220));
+            $response = $this->callGroq($prompt, 'Analiza el perfil.', (int) config('services.groq.max_tokens_medium', 220), 'analyze_profile');
 
             if (! $response) {
                 return $this->getFallbackAnalysis($performanceData);
@@ -72,7 +72,7 @@ class GroqService
             self::ANSWER_EXPLANATION_PROMPT
         );
 
-        $response = $this->callGroq($prompt, 'Explica la respuesta.', (int) config('services.groq.max_tokens_small', 140));
+        $response = $this->callGroq($prompt, 'Explica la respuesta.', (int) config('services.groq.max_tokens_small', 140), 'explain_answer');
 
         return $response ?: 'Lo sentimos, no pudimos generar la explicación en este momento. La respuesta correcta es la opción ' . ($correctIndex + 1) . '.';
     }
@@ -82,9 +82,9 @@ class GroqService
         $cacheKey = sprintf('groq:weekly-recommendation:%s', md5(json_encode($stats, JSON_UNESCAPED_UNICODE)));
         $ttl = (int) config('services.groq.cache_ttl_seconds', 900);
 
-        return Cache::remember($cacheKey, $ttl, function () use ($stats) {
+        return $this->rememberWithMetrics($cacheKey, $ttl, 'weekly_recommendation', function () use ($stats) {
             $prompt = str_replace('{stats}', json_encode($stats, JSON_UNESCAPED_UNICODE), self::WEEKLY_RECOMMENDATION_PROMPT);
-            $response = $this->callGroq($prompt, 'Genera recomendación.', (int) config('services.groq.max_tokens_small', 140));
+            $response = $this->callGroq($prompt, 'Genera recomendación.', (int) config('services.groq.max_tokens_small', 140), 'weekly_recommendation');
 
             return $response ?: 'Esta semana te recomendamos enfocarte en las materias con menor porcentaje de aciertos. ¡Sigue así!';
         });
@@ -105,11 +105,12 @@ class GroqService
         $cacheKey = sprintf('groq:weak-topics:%s', md5(json_encode($payload, JSON_UNESCAPED_UNICODE)));
         $ttl = (int) config('services.groq.cache_ttl_seconds', 900);
 
-        return Cache::remember($cacheKey, $ttl, function () use ($systemPrompt, $payload) {
+        return $this->rememberWithMetrics($cacheKey, $ttl, 'weak_topic_priorities', function () use ($systemPrompt, $payload) {
             $response = $this->callGroq(
                 $systemPrompt,
                 'Datos: ' . json_encode($payload, JSON_UNESCAPED_UNICODE),
-                (int) config('services.groq.max_tokens_small', 140)
+                (int) config('services.groq.max_tokens_small', 140),
+                'weak_topic_priorities'
             );
 
             if (! $response) {
@@ -136,7 +137,7 @@ class GroqService
         });
     }
 
-    private function callGroq(string $systemPrompt, string $userMessage, int $maxTokens): ?string
+    private function callGroq(string $systemPrompt, string $userMessage, int $maxTokens, string $operation): ?string
     {
         $apiKey = config('services.groq.key');
 
@@ -165,11 +166,67 @@ class GroqService
                     'max_tokens' => max(40, $maxTokens),
                 ]);
 
+            $this->recordRequestMetrics(
+                $operation,
+                (int) data_get($response->json(), 'usage.total_tokens', 0),
+                (bool) $response->ok()
+            );
+
             return $response->json('choices.0.message.content');
         } catch (\Exception $e) {
+            $this->recordRequestMetrics($operation, 0, false);
             Log::error('Groq API Error: ' . $e->getMessage());
             return null;
         }
+    }
+
+    private function rememberWithMetrics(string $cacheKey, int $ttl, string $operation, callable $resolver): mixed
+    {
+        if (Cache::has($cacheKey)) {
+            $this->recordCacheMetrics($operation, true);
+            return Cache::get($cacheKey);
+        }
+
+        $this->recordCacheMetrics($operation, false);
+        $value = $resolver();
+        Cache::put($cacheKey, $value, $ttl);
+
+        return $value;
+    }
+
+    private function recordCacheMetrics(string $operation, bool $hit): void
+    {
+        $day = now()->format('Ymd');
+        $type = $hit ? 'cache_hits' : 'cache_misses';
+        $this->incrementMetric("ai:metrics:{$day}:{$type}");
+        $this->incrementMetric("ai:metrics:{$day}:{$operation}:{$type}");
+    }
+
+    private function recordRequestMetrics(string $operation, int $tokens, bool $ok): void
+    {
+        $day = now()->format('Ymd');
+        $minute = now()->format('YmdHi');
+
+        $this->incrementMetric("ai:metrics:{$day}:requests_total");
+        $this->incrementMetric("ai:metrics:{$day}:{$operation}:requests_total");
+        $this->incrementMetric("ai:metrics:minute:{$minute}:requests_total", 1, 180);
+
+        if ($tokens > 0) {
+            $this->incrementMetric("ai:metrics:{$day}:tokens_total", $tokens);
+            $this->incrementMetric("ai:metrics:{$day}:{$operation}:tokens_total", $tokens);
+            $this->incrementMetric("ai:metrics:minute:{$minute}:tokens_total", $tokens, 180);
+        }
+
+        if (! $ok) {
+            $this->incrementMetric("ai:metrics:{$day}:errors_total");
+            $this->incrementMetric("ai:metrics:{$day}:{$operation}:errors_total");
+        }
+    }
+
+    private function incrementMetric(string $key, int $by = 1, int $ttlSeconds = 172800): void
+    {
+        Cache::add($key, 0, $ttlSeconds);
+        Cache::increment($key, $by);
     }
 
     private function extractJsonObject(string $raw): ?string
