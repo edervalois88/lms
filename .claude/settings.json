@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(php -l routes/web.php)",
+      "Bash(php -l app/Http/Controllers/StudentDashboardController.php)",
+      "Bash(php -r \"require 'vendor/autoload.php';\")",
+      "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); [print\\(r['name'], '->', r['action']\\) for r in data if r.get\\('name'\\)]\")",
+      "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); [print\\(r['name']\\) for r in data if r.get\\('name'\\) and 'password' in r['name'].lower\\(\\)]\")",
+      "Bash(xargs grep:*)",
+      "Bash(find resources/js -name \"*.vue\" -exec grep -l \"axios\" {} \\\\;)",
+      "Bash(grep \"use.*GroqService\" app/Http/Controllers/Assessment/*.php)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)"
+    ]
+  }
+}

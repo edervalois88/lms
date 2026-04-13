@@ -6,6 +6,12 @@ export const playSound = (type) => {
         error: '/sounds/error.mp3',
     };
 
-    const audio = new Audio(sounds[type]);
-    audio.play().catch(e => console.log('Audio play blocked or file missing:', e));
+    const soundFile = sounds[type];
+    if (!soundFile) return;
+
+    const audio = new Audio(soundFile);
+    audio.volume = 0.3;
+    audio.play().catch(() => {
+        // Silently fail if audio cannot be played (file missing, blocked, etc)
+    });
 };

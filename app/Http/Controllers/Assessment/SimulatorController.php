@@ -13,7 +13,7 @@ use App\Models\ExamAnswer;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\Topic;
-use App\Services\AI\GroqService;
+use App\Services\GroqService;
 use App\Services\FreemiumLimitService;
 use App\Services\Learning\GamificationService;
 use App\Services\Learning\StudyStreakService;
