@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\Question;
+use App\Models\Topic;
 use App\Models\UserTopicMastery;
+use App\Services\AI\GroqService;
 use App\Services\Learning\ExamAreaResolver;
 use App\Services\Learning\SpacedRepetitionService;
 use Inertia\Inertia;
@@ -19,6 +21,7 @@ class DailyPracticeController extends Controller
     public function __construct(
         protected SpacedRepetitionService $srs,
         protected ExamAreaResolver $areaResolver,
+        protected GroqService $groq,
     ) {}
 
     public function index(): Response
@@ -55,21 +58,63 @@ class DailyPracticeController extends Controller
         $needed = self::WEAK_SLOTS;
 
         // Topics where the user has low mastery (< 50 %)
-        $weakTopicIds = UserTopicMastery::where('user_id', $user->id)
+        $weakMasteries = UserTopicMastery::where('user_id', $user->id)
             ->where('mastery_score', '<', 0.5)
             ->orderBy('mastery_score')
-            ->pluck('topic_id');
+            ->limit(30)
+            ->get(['topic_id', 'mastery_score']);
+
+        $weakTopicIds = $weakMasteries->pluck('topic_id');
 
         $questions = collect();
 
         if ($weakTopicIds->isNotEmpty()) {
+            $topics = Topic::query()
+                ->whereIn('id', $weakTopicIds)
+                ->with('subject:id,name')
+                ->get(['id', 'subject_id', 'name'])
+                ->keyBy('id');
+
+            $masteryByTopicId = $weakMasteries
+                ->mapWithKeys(fn ($row) => [(int) $row->topic_id => (float) $row->mastery_score]);
+
+            $topicPayload = $topics
+                ->map(function ($topic) use ($masteryByTopicId) {
+                    return [
+                        'topic' => (string) $topic->name,
+                        'subject' => (string) ($topic->subject?->name ?? 'General'),
+                        'mastery_score' => round((float) ($masteryByTopicId[(int) $topic->id] ?? 0), 3),
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $priorityTopics = $this->groq->recommendWeakTopicPriorities($topicPayload, $user->major?->name);
+
+            $priorityOrder = collect($priorityTopics)
+                ->mapWithKeys(fn ($name, $index) => [mb_strtolower(trim((string) $name)) => $index]);
+
+            $topicPriorityById = $topics->mapWithKeys(function ($topic) use ($priorityOrder, $masteryByTopicId) {
+                $topicName = mb_strtolower(trim((string) $topic->name));
+                $aiRank = $priorityOrder[$topicName] ?? 1000;
+                $mastery = (float) ($masteryByTopicId[(int) $topic->id] ?? 1.0);
+
+                // Lower rank first (AI), then lower mastery first.
+                return [(int) $topic->id => $aiRank + $mastery];
+            });
+
             $questions = Question::whereIn('topic_id', $weakTopicIds)
                 ->whereNotIn('id', $excludeIds)
                 ->where('is_active', true)
                 ->with('topic')
                 ->inRandomOrder()
-                ->limit($needed)
-                ->get();
+                ->limit(max(20, $needed * 6))
+                ->get()
+                ->sortBy(function ($question) use ($topicPriorityById) {
+                    return (float) ($topicPriorityById[(int) $question->topic_id] ?? 2000);
+                })
+                ->take($needed)
+                ->values();
         }
 
         // If not enough weak questions, fill with any questions from user's major area

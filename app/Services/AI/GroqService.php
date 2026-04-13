@@ -74,6 +74,43 @@ class GroqService
         return $response ?: 'Esta semana te recomendamos enfocarte en las materias con menor porcentaje de aciertos. ¡Sigue así!';
     }
 
+    public function recommendWeakTopicPriorities(array $weakTopics, ?string $goalMajor = null): array
+    {
+        if (empty($weakTopics)) {
+            return [];
+        }
+
+        $payload = [
+            'goal_major' => $goalMajor,
+            'weak_topics' => $weakTopics,
+        ];
+
+        $systemPrompt = 'Eres un tutor académico para examen UNAM. Recibirás temas débiles con score de dominio (0.0 a 1.0) y materia. Debes devolver SOLO JSON válido con esta forma exacta: {"priority_topics": ["tema1", "tema2", "tema3", "tema4", "tema5"]}. Ordena de mayor prioridad a menor para mejorar puntaje rápidamente. No agregues texto fuera del JSON.';
+        $response = $this->callGroq($systemPrompt, 'Datos: ' . json_encode($payload, JSON_UNESCAPED_UNICODE));
+
+        if (! $response) {
+            return [];
+        }
+
+        $decoded = json_decode($response, true);
+
+        if (! is_array($decoded)) {
+            $jsonSlice = $this->extractJsonObject($response);
+            $decoded = $jsonSlice ? json_decode($jsonSlice, true) : null;
+        }
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        return collect((array) ($decoded['priority_topics'] ?? []))
+            ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+            ->map(fn ($value) => trim($value))
+            ->take(8)
+            ->values()
+            ->all();
+    }
+
     private function callGroq(string $systemPrompt, string $userMessage): ?string
     {
         $apiKey = config('services.groq.key');
@@ -102,6 +139,18 @@ class GroqService
             Log::error('Groq API Error: ' . $e->getMessage());
             return null;
         }
+    }
+
+    private function extractJsonObject(string $raw): ?string
+    {
+        $start = strpos($raw, '{');
+        $end = strrpos($raw, '}');
+
+        if ($start === false || $end === false || $end <= $start) {
+            return null;
+        }
+
+        return substr($raw, $start, $end - $start + 1);
     }
 
     private function getFallbackQuestion(string $subject, string $topic): array
