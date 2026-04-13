@@ -317,51 +317,56 @@ onMounted(() => {
                         </div>
 
                         <!-- Action Modules -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hud-element">
-                            <Link 
-                                :href="route('simulator.index')" 
-                                class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 hud-element">
+                            <Link
+                                :href="route('simulator.index')"
+                                class="group relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-[#0b1220] p-1.5 transition-all duration-300 hover:-translate-y-1 hover:border-orange-400/40 hover:shadow-[0_14px_35px_rgba(249,115,22,0.22)]"
                                 @click="playSound('success')"
                             >
-                                <div class="bg-midnight rounded-[2.3rem] p-8 flex items-center gap-8 border border-white/5 group-hover:border-orange-500/30 transition-colors">
-                                    <div class="w-20 h-20 bg-orange-500/10 rounded-3xl flex items-center justify-center text-4xl text-orange-500 shadow-orange-glow group-hover:rotate-12 transition-transform duration-500">
+                                <div class="absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_0%_0%,rgba(249,115,22,0.25),transparent_60%)]"></div>
+                                <div class="relative flex items-center gap-5 rounded-4xl border border-white/10 bg-[#060b14] px-6 py-7">
+                                    <div class="w-16 h-16 shrink-0 rounded-2xl bg-orange-500/10 border border-orange-400/20 flex items-center justify-center text-3xl text-orange-400 transition-transform duration-300 group-hover:rotate-6">
                                         <i class="fa-solid fa-graduation-cap"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="text-2xl font-black uppercase tracking-tighter italic">Simulacro</h3>
-                                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Ejecutar 120 Reactivos</p>
+                                    <div class="min-w-0">
+                                        <p class="text-[11px] font-black uppercase tracking-[0.22em] text-orange-300/90">Módulo Principal</p>
+                                        <h3 class="text-3xl font-black uppercase italic tracking-tight leading-none mt-1">Simulacro</h3>
+                                        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-2">Ejecutar 120 reactivos</p>
                                     </div>
                                 </div>
                             </Link>
-                            
-                            <Link 
-                                :href="route('quiz.index')" 
-                                            class="px-8 py-4 min-h-11 rounded-2xl bg-linear-to-r from-orange-500 to-red-500 text-white font-black uppercase tracking-wider shadow-[0_0_20px_rgba(249,115,22,0.45)] hover:scale-[1.02] transition-transform"
+
+                            <Link
+                                :href="route('quiz.index')"
+                                class="group relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-linear-to-r from-orange-500 to-red-500 p-1.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_38px_rgba(255,93,43,0.35)]"
                                 @click="playSound('success')"
                             >
-                                <div class="bg-midnight rounded-[2.3rem] p-8 flex items-center gap-8 border border-white/5 group-hover:border-blue-500/30 transition-colors">
-                                    <div class="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center text-4xl text-blue-400 shadow-blue-glow group-hover:rotate-12 transition-transform duration-500">
+                                <div class="relative flex items-center gap-5 rounded-4xl border border-black/20 bg-[#060b14] px-6 py-7">
+                                    <div class="w-16 h-16 shrink-0 rounded-2xl bg-blue-500/10 border border-blue-400/25 flex items-center justify-center text-3xl text-blue-400 transition-transform duration-300 group-hover:rotate-6">
                                         <i class="fa-solid fa-bolt-lightning"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="text-2xl font-black uppercase tracking-tighter italic">Práctica</h3>
-                                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Entrenamiento Focalizado</p>
+                                    <div class="min-w-0">
+                                        <p class="text-[11px] font-black uppercase tracking-[0.22em] text-orange-200/90">Módulo Activo</p>
+                                        <h3 class="text-3xl font-black uppercase italic tracking-tight leading-none mt-1">Práctica</h3>
+                                        <p class="text-[11px] font-bold text-gray-300 uppercase tracking-[0.2em] mt-2">Entrenamiento focalizado</p>
                                     </div>
                                 </div>
                             </Link>
 
                             <Link
                                 :href="route('practice.daily')"
-                                class="glass-morphism p-1 rounded-[2.5rem] group hover:scale-[1.03] transition-all duration-500 block"
+                                class="group relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-[#0b1220] p-1.5 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:shadow-[0_14px_35px_rgba(16,185,129,0.2)] md:col-span-2 xl:col-span-1"
                                 @click="playSound('success')"
                             >
-                                <div class="bg-midnight rounded-[2.3rem] p-8 flex items-center gap-8 border border-white/5 group-hover:border-green-500/30 transition-colors">
-                                    <div class="w-20 h-20 bg-green-500/10 rounded-3xl flex items-center justify-center text-4xl text-green-400 group-hover:rotate-12 transition-transform duration-500">
+                                <div class="absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_100%_0%,rgba(16,185,129,0.2),transparent_58%)]"></div>
+                                <div class="relative flex items-center gap-5 rounded-4xl border border-white/10 bg-[#060b14] px-6 py-7">
+                                    <div class="w-16 h-16 shrink-0 rounded-2xl bg-emerald-500/10 border border-emerald-400/20 flex items-center justify-center text-3xl text-emerald-400 transition-transform duration-300 group-hover:rotate-6">
                                         <i class="fa-solid fa-fire"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="text-2xl font-black uppercase tracking-tighter italic">Daily XP</h3>
-                                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Racha + Recompensas</p>
+                                    <div class="min-w-0">
+                                        <p class="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-300/90">Constancia</p>
+                                        <h3 class="text-3xl font-black uppercase italic tracking-tight leading-none mt-1">Daily XP</h3>
+                                        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-2">Racha + recompensas</p>
                                     </div>
                                 </div>
                             </Link>
