@@ -96,6 +96,31 @@ const tacticalMessage = computed(() => {
     return `Protocolo detectado: Para neutralizar los ${gap} aciertos restantes, debemos priorizar el módulo de ${tacticalModule.value}. El algoritmo estima éxito en ${estimatedSessions.value} sesiones.`;
 });
 
+const accuracyDelta = computed(() => Number(props.stats?.accuracy_delta ?? 0));
+const efficiencyDirection = computed(() => {
+    if (accuracyDelta.value > 0) return 'up';
+    if (accuracyDelta.value < 0) return 'down';
+    return 'stable';
+});
+const efficiencyLabel = computed(() => {
+    if (efficiencyDirection.value === 'up') {
+        return `+${Math.abs(accuracyDelta.value).toFixed(1)}% eficiencia`;
+    }
+
+    if (efficiencyDirection.value === 'down') {
+        return `-${Math.abs(accuracyDelta.value).toFixed(1)}% eficiencia`;
+    }
+
+    return 'Sin variación semanal';
+});
+const floatingMessage = computed(() => {
+    if ((props.stats?.streak || 0) > 0) {
+        return `Llevas ${props.stats.streak} día(s) de racha activa. Mantén el ritmo.`;
+    }
+
+    return 'Inicia práctica diaria para construir tu primera racha.';
+});
+
 onMounted(() => {
     initializeTheme();
 
@@ -350,7 +375,13 @@ onMounted(() => {
                             <div class="flex justify-between items-center">
                                 <div class="text-center grow">
                                     <p class="text-5xl font-black text-white glow-text">{{ stats.accuracy }}%</p>
-                                    <p class="text-[9px] font-black text-green-400 uppercase mt-2 tracking-widest"><i class="fa-solid fa-arrow-up"></i> +4.2% Eficiencia</p>
+                                    <p
+                                        class="text-[9px] font-black uppercase mt-2 tracking-widest"
+                                        :class="efficiencyDirection === 'up' ? 'text-green-400' : efficiencyDirection === 'down' ? 'text-red-400' : 'text-gray-400'"
+                                    >
+                                        <i :class="efficiencyDirection === 'up' ? 'fa-solid fa-arrow-up' : efficiencyDirection === 'down' ? 'fa-solid fa-arrow-down' : 'fa-solid fa-minus'"></i>
+                                        {{ efficiencyLabel }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -399,7 +430,7 @@ onMounted(() => {
                 </div>
                 <div>
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Logro Desbloqueado</p>
-                    <p class="text-xs font-bold">¡Primer paso dado! Completaste el Onboarding.</p>
+                    <p class="text-xs font-bold">{{ floatingMessage }}</p>
                 </div>
             </div>
         </div>

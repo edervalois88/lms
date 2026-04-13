@@ -131,6 +131,35 @@ class ProgressCalculatorService
         ];
     }
 
+    public function getWeeklyAccuracyDelta(User $user): float
+    {
+        $now = Carbon::now();
+        $currentStart = $now->copy()->startOfWeek();
+        $previousStart = $currentStart->copy()->subWeek();
+        $previousEnd = $currentStart->copy()->subSecond();
+
+        $currentAccuracy = $this->accuracyBetween($user, $currentStart, $now);
+        $previousAccuracy = $this->accuracyBetween($user, $previousStart, $previousEnd);
+
+        return round($currentAccuracy - $previousAccuracy, 1);
+    }
+
+    private function accuracyBetween(User $user, Carbon $from, Carbon $to): float
+    {
+        $answers = ExamAnswer::query()
+            ->whereHas('exam', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->whereBetween('created_at', [$from, $to])
+            ->get(['is_correct']);
+
+        if ($answers->isEmpty()) {
+            return 0.0;
+        }
+
+        return round(($answers->where('is_correct', true)->count() / $answers->count()) * 100, 1);
+    }
+
     private function calculateTrend(iterable $answers): string
     {
         $answersArray = is_array($answers) ? $answers : iterator_to_array($answers);

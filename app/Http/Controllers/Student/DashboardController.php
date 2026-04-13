@@ -32,6 +32,7 @@ class DashboardController extends Controller
                 'streak' => $user->streak_days,
                 'total_exams' => $user->exams()->completed()->count(),
                 'accuracy' => $this->progress->getWeeklyStats($user)['avg_accuracy'],
+                'accuracy_delta' => $this->progress->getWeeklyAccuracyDelta($user),
                 'projection' => $this->progress->getScoreProjection($user),
             ],
             'recent_exams' => $user->exams()
