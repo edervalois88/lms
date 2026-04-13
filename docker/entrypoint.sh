@@ -11,19 +11,28 @@ echo "📝 Aplicando defaults de entorno en memoria..."
 : "${QUEUE_CONNECTION:=database}"
 export LOG_CHANNEL SESSION_DRIVER CACHE_STORE QUEUE_CONNECTION
 
-# Railway puede proveer MYSQLHOST/MYSQLUSER/etc. o DATABASE_URL en lugar de DB_HOST.
+# Railway puede proveer MYSQLHOST/MYSQLUSER/etc. o DATABASE_URL o MYSQL_URL en lugar de DB_HOST.
 # Mapear a las variables que Laravel espera (DB_HOST, DB_USERNAME, etc.)
+# También manejar variantes de nombres: MYSQL_HOST vs MYSQLHOST, MYSQL_URL vs DATABASE_URL
+_MYSQL_URL="${DATABASE_URL:-${MYSQL_URL:-}}"
+_MYSQL_HOST="${MYSQLHOST:-${MYSQL_HOST:-}}"
+_MYSQL_PORT="${MYSQLPORT:-${MYSQL_PORT:-3306}}"
+_MYSQL_DB="${MYSQLDATABASE:-${MYSQL_DATABASE:-railway}}"
+_MYSQL_USER="${MYSQLUSER:-${MYSQL_USER:-root}}"
+_MYSQL_PASS="${MYSQLPASSWORD:-${MYSQL_PASSWORD:-}}"
+
 if [ -z "${DB_HOST:-}" ]; then
-  if [ -n "${MYSQLHOST:-}" ]; then
-    export DB_HOST="$MYSQLHOST"
-    export DB_PORT="${MYSQLPORT:-3306}"
-    export DB_DATABASE="${MYSQLDATABASE:-railway}"
-    export DB_USERNAME="${MYSQLUSER:-root}"
-    export DB_PASSWORD="${MYSQLPASSWORD:-}"
-    echo "🔍 Mapeado MYSQLHOST → DB_HOST=${DB_HOST}"
-  elif [ -n "${DATABASE_URL:-}" ]; then
+  if [ -n "$_MYSQL_HOST" ]; then
+    export DB_HOST="$_MYSQL_HOST"
+    export DB_PORT="$_MYSQL_PORT"
+    export DB_DATABASE="$_MYSQL_DB"
+    export DB_USERNAME="$_MYSQL_USER"
+    export DB_PASSWORD="$_MYSQL_PASS"
+    export DB_CONNECTION="mysql"
+    echo "🔍 Mapeado MYSQLHOST → DB_HOST=${DB_HOST} DB_DATABASE=${DB_DATABASE}"
+  elif [ -n "$_MYSQL_URL" ]; then
     # Formato: mysql://user:password@host:port/dbname
-    _url="${DATABASE_URL#*://}"
+    _url="${_MYSQL_URL#*://}"
     _userinfo="${_url%@*}"
     _hostinfo="${_url##*@}"
     _hostport="${_hostinfo%%/*}"
@@ -39,8 +48,25 @@ if [ -z "${DB_HOST:-}" ]; then
     export DB_USERNAME="${_userinfo%%:*}"
     export DB_PASSWORD="${_userinfo#*:}"
     export DB_DATABASE="${_dbname:-railway}"
+    export DB_CONNECTION="mysql"
     echo "🔍 Parseado DATABASE_URL → DB_HOST=${DB_HOST} DB_PORT=${DB_PORT} DB_DATABASE=${DB_DATABASE}"
   fi
+fi
+
+# Escribir variables DB al .env para que php-fpm y php-cli las lean via Dotenv.
+# (php-fpm limpia el entorno por defecto; Dotenv no sobreescribe vars de entorno ya definidas,
+#  pero sí las lee si no están en el entorno actual del proceso worker)
+if [ -n "${DB_HOST:-}" ]; then
+  echo "📝 Escribiendo conexión DB en .env..."
+  # Remover líneas existentes (comentadas o no) y agregar los valores actuales
+  sed -i '/^#\s*DB_CONNECTION/d; /^DB_CONNECTION=/d' .env
+  sed -i '/^#\s*DB_HOST/d;       /^DB_HOST=/d'       .env
+  sed -i '/^#\s*DB_PORT/d;       /^DB_PORT=/d'       .env
+  sed -i '/^#\s*DB_DATABASE/d;   /^DB_DATABASE=/d'   .env
+  sed -i '/^#\s*DB_USERNAME/d;   /^DB_USERNAME=/d'   .env
+  sed -i '/^#\s*DB_PASSWORD/d;   /^DB_PASSWORD=/d'   .env
+  printf 'DB_CONNECTION=mysql\nDB_HOST=%s\nDB_PORT=%s\nDB_DATABASE=%s\nDB_USERNAME=%s\nDB_PASSWORD=%s\n' \
+    "${DB_HOST}" "${DB_PORT:-3306}" "${DB_DATABASE:-railway}" "${DB_USERNAME:-root}" "${DB_PASSWORD:-}" >> .env
 fi
 
 # 2. Creación EXPLÍCITA de carpetas (Sin usar llaves {} para compatibilidad con Alpine sh)

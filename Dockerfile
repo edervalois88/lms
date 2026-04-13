@@ -67,6 +67,10 @@ RUN find storage bootstrap/cache -type d -exec chmod 775 {} \; \
 # Nginx config
 COPY ./docker/nginx.conf /etc/nginx/http.d/default.conf
 
+# PHP-FPM: pass environment variables to worker processes (needed for Railway runtime env)
+RUN echo '[www]' > /usr/local/etc/php-fpm.d/zz-docker-env.conf && \
+    echo 'clear_env = no' >> /usr/local/etc/php-fpm.d/zz-docker-env.conf
+
 # Supervisor config
 COPY ./docker/supervisord.conf /etc/supervisord.conf
 
