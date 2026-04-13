@@ -1,10 +1,20 @@
 <script setup>
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const props = defineProps({
-    mastery: Array,
-    exams_history: Array
+    mastery: {
+        type: Array,
+        default: () => []
+    },
+    exams_history: {
+        type: Array,
+        default: () => []
+    },
+    exams_pagination: {
+        type: Object,
+        default: () => ({ current_page: 1, last_page: 1, per_page: 10, total: 0 })
+    }
 });
 
 // Calculate aggregate stats
@@ -23,12 +33,16 @@ const streak = computed(() => {
 });
 
 const formatDate = (dateString) => {
+    if (!dateString) return 'Sin fecha';
+
     return new Date(dateString).toLocaleDateString('es-MX', {
         day: 'numeric',
         month: 'short',
         year: 'numeric'
     });
 };
+
+const examsHistory = computed(() => props.exams_history || []);
 </script>
 
 <template>
@@ -126,7 +140,7 @@ const formatDate = (dateString) => {
                         Historial de Exámenes
                     </h2>
 
-                    <div v-if="exams_history.length === 0" class="py-12 text-center">
+                    <div v-if="examsHistory.length === 0" class="py-12 text-center">
                         <p class="text-gray-400 italic">No has realizado simulacros todavía.</p>
                     </div>
 
@@ -141,7 +155,7 @@ const formatDate = (dateString) => {
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
-                                <tr v-for="exam in exams_history" :key="exam.id" class="group">
+                                <tr v-for="exam in examsHistory" :key="exam.id" class="group">
                                     <td class="py-5 font-medium text-gray-600">{{ formatDate(exam.created_at) }}</td>
                                     <td class="py-5">
                                         <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold uppercase">
@@ -152,13 +166,25 @@ const formatDate = (dateString) => {
                                         <span class="font-black text-gray-900">{{ exam.score || '85' }}/120</span>
                                     </td>
                                     <td class="py-5 text-right">
-                                        <button class="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-orange-50 hover:text-orange-600 transition-all">
+                                        <Link
+                                            :href="route('simulator.results', exam.id)"
+                                            class="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-orange-50 hover:text-orange-600 transition-all"
+                                        >
                                             <i class="fa-solid fa-eye text-xs"></i>
-                                        </button>
+                                        </Link>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
+
+                        <div class="mt-6 flex items-center justify-between text-sm text-gray-500">
+                            <span>
+                                Mostrando {{ examsHistory.length }} de {{ exams_pagination.total }} simulacros
+                            </span>
+                            <span>
+                                Página {{ exams_pagination.current_page }} / {{ exams_pagination.last_page }}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -170,9 +196,12 @@ const formatDate = (dateString) => {
                     <h2 class="text-3xl font-black mb-2">¿Listo para el siguiente nivel?</h2>
                     <p class="text-orange-100 text-lg">Inicia un simulacro completo y proyecta tu puntaje real UNAM.</p>
                 </div>
-                <button class="relative z-10 bg-white text-orange-600 px-10 py-4 rounded-2xl font-black text-lg hover:bg-orange-50 transition-colors shadow-lg shadow-black/10">
+                <Link
+                    :href="route('simulator.index')"
+                    class="relative z-10 bg-white text-orange-600 px-10 py-4 rounded-2xl font-black text-lg hover:bg-orange-50 transition-colors shadow-lg shadow-black/10"
+                >
                     Iniciar Simulacro
-                </button>
+                </Link>
                 <!-- Abstract decorations -->
                 <div class="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
                 <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-64 h-64 bg-black/10 rounded-full blur-3xl"></div>

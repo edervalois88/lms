@@ -16,14 +16,21 @@ class ProgressController extends Controller
     public function index(): Response
     {
         $user = auth()->user();
+        $examHistory = $user->exams()
+            ->withCount('examAnswers')
+            ->latest()
+            ->paginate(10);
 
         return Inertia::render('Progress/Index', [
             'mastery' => $this->calculator->getSubjectMastery($user),
             'projection' => $this->calculator->getScoreProjection($user),
-            'exams_history' => $user->exams()
-                ->withCount('examAnswers')
-                ->latest()
-                ->paginate(10),
+            'exams_history' => $examHistory->items(),
+            'exams_pagination' => [
+                'current_page' => $examHistory->currentPage(),
+                'last_page' => $examHistory->lastPage(),
+                'per_page' => $examHistory->perPage(),
+                'total' => $examHistory->total(),
+            ],
             'weekly_stats' => $this->calculator->getWeeklyStats($user)
         ]);
     }
