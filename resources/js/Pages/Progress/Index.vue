@@ -14,6 +14,18 @@ const props = defineProps({
     exams_pagination: {
         type: Object,
         default: () => ({ current_page: 1, last_page: 1, per_page: 10, total: 0 })
+    },
+    projection: {
+        type: Object,
+        default: () => ({ projected_score: 0, confidence: 'Baja' })
+    },
+    streak_days: {
+        type: Number,
+        default: 0
+    },
+    weekly_stats: {
+        type: Object,
+        default: () => ({ questions_answered: 0 })
     }
 });
 
@@ -27,10 +39,7 @@ const avgAccuracy = computed(() => {
     return totalQuestions.value > 0 ? Math.round((totalCorrect / totalQuestions.value) * 100) : 0;
 });
 
-const streak = computed(() => {
-    // In a real app, this would come from the User prop or a specific stat
-    return 15; 
-});
+const streak = computed(() => props.streak_days || 0);
 
 const formatDate = (dateString) => {
     if (!dateString) return 'Sin fecha';
@@ -43,6 +52,7 @@ const formatDate = (dateString) => {
 };
 
 const examsHistory = computed(() => props.exams_history || []);
+const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
 </script>
 
 <template>
@@ -76,7 +86,7 @@ const examsHistory = computed(() => props.exams_history || []);
                     <h3 class="text-4xl font-black text-gray-900">{{ totalQuestions }}</h3>
                     <div class="mt-4 flex items-center text-green-500 text-sm font-bold">
                         <i class="fa-solid fa-arrow-up mr-2"></i>
-                        <span>+12% esta semana</span>
+                        <span>{{ weekly_stats.questions_answered || 0 }} respuestas esta semana</span>
                     </div>
                 </div>
                 <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
@@ -88,8 +98,8 @@ const examsHistory = computed(() => props.exams_history || []);
                 </div>
                 <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                     <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Nivel Global</p>
-                    <h3 class="text-4xl font-black text-gray-900">Avanzado</h3>
-                    <p class="mt-4 text-gray-500 text-sm italic">"Estás por encima del 85% de los aspirantes"</p>
+                    <h3 class="text-4xl font-black text-gray-900">{{ confidenceLabel }}</h3>
+                    <p class="mt-4 text-gray-500 text-sm italic">Confianza estimada de tu proyección actual.</p>
                 </div>
             </div>
 
@@ -108,15 +118,15 @@ const examsHistory = computed(() => props.exams_history || []);
                     </div>
 
                     <div v-else class="space-y-8">
-                        <div v-for="item in mastery" :key="item.id" class="group">
+                        <div v-for="item in mastery" :key="item.id || item.subject" class="group">
                             <div class="flex justify-between items-end mb-3">
                                 <div>
                                     <h4 class="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
-                                        {{ item.topic?.subject?.name || 'Materia' }}
+                                        {{ item.subject || 'Materia' }}
                                     </h4>
-                                    <p class="text-xs text-gray-400">{{ item.topic?.name }}</p>
+                                    <p class="text-xs text-gray-400 uppercase">Tendencia: {{ item.trend || 'stable' }}</p>
                                 </div>
-                                <span class="text-lg font-black" :style="{ color: item.topic?.subject?.color || '#F97316' }">
+                                <span class="text-lg font-black" :style="{ color: item.subject_color || '#F97316' }">
                                     {{ Math.round((item.mastery_score || 0) * 10) }}%
                                 </span>
                             </div>
@@ -125,7 +135,7 @@ const examsHistory = computed(() => props.exams_history || []);
                                     class="h-full transition-all duration-1000 ease-out shadow-inner"
                                     :style="{ 
                                         width: (item.mastery_score || 0) * 10 + '%',
-                                        backgroundColor: item.topic?.subject?.color || '#F97316'
+                                        backgroundColor: item.subject_color || '#F97316'
                                     }"
                                 ></div>
                             </div>
@@ -163,7 +173,7 @@ const examsHistory = computed(() => props.exams_history || []);
                                         </span>
                                     </td>
                                     <td class="py-5">
-                                        <span class="font-black text-gray-900">{{ exam.score || '85' }}/120</span>
+                                        <span class="font-black text-gray-900">{{ exam.score ?? '--' }}/120</span>
                                     </td>
                                     <td class="py-5 text-right">
                                         <Link
@@ -191,7 +201,7 @@ const examsHistory = computed(() => props.exams_history || []);
             </div>
 
             <!-- Promotion / CTA -->
-            <div class="mt-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-3xl p-10 text-white flex flex-col md:flex-row items-center justify-between shadow-2xl overflow-hidden relative">
+            <div class="mt-12 bg-linear-to-r from-orange-500 to-red-600 rounded-3xl p-10 text-white flex flex-col md:flex-row items-center justify-between shadow-2xl overflow-hidden relative">
                 <div class="relative z-10 text-center md:text-left mb-8 md:mb-0">
                     <h2 class="text-3xl font-black mb-2">¿Listo para el siguiente nivel?</h2>
                     <p class="text-orange-100 text-lg">Inicia un simulacro completo y proyecta tu puntaje real UNAM.</p>

@@ -69,6 +69,33 @@ const bootcampProtocolText = computed(() => {
     return 'Protocolo de refuerzo en generación. Ejecuta misión táctica para calibrar tu perfil.';
 });
 
+const tacticalModule = computed(() => {
+    if (bootcampSubjects.value.length > 0) {
+        return bootcampSubjects.value.join(' y ');
+    }
+
+    return 'materias clave';
+});
+
+const estimatedSessions = computed(() => {
+    const gap = Number(props.stats?.projection?.gap_to_goal ?? 0);
+    if (!Number.isFinite(gap) || gap <= 0) {
+        return 1;
+    }
+
+    return Math.max(1, Math.ceil(gap / 8));
+});
+
+const tacticalMessage = computed(() => {
+    const gap = Number(props.stats?.projection?.gap_to_goal ?? 0);
+
+    if (!Number.isFinite(gap) || gap <= 0) {
+        return 'Protocolo detectado: ya estás en zona de ingreso. Mantén sesiones de consolidación para sostener tu ventaja.';
+    }
+
+    return `Protocolo detectado: Para neutralizar los ${gap} aciertos restantes, debemos priorizar el módulo de ${tacticalModule.value}. El algoritmo estima éxito en ${estimatedSessions.value} sesiones.`;
+});
+
 onMounted(() => {
     initializeTheme();
 
@@ -230,7 +257,7 @@ onMounted(() => {
                                             <i class="fa-solid fa-robot"></i>
                                         </div>
                                         <p class="text-sm font-bold text-gray-300 italic leading-relaxed pl-4">
-                                            "Protocolo detectado: Para neutralizar los <span class="text-orange-500">{{ stats.projection.gap_to_goal }} aciertos</span> restantes, debemos priorizar el módulo de <b>Física Cuántica</b>. El algoritmo estima éxito en 14 sesiones."
+                                            {{ tacticalMessage }}
                                         </p>
                                     </div>
                                 </div>

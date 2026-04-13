@@ -16,6 +16,7 @@ class ProgressController extends Controller
     public function index(): Response
     {
         $user = auth()->user();
+        $weeklyStats = $this->calculator->getWeeklyStats($user);
         $examHistory = $user->exams()
             ->withCount('examAnswers')
             ->latest()
@@ -24,6 +25,7 @@ class ProgressController extends Controller
         return Inertia::render('Progress/Index', [
             'mastery' => $this->calculator->getSubjectMastery($user),
             'projection' => $this->calculator->getScoreProjection($user),
+            'streak_days' => (int) ($user->streak_days ?? 0),
             'exams_history' => $examHistory->items(),
             'exams_pagination' => [
                 'current_page' => $examHistory->currentPage(),
@@ -31,7 +33,7 @@ class ProgressController extends Controller
                 'per_page' => $examHistory->perPage(),
                 'total' => $examHistory->total(),
             ],
-            'weekly_stats' => $this->calculator->getWeeklyStats($user)
+            'weekly_stats' => $weeklyStats,
         ]);
     }
 }

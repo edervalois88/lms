@@ -34,7 +34,9 @@ class ProgressCalculatorService
             $accuracy = $total > 0 ? ($correct / $total) : 0;
 
             $mastery[] = [
+                'id' => $subject->id,
                 'subject' => $subject->name,
+                'subject_color' => $subject->color,
                 'mastery_score' => round($accuracy * 10, 1),
                 'total_attempts' => $total,
                 'correct_attempts' => $correct,
@@ -59,11 +61,18 @@ class ProgressCalculatorService
             $projectedScore += ($m['mastery_score'] / 10) * $weight;
         }
 
+        $totalAttempts = array_sum(array_map(fn ($m) => (int) ($m['total_attempts'] ?? 0), $mastery));
+        $confidence = match (true) {
+            $totalAttempts >= 120 => 'Alta',
+            $totalAttempts >= 40 => 'Media',
+            default => 'Baja',
+        };
+
         return [
             'projected_score' => round($projectedScore),
             'min_score' => round($projectedScore * 0.9),
             'max_score' => min(120, round($projectedScore * 1.1)),
-            'confidence' => 'Media',
+            'confidence' => $confidence,
             'gap_to_goal' => $user->major ? ($user->major->min_score - round($projectedScore)) : null,
             'goal_name' => $user->major?->name ?? 'No definida'
         ];
@@ -124,6 +133,46 @@ class ProgressCalculatorService
 
     private function calculateTrend(iterable $answers): string
     {
-        return 'up'; // Simplified mock logic
+        $answersArray = is_array($answers) ? $answers : iterator_to_array($answers);
+        $count = count($answersArray);
+
+        if ($count < 6) {
+            return 'stable';
+        }
+
+        $half = intdiv($count, 2);
+        $firstHalf = array_slice($answersArray, 0, $half);
+        $secondHalf = array_slice($answersArray, $half);
+
+        $firstAcc = $this->accuracyForSegment($firstHalf);
+        $secondAcc = $this->accuracyForSegment($secondHalf);
+        $delta = $secondAcc - $firstAcc;
+
+        if ($delta >= 0.08) {
+            return 'up';
+        }
+
+        if ($delta <= -0.08) {
+            return 'down';
+        }
+
+        return 'stable';
+    }
+
+    private function accuracyForSegment(array $segment): float
+    {
+        if (count($segment) === 0) {
+            return 0.0;
+        }
+
+        $correct = 0;
+
+        foreach ($segment as $answer) {
+            if ((bool) ($answer->is_correct ?? false)) {
+                $correct++;
+            }
+        }
+
+        return $correct / count($segment);
     }
 }
