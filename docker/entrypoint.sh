@@ -3,36 +3,49 @@ set -eu
 
 echo "🚀 Iniciando Protocolo de Despegue NexusEdu (v11.1 Alpine-Compatible)..."
 
-# 1. Defaults seguros por variables de entorno (sin materializar secretos en .env)
-echo "📝 Aplicando defaults de entorno en memoria..."
+# ─────────────────────────────────────────────────────────────────────
+# 1. Generar .env desde las variables de entorno del contenedor.
+#    El .env de desarrollo NO se incluye en la imagen (ver .dockerignore).
+#    Railway inyecta todas las variables como env vars reales.
+# ─────────────────────────────────────────────────────────────────────
+echo "📝 Generando .env desde variables de entorno del contenedor..."
+
+# Defaults para variables de servicio
 : "${LOG_CHANNEL:=errorlog}"
 : "${SESSION_DRIVER:=database}"
 : "${CACHE_STORE:=database}"
 : "${QUEUE_CONNECTION:=database}"
 export LOG_CHANNEL SESSION_DRIVER CACHE_STORE QUEUE_CONNECTION
 
-# Railway puede proveer MYSQLHOST/MYSQLUSER/etc. o DATABASE_URL o MYSQL_URL en lugar de DB_HOST.
-# Mapear a las variables que Laravel espera (DB_HOST, DB_USERNAME, etc.)
-# También manejar variantes de nombres: MYSQL_HOST vs MYSQLHOST, MYSQL_URL vs DATABASE_URL
-_MYSQL_URL="${DATABASE_URL:-${MYSQL_URL:-}}"
-_MYSQL_HOST="${MYSQLHOST:-${MYSQL_HOST:-}}"
-_MYSQL_PORT="${MYSQLPORT:-${MYSQL_PORT:-3306}}"
-_MYSQL_DB="${MYSQLDATABASE:-${MYSQL_DATABASE:-railway}}"
-_MYSQL_USER="${MYSQLUSER:-${MYSQL_USER:-root}}"
-_MYSQL_PASS="${MYSQLPASSWORD:-${MYSQL_PASSWORD:-}}"
+# Diagnóstico: listar TODAS las variables relevantes de BD que Railway inyecta
+echo "🔍 Variables de BD disponibles en el entorno:"
+env | grep -iE '^(DB_|MYSQL|DATABASE_URL)' | sed 's/PASSWORD=.*/PASSWORD=***/' || echo "   (ninguna encontrada)"
 
+# Railway puede usar diferentes nombres de variables para MySQL.
+# Intentamos todos los formatos conocidos y mapeamos a DB_* de Laravel.
 if [ -z "${DB_HOST:-}" ]; then
-  if [ -n "$_MYSQL_HOST" ]; then
-    export DB_HOST="$_MYSQL_HOST"
-    export DB_PORT="$_MYSQL_PORT"
-    export DB_DATABASE="$_MYSQL_DB"
-    export DB_USERNAME="$_MYSQL_USER"
-    export DB_PASSWORD="$_MYSQL_PASS"
+  # Opción A: Variables MYSQLHOST (Railway MySQL plugin)
+  if [ -n "${MYSQLHOST:-}" ]; then
+    export DB_HOST="$MYSQLHOST"
+    export DB_PORT="${MYSQLPORT:-3306}"
+    export DB_DATABASE="${MYSQLDATABASE:-railway}"
+    export DB_USERNAME="${MYSQLUSER:-root}"
+    export DB_PASSWORD="${MYSQLPASSWORD:-}"
     export DB_CONNECTION="mysql"
-    echo "🔍 Mapeado MYSQLHOST → DB_HOST=${DB_HOST} DB_DATABASE=${DB_DATABASE}"
-  elif [ -n "$_MYSQL_URL" ]; then
-    # Formato: mysql://user:password@host:port/dbname
-    _url="${_MYSQL_URL#*://}"
+    echo "✅ Mapeado MYSQLHOST → DB_HOST=${DB_HOST}"
+  # Opción B: Variables MYSQL_HOST (formato alternativo)
+  elif [ -n "${MYSQL_HOST:-}" ]; then
+    export DB_HOST="$MYSQL_HOST"
+    export DB_PORT="${MYSQL_PORT:-3306}"
+    export DB_DATABASE="${MYSQL_DATABASE:-railway}"
+    export DB_USERNAME="${MYSQL_USER:-root}"
+    export DB_PASSWORD="${MYSQL_PASSWORD:-}"
+    export DB_CONNECTION="mysql"
+    echo "✅ Mapeado MYSQL_HOST → DB_HOST=${DB_HOST}"
+  # Opción C: DATABASE_URL o MYSQL_URL (connection string completa)
+  elif [ -n "${DATABASE_URL:-}" ] || [ -n "${MYSQL_URL:-}" ]; then
+    _conn_url="${DATABASE_URL:-${MYSQL_URL}}"
+    _url="${_conn_url#*://}"
     _userinfo="${_url%@*}"
     _hostinfo="${_url##*@}"
     _hostport="${_hostinfo%%/*}"
@@ -49,25 +62,27 @@ if [ -z "${DB_HOST:-}" ]; then
     export DB_PASSWORD="${_userinfo#*:}"
     export DB_DATABASE="${_dbname:-railway}"
     export DB_CONNECTION="mysql"
-    echo "🔍 Parseado DATABASE_URL → DB_HOST=${DB_HOST} DB_PORT=${DB_PORT} DB_DATABASE=${DB_DATABASE}"
+    echo "✅ Parseado DATABASE_URL → DB_HOST=${DB_HOST} DB_PORT=${DB_PORT}"
   fi
 fi
 
-# Escribir variables DB al .env para que php-fpm y php-cli las lean via Dotenv.
-# (php-fpm limpia el entorno por defecto; Dotenv no sobreescribe vars de entorno ya definidas,
-#  pero sí las lee si no están en el entorno actual del proceso worker)
-if [ -n "${DB_HOST:-}" ]; then
-  echo "📝 Escribiendo conexión DB en .env..."
-  # Remover líneas existentes (comentadas o no) y agregar los valores actuales
-  sed -i '/^#\s*DB_CONNECTION/d; /^DB_CONNECTION=/d' .env
-  sed -i '/^#\s*DB_HOST/d;       /^DB_HOST=/d'       .env
-  sed -i '/^#\s*DB_PORT/d;       /^DB_PORT=/d'       .env
-  sed -i '/^#\s*DB_DATABASE/d;   /^DB_DATABASE=/d'   .env
-  sed -i '/^#\s*DB_USERNAME/d;   /^DB_USERNAME=/d'   .env
-  sed -i '/^#\s*DB_PASSWORD/d;   /^DB_PASSWORD=/d'   .env
-  printf 'DB_CONNECTION=mysql\nDB_HOST=%s\nDB_PORT=%s\nDB_DATABASE=%s\nDB_USERNAME=%s\nDB_PASSWORD=%s\n' \
-    "${DB_HOST}" "${DB_PORT:-3306}" "${DB_DATABASE:-railway}" "${DB_USERNAME:-root}" "${DB_PASSWORD:-}" >> .env
+# Generar .env desde cero con TODAS las variables relevantes.
+# Esto garantiza que tanto php artisan (CLI) como php-fpm (web) las lean.
+{
+  # Escribir todas las env vars que Laravel necesita, prefijadas con los nombres que espera
+  printenv | grep -E '^(APP_|DB_|LOG_|SESSION_|CACHE_|QUEUE_|REDIS_|MAIL_|BROADCAST_|FILESYSTEM_|STRIPE_|ANTHROPIC_|VITE_)' | sort
+} > .env 2>/dev/null || true
+
+# Si hay DATABASE_URL, incluirla también (Laravel la soporta nativamente en 'url')
+if [ -n "${DATABASE_URL:-}" ]; then
+  echo "DATABASE_URL=${DATABASE_URL}" >> .env
 fi
+if [ -n "${MYSQL_URL:-}" ]; then
+  echo "MYSQL_URL=${MYSQL_URL}" >> .env
+fi
+
+echo "📋 .env generado con $(wc -l < .env) variables"
+echo "🔍 Conexión BD resultante: DB_CONNECTION=${DB_CONNECTION:-[no definido]} DB_HOST=${DB_HOST:-[no definido]}"
 
 # 2. Creación EXPLÍCITA de carpetas (Sin usar llaves {} para compatibilidad con Alpine sh)
 echo "📂 Asegurando directorios de sistema..."
@@ -124,16 +139,6 @@ if [ "${DB_CONNECTION:-mysql}" != "sqlite" ]; then
 fi
 
 echo "📂 Preparando Estructura de Datos..."
-
-# Diagnóstico: mostrar qué variables de BD están disponibles
-echo "🔍 Variables de BD detectadas:"
-echo "   DB_CONNECTION=${DB_CONNECTION:-[no definido]}"
-echo "   DB_HOST=${DB_HOST:-[no definido]}"
-echo "   MYSQLHOST=${MYSQLHOST:-[no definido]}"
-echo "   MYSQL_HOST=${MYSQL_HOST:-[no definido]}"
-echo "   DATABASE_URL=$([ -n "${DATABASE_URL:-}" ] && echo '[definido]' || echo '[no definido]')"
-echo "   MYSQL_URL=$([ -n "${MYSQL_URL:-}" ] && echo '[definido]' || echo '[no definido]')"
-
 php artisan config:clear
 
 AUTO_RUN_MIGRATIONS="${AUTO_RUN_MIGRATIONS:-true}"
