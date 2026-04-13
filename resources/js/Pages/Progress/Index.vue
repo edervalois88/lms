@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const props = defineProps({
     mastery: {
@@ -57,6 +58,8 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
 
 <template>
     <Head title="Mi Progreso - NexusEdu" />
+
+    <AuthenticatedLayout>
 
     <div class="progress-page app-shell min-h-screen py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-7xl mx-auto">
@@ -219,6 +222,7 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
 
         </div>
     </div>
+    </AuthenticatedLayout>
 </template>
 
 <style scoped>

@@ -4,6 +4,7 @@ import { computed, onMounted } from 'vue';
 import { animate, spring, stagger } from 'motion';
 import { playSound } from '@/Utils/SoundService';
 import { useTheme } from '@/Composables/useTheme';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const props = defineProps({
     major: Object,
@@ -137,88 +138,31 @@ onMounted(() => {
 <template>
     <Head title="Command Center - NexusEdu" />
 
-    <div class="app-shell min-h-screen bg-midnight text-white font-sans selection:bg-orange-500/30">
-        
-        <!-- Top Immersive Status Bar -->
-        <div class="app-nav bg-cyber-gray/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-black shadow-orange-glow text-white" :style="{ background: `linear-gradient(135deg, ${themePalette.primary}, ${themePalette.secondary})` }">
-                        <i :class="avatarIcon"></i>
-                    </div>
-                    <div class="hidden md:block">
+    <AuthenticatedLayout>
+        <template #default>
+            <!-- Dashboard Content Header -->
+            <header class="bg-midnight border-b border-white/5 sticky top-16 z-30">
+                <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+                    <div>
                         <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Status: Operador | GPA: {{ props.user_gpa || '---' }}</p>
-                        <p class="text-sm font-black">{{ $page.props.auth.user.name }}</p>
+                        <p class="text-lg font-black">NODO CENTRAL</p>
+                    </div>
+
+                    <div class="flex items-center gap-6">
+                        <div v-if="isAdmin" class="flex items-center gap-2 px-4 py-2 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                            <i class="fa-solid fa-shield-halved text-purple-400"></i>
+                            <span class="text-xs font-black text-purple-300 uppercase">Admin Mode</span>
+                        </div>
+
+                        <div class="flex items-center gap-2 px-4 py-2 bg-orange-500/10 rounded-xl border border-orange-500/20 group cursor-help">
+                            <i class="fa-solid fa-fire text-orange-500 group-hover:animate-bounce"></i>
+                            <span class="font-black text-sm">{{ stats.streak }} DÍAS</span>
+                        </div>
                     </div>
                 </div>
+            </header>
 
-                <!-- Global XP Bar -->
-                <div class="grow max-w-md mx-10 hidden lg:block">
-                    <div class="flex justify-between items-end mb-1 px-1">
-                        <span class="text-[10px] font-black uppercase tracking-widest" :style="{ color: themePalette.primary }">{{ profileTitle || $page.props.auth.gamification?.rank || 'Novato' }}</span>
-                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">NIVEL {{ $page.props.auth.gamification?.current || 1 }}</span>
-                    </div>
-                    <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
-                        <div 
-                            class="h-full shadow-orange-glow transition-all duration-1000"
-                            :style="{ width: ($page.props.auth.gamification?.progress || 0) + '%', backgroundColor: themePalette.primary }"
-                        ></div>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-6">
-                    <button
-                        type="button"
-                        @click="toggleTheme()"
-                        class="nx-icon-btn"
-                        :title="theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
-                    >
-                        <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
-                    </button>
-
-                    <Link
-                        v-if="isAdmin"
-                        :href="route('admin.index')"
-                        class="nx-icon-btn"
-                        title="Panel admin"
-                    >
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </Link>
-
-                    <Link
-                        :href="route('profile.edit')"
-                        class="nx-icon-btn"
-                        title="Perfil"
-                    >
-                        <i class="fa-solid fa-user-gear"></i>
-                    </Link>
-
-                    <Link
-                        :href="route('logout')"
-                        method="post"
-                        as="button"
-                        class="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-colors border border-red-500/20"
-                        title="Cerrar sesión"
-                    >
-                        <i class="fa-solid fa-power-off"></i>
-                    </Link>
-
-                    <div class="flex items-center gap-2 px-4 py-2 bg-orange-500/10 rounded-xl border border-orange-500/20 group cursor-help">
-                        <i class="fa-solid fa-fire text-orange-500 group-hover:animate-bounce"></i>
-                        <span class="font-black text-sm">{{ stats.streak }} DÍAS</span>
-                    </div>
-                    <Link
-                        :href="route('review.index')"
-                        class="nx-icon-btn"
-                        title="Repetición espaciada"
-                    >
-                        <i class="fa-solid fa-bell"></i>
-                    </Link>
-                </div>
-            </div>
-        </div>
-
-        <div class="py-12 px-6">
+            <div class="py-12 px-6">
             <div class="max-w-7xl mx-auto space-y-12">
                 
                 <!-- Main HUD Wrap -->
@@ -457,8 +401,8 @@ onMounted(() => {
                 </div>
             </div>
         </div>
-
-    </div>
+        </template>
+    </AuthenticatedLayout>
 </template>
 
 <style scoped>

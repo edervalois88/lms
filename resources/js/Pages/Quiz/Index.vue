@@ -1,5 +1,6 @@
 <script setup>
 import { Link, Head } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 defineProps({
     subjects: Array,
@@ -9,8 +10,9 @@ defineProps({
 <template>
     <Head title="Cuestionarios - NexusEdu" />
 
-    <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
+    <AuthenticatedLayout>
+        <div class="py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto">
             <header class="mb-12">
                 <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
                     Domina tu <span class="text-orange-600">Conocimiento</span>
@@ -68,7 +70,8 @@ defineProps({
                 </Link>
             </div>
         </div>
-    </div>
+        </div>
+    </AuthenticatedLayout>
 </template>
 
 <style scoped>

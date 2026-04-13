@@ -6,6 +6,7 @@ import QuestionCard from '@/Components/Quiz/QuestionCard.vue';
 import FeedbackPanel from '@/Components/Quiz/FeedbackPanel.vue';
 import TutorChat from '@/Components/Quiz/TutorChat.vue';
 import UpgradeModal from '@/Components/UI/UpgradeModal.vue';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const props = defineProps({
     subject: Object,
@@ -174,8 +175,10 @@ const handleTutorAsk = async (message) => {
 <template>
     <Head :title="`Quiz: ${subject.name}`" />
 
-    <div class="min-h-screen bg-gray-50 flex flex-col">
+    <AuthenticatedLayout>
         <UpgradeModal :show="showUpgradeModal" :feature="blockedFeature" @close="showUpgradeModal = false" />
+
+        <div class="flex flex-col">
 
         <div v-if="xpToast" class="fixed top-5 right-5 z-50 rounded-xl bg-emerald-600 text-white px-4 py-2 text-sm font-black shadow-lg animate-fade-in">
             {{ xpToast }}
@@ -313,7 +316,8 @@ const handleTutorAsk = async (message) => {
 
             </div>
         </main>
-    </div>
+        </div>
+    </AuthenticatedLayout>
 </template>
 
 <style scoped>

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { animate, spring, stagger } from 'motion';
 import Card from '@/Components/UI/Card.vue';
 import { playSound } from '@/Utils/SoundService';
@@ -83,6 +84,8 @@ onMounted(() => {
 
 <template>
     <Head title="Resultados del Simulacro - NexusEdu" />
+
+    <AuthenticatedLayout>
 
     <div class="app-shell min-h-screen text-white px-4 py-10 md:px-8 end-screen-fade">
         <div class="max-w-7xl mx-auto space-y-8 relative">
@@ -223,6 +226,7 @@ onMounted(() => {
             </Card>
         </div>
     </div>
+    </AuthenticatedLayout>
 </template>
 
 <style scoped>
