@@ -142,7 +142,7 @@ echo "📂 Preparando Estructura de Datos..."
 php artisan config:clear
 
 AUTO_RUN_MIGRATIONS="${AUTO_RUN_MIGRATIONS:-true}"
-AUTO_RUN_SEEDERS="${AUTO_RUN_SEEDERS:-false}"
+AUTO_RUN_SEEDERS="${AUTO_RUN_SEEDERS:-true}"
 
 if [ "$AUTO_RUN_MIGRATIONS" = "true" ]; then
   if [ "$AUTO_RUN_SEEDERS" = "true" ]; then
@@ -155,6 +155,10 @@ if [ "$AUTO_RUN_MIGRATIONS" = "true" ]; then
 else
   echo "⏭️ AUTO_RUN_MIGRATIONS=false, se omite migrate."
 fi
+
+# Asegurar que el sistema de recompensas está configurado
+echo "🎁 Verificando sistema de recompensas..."
+php artisan rewards:setup
 
 echo "📂 Limpieza Final..."
 AUTO_OPTIMIZE_CLEAR="${AUTO_OPTIMIZE_CLEAR:-true}"
