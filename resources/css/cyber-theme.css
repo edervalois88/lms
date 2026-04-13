@@ -105,6 +105,37 @@
     box-shadow: 0 0 0 3px var(--app-focus-ring);
 }
 
+.nx-panel {
+    border: 1px solid var(--app-card-border);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--app-bg-elevated) 92%, #000 8%), color-mix(in srgb, var(--app-bg) 92%, #000 8%));
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(12px);
+}
+
+.nx-panel-soft {
+    border: 1px solid color-mix(in srgb, var(--app-card-border) 82%, transparent 18%);
+    background: color-mix(in srgb, var(--app-card) 92%, transparent 8%);
+}
+
+.nx-icon-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: color-mix(in srgb, var(--app-text-muted) 90%, #fff 10%);
+    border: 1px solid var(--app-card-border);
+    background: color-mix(in srgb, var(--app-card) 70%, transparent 30%);
+    transition: all 180ms ease;
+}
+
+.nx-icon-btn:hover {
+    color: var(--app-text-strong);
+    border-color: var(--app-border-strong);
+    background: color-mix(in srgb, var(--app-card) 88%, transparent 12%);
+}
+
 @keyframes float {
     0% { transform: translateY(0px) rotate(0deg); }
     50% { transform: translateY(-10px) rotate(2deg); }

@@ -84,7 +84,7 @@ onMounted(() => {
 <template>
     <Head title="Resultados del Simulacro - NexusEdu" />
 
-    <div class="min-h-screen text-white px-4 py-10 md:px-8 end-screen-fade bg-[radial-gradient(circle_at_20%_0%,#1f2937_0%,#0b0f1a_45%,#020617_100%)]">
+    <div class="app-shell min-h-screen text-white px-4 py-10 md:px-8 end-screen-fade">
         <div class="max-w-7xl mx-auto space-y-8 relative">
             <div v-if="xp_awarded > 0 && showHero" class="pointer-events-none absolute inset-0 overflow-hidden">
                 <span

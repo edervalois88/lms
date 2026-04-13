@@ -58,16 +58,16 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
 <template>
     <Head title="Mi Progreso - NexusEdu" />
 
-    <div class="progress-page app-shell min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="progress-page app-shell min-h-screen py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-7xl mx-auto">
             
             <header class="mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                 <div>
-                    <h1 class="text-4xl font-black text-gray-900 mb-2">Mi <span class="text-orange-600">Progreso</span></h1>
+                    <h1 class="text-4xl font-black text-gray-900 mb-2">Mi <span class="text-orange-500">Progreso</span></h1>
                     <p class="text-lg text-gray-500">Visualiza tu evolución y prepárate para el éxito.</p>
                 </div>
                 <div class="flex gap-4">
-                    <div class="bg-white px-6 py-4 rounded-3xl shadow-sm border border-gray-100 flex items-center">
+                    <div class="nx-panel px-6 py-4 rounded-3xl flex items-center">
                         <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mr-4">
                             <i class="fa-solid fa-fire"></i>
                         </div>
@@ -81,7 +81,7 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
 
             <!-- Quick Stats -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                <div class="nx-panel p-8 rounded-3xl">
                     <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Total Preguntas</p>
                     <h3 class="text-4xl font-black text-gray-900">{{ totalQuestions }}</h3>
                     <div class="mt-4 flex items-center text-green-500 text-sm font-bold">
@@ -89,14 +89,14 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
                         <span>{{ weekly_stats.questions_answered || 0 }} respuestas esta semana</span>
                     </div>
                 </div>
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                <div class="nx-panel p-8 rounded-3xl">
                     <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Precisión Media</p>
                     <h3 class="text-4xl font-black text-gray-900">{{ avgAccuracy }}%</h3>
                     <div class="mt-4 w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                         <div class="bg-orange-500 h-full" :style="{ width: avgAccuracy + '%' }"></div>
                     </div>
                 </div>
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                <div class="nx-panel p-8 rounded-3xl">
                     <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Nivel Global</p>
                     <h3 class="text-4xl font-black text-gray-900">{{ confidenceLabel }}</h3>
                     <p class="mt-4 text-gray-500 text-sm italic">Confianza estimada de tu proyección actual.</p>
@@ -106,7 +106,7 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 <!-- Mastery by Subject -->
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                <div class="nx-panel p-8 rounded-3xl">
                     <h2 class="text-2xl font-black text-gray-900 mb-8 flex items-center">
                         <i class="fa-solid fa-chart-line mr-3 text-orange-600"></i>
                         Dominio por Materia
@@ -144,7 +144,7 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
                 </div>
 
                 <!-- Exam History -->
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                <div class="nx-panel p-8 rounded-3xl">
                     <h2 class="text-2xl font-black text-gray-900 mb-8 flex items-center">
                         <i class="fa-solid fa-history mr-3 text-orange-600"></i>
                         Historial de Exámenes
@@ -168,7 +168,7 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
                                 <tr v-for="exam in examsHistory" :key="exam.id" class="group">
                                     <td class="py-5 font-medium text-gray-600">{{ formatDate(exam.created_at) }}</td>
                                     <td class="py-5">
-                                        <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold uppercase">
+                                        <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold uppercase border border-white/10">
                                             {{ exam.type }}
                                         </span>
                                     </td>
@@ -178,7 +178,7 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
                                     <td class="py-5 text-right">
                                         <Link
                                             :href="route('simulator.results', exam.id)"
-                                            class="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-orange-50 hover:text-orange-600 transition-all"
+                                            class="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-orange-500/15 hover:text-orange-300 transition-all"
                                         >
                                             <i class="fa-solid fa-eye text-xs"></i>
                                         </Link>

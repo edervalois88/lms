@@ -170,7 +170,7 @@ onMounted(() => {
                     <button
                         type="button"
                         @click="toggleTheme()"
-                        class="hud-icon-btn"
+                        class="nx-icon-btn"
                         :title="theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
                     >
                         <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
@@ -179,7 +179,7 @@ onMounted(() => {
                     <Link
                         v-if="isAdmin"
                         :href="route('admin.index')"
-                        class="hud-icon-btn"
+                        class="nx-icon-btn"
                         title="Panel admin"
                     >
                         <i class="fa-solid fa-shield-halved"></i>
@@ -187,7 +187,7 @@ onMounted(() => {
 
                     <Link
                         :href="route('profile.edit')"
-                        class="hud-icon-btn"
+                        class="nx-icon-btn"
                         title="Perfil"
                     >
                         <i class="fa-solid fa-user-gear"></i>
@@ -209,7 +209,7 @@ onMounted(() => {
                     </div>
                     <Link
                         :href="route('review.index')"
-                        class="hud-icon-btn"
+                        class="nx-icon-btn"
                         title="Repetición espaciada"
                     >
                         <i class="fa-solid fa-bell"></i>
@@ -376,7 +376,7 @@ onMounted(() => {
                     <!-- Side HUD: Rankings & Mastery -->
                     <div class="lg:col-span-4 space-y-10 hud-element">
                         <!-- Stats Mini HUD -->
-                        <div class="dashboard-panel p-7 rounded-[2.2rem] space-y-6">
+                        <div class="nx-panel p-7 rounded-[2.2rem] space-y-6">
                             <div class="flex items-center justify-between pb-4 border-b border-white/10">
                                 <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.22em]">Puntaje Global</h3>
                                 <span class="w-9 h-9 rounded-xl bg-orange-500/15 border border-orange-400/25 text-orange-300 flex items-center justify-center">
@@ -410,7 +410,7 @@ onMounted(() => {
                         </div>
 
                         <!-- Mastery Levels -->
-                        <div class="dashboard-panel p-7 rounded-[2.2rem]">
+                        <div class="nx-panel p-7 rounded-[2.2rem]">
                             <h3 class="text-[10px] font-black text-orange-300 uppercase tracking-[0.22em] mb-6">Zonas de Dominio</h3>
                             <div class="space-y-3">
                                 <div v-for="item in subject_mastery.slice(0, 5)" :key="item.subject" class="rounded-2xl border border-white/10 bg-white/3 p-4 group cursor-pointer transition-colors hover:bg-white/5">
@@ -426,7 +426,7 @@ onMounted(() => {
                         </div>
 
                         <!-- Quick Profile Info -->
-                        <div class="dashboard-panel p-7 rounded-[2.2rem] relative overflow-hidden">
+                        <div class="nx-panel p-7 rounded-[2.2rem] relative overflow-hidden">
                            <div class="absolute -right-14 -bottom-14 w-44 h-44 bg-orange-500/10 rounded-full blur-3xl"></div>
                            <div class="relative z-10 flex items-center gap-5">
                                <div class="w-16 h-16 rounded-2xl border border-orange-400/30 bg-orange-500/10 text-orange-300 flex items-center justify-center text-3xl font-black">
@@ -447,7 +447,7 @@ onMounted(() => {
 
         <!-- Notification Feed (Floating) -->
         <div class="fixed bottom-10 right-10 z-40 space-y-4 max-w-xs hidden xl:block">
-            <div class="dashboard-panel p-5 rounded-2xl animate-float shadow-2xl flex items-start gap-4">
+            <div class="nx-panel p-5 rounded-2xl animate-float shadow-2xl flex items-start gap-4">
                 <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/20 flex items-center justify-center text-emerald-300">
                     <i class="fa-solid fa-trophy"></i>
                 </div>
@@ -462,31 +462,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.dashboard-panel {
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    background: linear-gradient(160deg, rgba(12, 18, 30, 0.94), rgba(8, 12, 22, 0.9));
-    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
-}
-
-.hud-icon-btn {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 9999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: rgb(156 163 175 / 1);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.04);
-    transition: all 180ms ease;
-}
-
-.hud-icon-btn:hover {
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.24);
-    background: rgba(255, 255, 255, 0.08);
-}
-
 .italic-glow {
     text-shadow: 0 0 30px rgba(255, 107, 0, 0.2);
 }
