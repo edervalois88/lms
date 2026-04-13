@@ -40,6 +40,7 @@ const baseNavItems = [
     { name: 'DAILY XP', route: 'practice.daily', icon: 'fa-solid fa-fire' },
     { name: 'ANALÍTICA', route: 'progress.index', icon: 'fa-solid fa-chart-line' },
     { name: 'REPETICIÓN', route: 'review.index', icon: 'fa-solid fa-repeat' },
+    { name: 'PERFIL', route: 'profile.edit', icon: 'fa-solid fa-gear' },
 ];
 
 const navItems = computed(() => {
@@ -99,20 +100,8 @@ const mobileQuickNav = computed(() => {
         <nav class="app-nav bg-cyber-gray/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
             <div class="px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center h-16">
-                    <!-- Logo (Desktop Only) -->
-                    <div class="hidden md:flex items-center">
-                        <Link :href="route('dashboard')" class="flex items-center gap-3 group" @click="playSound('pop')">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-orange-glow transform group-hover:rotate-12 transition-transform" :style="{ background: `linear-gradient(135deg, ${themePalette.primary}, ${themePalette.secondary})` }">N</div>
-                            <span class="text-xl font-black tracking-tighter uppercase italic">Nexus<span :style="{ color: themePalette.primary }">Edu</span></span>
-                        </Link>
-                    </div>
-
-                    <!-- Mobile Logo -->
-                    <div class="md:hidden">
-                        <Link :href="route('dashboard')" class="flex items-center gap-2" @click="playSound('pop')">
-                            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-orange-glow" :style="{ background: `linear-gradient(135deg, ${themePalette.primary}, ${themePalette.secondary})` }">N</div>
-                        </Link>
-                    </div>
+                    <!-- Spacer (Desktop) -->
+                    <div class="hidden md:block flex-1"></div>
 
                     <!-- Desktop Theme Toggle -->
                     <div class="hidden md:block">
@@ -173,13 +162,13 @@ const mobileQuickNav = computed(() => {
             </div>
 
             <!-- Nav Items Scrollable Area -->
-            <div class="flex-1 overflow-y-auto px-2 py-4 space-y-1">
+            <div class="flex-1 overflow-y-auto px-2 py-4 space-y-2">
                 <Link
                     v-for="item in navItems"
                     :key="item.name"
                     :href="route(item.route)"
                     @click="playSound('click')"
-                    class="relative group min-h-11 w-full rounded-2xl px-3 py-2.5 flex items-center gap-3 text-xs font-black uppercase tracking-[0.1em] transition-all duration-200 overflow-hidden"
+                    class="relative group min-h-12 w-full rounded-2xl px-3 py-3 flex items-center justify-center gap-3 text-xs font-black uppercase tracking-[0.1em] transition-all duration-200 overflow-hidden"
                     :class="route().current(item.route + '*')
                         ? 'bg-orange-500/15 border border-orange-500/30 text-orange-300'
                         : 'text-gray-400 hover:bg-white/6 hover:text-white border border-transparent'"
@@ -192,9 +181,9 @@ const mobileQuickNav = computed(() => {
                     <div v-if="route().current(item.route + '*')" class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200" :style="{ boxShadow: `inset 0 0 20px rgba(255,107,0,0.1)` }"></div>
 
                     <!-- Content -->
-                    <div class="relative z-10 flex items-center gap-3 w-full">
-                        <i :class="item.icon" class="text-sm w-5 text-center flex-shrink-0"></i>
-                        <span v-if="!sidebarCollapsed" class="flex-1 truncate">{{ item.name }}</span>
+                    <div class="relative z-10 flex items-center gap-3 w-full" :class="sidebarCollapsed && 'justify-center'">
+                        <i :class="item.icon" class="text-lg w-6 text-center flex-shrink-0"></i>
+                        <span v-if="!sidebarCollapsed" class="flex-1 truncate text-sm">{{ item.name }}</span>
                     </div>
                 </Link>
             </div>
