@@ -4,13 +4,34 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { playSound } from '@/Utils/SoundService';
 import { useTheme } from '@/Composables/useTheme';
 
-const showingNavigationDropdown = ref(false);
 const { theme, initializeTheme, toggleTheme } = useTheme();
 const page = usePage();
+const sidebarCollapsed = ref(false);
+const mobileSidebarOpen = ref(false);
 
 onMounted(() => {
     initializeTheme();
+
+    if (typeof window !== 'undefined') {
+        sidebarCollapsed.value = window.localStorage.getItem('nexus.sidebar.collapsed') === 'true';
+    }
 });
+
+const toggleSidebarCollapse = () => {
+    sidebarCollapsed.value = !sidebarCollapsed.value;
+
+    if (typeof window !== 'undefined') {
+        window.localStorage.setItem('nexus.sidebar.collapsed', String(sidebarCollapsed.value));
+    }
+};
+
+const toggleMobileSidebar = () => {
+    mobileSidebarOpen.value = !mobileSidebarOpen.value;
+};
+
+const closeMobileSidebar = () => {
+    mobileSidebarOpen.value = false;
+};
 
 const baseNavItems = [
     { name: 'NODO CENTRAL', route: 'dashboard', icon: 'fa-solid fa-house' },
@@ -84,20 +105,14 @@ const mobileQuickNav = computed(() => {
                             </Link>
                         </div>
 
-                        <!-- Navigation Links -->
-                        <div class="hidden space-x-8 md:-my-px md:flex h-full">
-                            <Link 
-                                v-for="item in navItems" 
-                                :key="item.name"
-                                :href="route(item.route)"
-                                @click="playSound('click')"
-                                class="app-interactive inline-flex items-center px-1 pt-1 min-h-11 border-b-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
-                                :class="route().current(item.route + '*') ? 'border-orange-500 text-white glow-text' : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-white/10'"
-                            >
-                                <i :class="item.icon" class="mr-3 text-[10px]"></i>
-                                {{ item.name }}
-                            </Link>
-                        </div>
+                        <button
+                            type="button"
+                            @click="toggleSidebarCollapse"
+                            class="app-interactive hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl min-h-11 bg-white/5 border border-white/10 text-xs font-black uppercase tracking-wider text-gray-300 hover:text-white hover:bg-white/10"
+                        >
+                            <i :class="sidebarCollapsed ? 'fa-solid fa-panel-left-open' : 'fa-solid fa-panel-left-close'"></i>
+                            {{ sidebarCollapsed ? 'Expandir menú' : 'Colapsar menú' }}
+                        </button>
                     </div>
 
                     <div class="hidden md:flex md:items-center md:ms-6 gap-6">
@@ -141,53 +156,109 @@ const mobileQuickNav = computed(() => {
                         >
                             <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
                         </button>
-                        <button @click="showingNavigationDropdown = !showingNavigationDropdown" class="app-interactive inline-flex items-center justify-center min-h-11 min-w-11 p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition duration-150 ease-in-out">
-                            <i :class="showingNavigationDropdown ? 'fa-solid fa-xmark' : 'fa-solid fa-bars-staggered'"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Responsive Menu -->
-            <div :class="{ block: showingNavigationDropdown, hidden: !showingNavigationDropdown }" class="md:hidden bg-cyber-gray border-t border-white/5">
-                <div class="pt-4 pb-6 space-y-2 px-4 text-center">
-                    <Link 
-                        v-for="item in navItems" 
-                        :key="item.name"
-                        :href="route(item.route)"
-                        @click="playSound('click')"
-                        class="app-interactive block w-full py-4 min-h-11 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] transition-all"
-                        :class="route().current(item.route + '*') ? 'bg-orange-500 text-white shadow-orange-glow' : 'text-gray-500 hover:bg-white/5'"
-                    >
-                        {{ item.name }}
-                    </Link>
-
-                    <div class="pt-3 grid grid-cols-3 gap-3">
-                        <Link
-                            :href="route('profile.edit')"
-                            class="app-interactive py-3 min-h-11 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white"
-                        >
-                            Perfil
-                        </Link>
-                        <Link
-                            :href="route('logout')"
-                            method="post"
-                            as="button"
-                            class="app-interactive py-3 min-h-11 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-black uppercase tracking-widest text-red-400"
-                        >
-                            Salir
-                        </Link>
-                        <button
-                            type="button"
-                            @click="toggleTheme()"
-                            class="app-interactive py-3 min-h-11 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white"
-                        >
-                            {{ theme === 'dark' ? 'Claro' : 'Oscuro' }}
+                        <button @click="toggleMobileSidebar" class="app-interactive inline-flex items-center justify-center min-h-11 min-w-11 p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition duration-150 ease-in-out">
+                            <i :class="mobileSidebarOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars-staggered'"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </nav>
+
+        <!-- Desktop Sidebar -->
+        <aside
+            class="hidden md:flex fixed top-20 bottom-0 left-0 z-40 app-nav border-r border-white/10 px-3 py-4 transition-all duration-300"
+            :class="sidebarCollapsed ? 'w-24' : 'w-72'"
+        >
+            <div class="flex flex-col h-full w-full">
+                <div class="space-y-2">
+                    <Link
+                        v-for="item in navItems"
+                        :key="item.name"
+                        :href="route(item.route)"
+                        @click="playSound('click')"
+                        class="app-interactive min-h-11 w-full rounded-xl border px-3 py-3 flex items-center gap-3 text-xs font-black uppercase tracking-[0.15em] transition-all"
+                        :class="route().current(item.route + '*')
+                            ? 'border-orange-400/40 bg-orange-500/15 text-white shadow-orange-glow'
+                            : 'border-white/10 bg-white/3 text-gray-300 hover:bg-white/8 hover:text-white'"
+                        :title="item.name"
+                    >
+                        <i :class="item.icon" class="text-sm w-4 text-center"></i>
+                        <span v-if="!sidebarCollapsed">{{ item.name }}</span>
+                    </Link>
+                </div>
+
+                <div class="mt-auto space-y-2 pt-4 border-t border-white/10">
+                    <Link
+                        :href="route('profile.edit')"
+                        class="app-interactive min-h-11 w-full rounded-xl border border-white/10 bg-white/3 text-gray-300 hover:bg-white/8 hover:text-white px-3 py-3 flex items-center gap-3 text-xs font-black uppercase tracking-[0.15em]"
+                        :title="'Perfil'"
+                    >
+                        <i class="fa-solid fa-user-gear text-sm w-4 text-center"></i>
+                        <span v-if="!sidebarCollapsed">Perfil</span>
+                    </Link>
+
+                    <Link
+                        :href="route('logout')"
+                        method="post"
+                        as="button"
+                        class="app-interactive min-h-11 w-full rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500 hover:text-white px-3 py-3 flex items-center gap-3 text-xs font-black uppercase tracking-[0.15em]"
+                        :title="'Salir'"
+                    >
+                        <i class="fa-solid fa-power-off text-sm w-4 text-center"></i>
+                        <span v-if="!sidebarCollapsed">Salir</span>
+                    </Link>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Mobile Sidebar Drawer -->
+        <div v-if="mobileSidebarOpen" class="md:hidden fixed inset-0 z-50">
+            <div class="absolute inset-0 bg-black/60" @click="closeMobileSidebar"></div>
+            <aside class="absolute left-0 top-0 h-full w-80 max-w-[85vw] app-nav border-r border-white/10 p-4 overflow-y-auto">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+                    <p class="text-sm font-black uppercase tracking-[0.2em]">Navegación</p>
+                    <button @click="closeMobileSidebar" class="app-interactive min-h-11 min-w-11 rounded-xl bg-white/5 text-gray-300 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-2">
+                    <Link
+                        v-for="item in navItems"
+                        :key="'mobile-' + item.name"
+                        :href="route(item.route)"
+                        @click="playSound('click'); closeMobileSidebar()"
+                        class="app-interactive min-h-11 w-full rounded-xl border px-3 py-3 flex items-center gap-3 text-xs font-black uppercase tracking-[0.15em] transition-all"
+                        :class="route().current(item.route + '*')
+                            ? 'border-orange-400/40 bg-orange-500/15 text-white'
+                            : 'border-white/10 bg-white/3 text-gray-300 hover:bg-white/8 hover:text-white'"
+                    >
+                        <i :class="item.icon" class="text-sm w-4 text-center"></i>
+                        <span>{{ item.name }}</span>
+                    </Link>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-2">
+                    <Link
+                        :href="route('profile.edit')"
+                        @click="closeMobileSidebar"
+                        class="app-interactive min-h-11 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-gray-300 hover:text-white flex items-center justify-center"
+                    >
+                        Perfil
+                    </Link>
+                    <Link
+                        :href="route('logout')"
+                        method="post"
+                        as="button"
+                        class="app-interactive min-h-11 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-black uppercase tracking-widest text-red-300"
+                    >
+                        Salir
+                    </Link>
+                </div>
+            </aside>
+        </div>
+
+        <div :class="['transition-all duration-300', sidebarCollapsed ? 'md:pl-24' : 'md:pl-72']">
 
         <!-- Dynamic Page Heading -->
         <header class="bg-midnight relative z-10 pt-10" v-if="$slots.header">
@@ -228,6 +299,8 @@ const mobileQuickNav = computed(() => {
                 <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.4em]">© 2026 CODEX PROTOCOL. ALL RIGHTS RESERVED.</p>
             </div>
         </footer>
+
+        </div>
 
         <!-- Background Grid Decoration -->
         <div class="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
