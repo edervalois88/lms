@@ -207,9 +207,13 @@ onMounted(() => {
                         <i class="fa-solid fa-fire text-orange-500 group-hover:animate-bounce"></i>
                         <span class="font-black text-sm">{{ stats.streak }} DÍAS</span>
                     </div>
-                    <button class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                    <Link
+                        :href="route('review.index')"
+                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                        title="Repetición espaciada"
+                    >
                         <i class="fa-solid fa-bell"></i>
-                    </button>
+                    </Link>
                 </div>
             </div>
         </div>
