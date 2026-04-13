@@ -90,8 +90,19 @@ class QuizController extends Controller
         }
 
         if (! $question) {
+            // Fallback: usa cualquier reactivo activo de la misma materia para no bloquear la sesión.
+            $question = Question::query()
+                ->where('is_active', true)
+                ->whereHas('topic', function ($query) use ($subject) {
+                    $query->where('subject_id', $subject->id);
+                })
+                ->inRandomOrder()
+                ->first();
+        }
+
+        if (! $question) {
             return response()->json([
-                'message' => 'No fue posible generar una pregunta en este momento. Intenta de nuevo.',
+                'message' => 'No hay reactivos activos disponibles para esta materia en este momento. Intenta con otro tema.',
             ], 422);
         }
 

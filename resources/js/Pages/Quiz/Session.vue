@@ -49,7 +49,10 @@ const fetchQuestion = async (topic) => {
 
         currentQuestion.value = response.data;
     } catch (_error) {
-        requestError.value = 'No se pudo obtener una pregunta del banco real. Intenta nuevamente.';
+        const serverMessage = _error?.response?.data?.message;
+        requestError.value = typeof serverMessage === 'string' && serverMessage !== ''
+            ? serverMessage
+            : 'No se pudo obtener una pregunta del banco real. Intenta nuevamente.';
         currentQuestion.value = null;
     } finally {
         loading.value = false;
@@ -303,7 +306,14 @@ const handleTutorAsk = async (message) => {
                     </div>
 
                     <div v-else-if="requestError" class="rounded-2xl border border-rose-300 bg-rose-50 text-rose-700 p-4 font-semibold">
-                        {{ requestError }}
+                        <p>{{ requestError }}</p>
+                        <button
+                            type="button"
+                            class="mt-3 inline-flex items-center rounded-xl border border-rose-300 bg-white px-3 py-2 text-sm font-bold text-rose-700 hover:bg-rose-100 transition-colors"
+                            @click="fetchQuestion(activeTopic)"
+                        >
+                            Reintentar
+                        </button>
                     </div>
                 </div>
 
