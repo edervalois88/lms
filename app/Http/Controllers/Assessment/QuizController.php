@@ -108,6 +108,7 @@ class QuizController extends Controller
         }
 
         $question->load('topic.subject');
+        $question->randomizeOptions();
 
         return response()->json([
             'id' => $question->id,

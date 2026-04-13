@@ -113,6 +113,9 @@ class SimulatorController extends Controller
             $exam->questions()->syncWithoutDetaching($questions->pluck('id')->all());
         }
 
+        // Randomize options for each question
+        $questions->each(fn($q) => $q->randomizeOptions());
+
         return Inertia::render('Simulator/Exam', [
             'exam' => $exam,
             'questions' => $questions

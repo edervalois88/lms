@@ -49,6 +49,18 @@ class Question extends Model
         return $idx !== false ? (int) $idx : 0;
     }
 
+    /** Randomize options and return the correct answer index */
+    public function randomizeOptions(): void
+    {
+        if (!is_array($this->options) || empty($this->options)) {
+            return;
+        }
+
+        $options = $this->options;
+        shuffle($options);
+        $this->options = $options;
+    }
+
     public function topic(): BelongsTo
     {
         return $this->belongsTo(Topic::class);
