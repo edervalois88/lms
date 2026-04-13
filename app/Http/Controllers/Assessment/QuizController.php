@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -212,6 +213,18 @@ class QuizController extends Controller
 
     public function tutor(Request $request, Subject $subject): JsonResponse
     {
+        $user = auth()->user();
+        $maxAttempts = (int) config('services.groq.tutor_rate_limit_per_minute', 8);
+        $rateKey = sprintf('tutor:quiz:%d', (int) $user->id);
+
+        if (RateLimiter::tooManyAttempts($rateKey, $maxAttempts)) {
+            return response()->json([
+                'message' => 'Has alcanzado el límite de consultas al Tutor IA por minuto. Intenta de nuevo en unos segundos.',
+            ], 429);
+        }
+
+        RateLimiter::hit($rateKey, 60);
+
         $data = $request->validate([
             'question_id' => ['required', 'integer', 'exists:questions,id'],
             'selected_index' => ['required', 'integer', 'min:0', 'max:3'],
@@ -221,7 +234,6 @@ class QuizController extends Controller
         $question = Question::query()
             ->with('topic.subject')
             ->findOrFail($data['question_id']);
-        $user = auth()->user();
 
         $this->freemium->assertCanUseAiTutor($user);
         $this->freemium->registerAiTutorUsage($user);

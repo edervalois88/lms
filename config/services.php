@@ -50,6 +50,14 @@ return [
         'model' => env('GROQ_MODEL', 'llama-3.1-8b-instant'),
         'fallback_model' => env('GROQ_FALLBACK_MODEL', 'llama-3.3-70b-versatile'),
         'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
+        'timeout_seconds' => (int) env('GROQ_TIMEOUT_SECONDS', 12),
+        'retry_times' => (int) env('GROQ_RETRY_TIMES', 1),
+        'retry_sleep_ms' => (int) env('GROQ_RETRY_SLEEP_MS', 250),
+        'max_tokens_small' => (int) env('GROQ_MAX_TOKENS_SMALL', 140),
+        'max_tokens_medium' => (int) env('GROQ_MAX_TOKENS_MEDIUM', 220),
+        'max_tokens_large' => (int) env('GROQ_MAX_TOKENS_LARGE', 320),
+        'cache_ttl_seconds' => (int) env('GROQ_CACHE_TTL_SECONDS', 900),
+        'tutor_rate_limit_per_minute' => (int) env('GROQ_TUTOR_RATE_LIMIT_PER_MINUTE', 8),
     ],
 
     'vector' => [

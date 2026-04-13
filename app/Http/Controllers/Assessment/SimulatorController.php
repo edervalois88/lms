@@ -23,6 +23,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -420,6 +421,17 @@ class SimulatorController extends Controller
         abort_if($exam->user_id !== auth()->id(), 403);
 
         $user = $request->user();
+        $maxAttempts = (int) config('services.groq.tutor_rate_limit_per_minute', 8);
+        $rateKey = sprintf('tutor:simulator:%d', (int) $user->id);
+
+        if (RateLimiter::tooManyAttempts($rateKey, $maxAttempts)) {
+            return response()->json([
+                'message' => 'Has alcanzado el límite de consultas al Tutor IA por minuto. Intenta de nuevo en unos segundos.',
+            ], 429);
+        }
+
+        RateLimiter::hit($rateKey, 60);
+
         $this->freemium->assertCanUseAiTutor($user);
         $this->freemium->registerAiTutorUsage($user);
 
