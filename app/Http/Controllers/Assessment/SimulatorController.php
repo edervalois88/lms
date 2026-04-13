@@ -259,7 +259,7 @@ class SimulatorController extends Controller
             })
             ->values();
 
-        $aiService = app(\App\Services\AI\ClaudeService::class);
+        $aiService = app(\App\Services\AI\GroqService::class);
         $suggestions = [];
         
         if ($user->major && $correct < $user->major->min_score) {

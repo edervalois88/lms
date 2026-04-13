@@ -10,12 +10,12 @@ use Illuminate\Support\Facades\Log;
 
 class QuestionGeneratorService
 {
-    public function __construct(protected ClaudeService $claude) {}
+    public function __construct(protected GroqService $groq) {}
 
     public function generateForTopic(Topic $topic, int $difficulty, User $user): ?Question
     {
         try {
-            $data = $this->claude.generateQuestion($topic->subject->name, $topic->name, $difficulty);
+            $data = $this->groq->generateQuestion($topic->subject->name, $topic->name, $difficulty);
 
             return Question::create([
                 'topic_id' => $topic->id,

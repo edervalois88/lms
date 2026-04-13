@@ -4,7 +4,7 @@ namespace App\Http\Controllers\AI;
 
 use App\Http\Controllers\Controller;
 use App\Models\Question;
-use App\Services\AI\ClaudeService;
+use App\Services\AI\GroqService;
 use App\Services\Learning\ProgressCalculatorService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -12,7 +12,7 @@ use Illuminate\Http\JsonResponse;
 class AIController extends Controller
 {
     public function __construct(
-        protected ClaudeService $claude,
+        protected GroqService $groq,
         protected ProgressCalculatorService $progress
     ) {}
 
@@ -25,7 +25,7 @@ class AIController extends Controller
 
         $question = Question::findOrFail($request->question_id);
         
-        $explanation = $this->claude->explainAnswer(
+        $explanation = $this->groq->explainAnswer(
             $question->stem,
             $question->options,
             array_search($question->correct_answer, $question->options),
@@ -40,7 +40,7 @@ class AIController extends Controller
     public function recommendation(): JsonResponse
     {
         $stats = $this->progress->getWeeklyStats(auth()->user());
-        $recommendation = $this->claude->getWeeklyRecommendation($stats);
+        $recommendation = $this->groq->getWeeklyRecommendation($stats);
 
         return response()->json([
             'stats' => $stats,
