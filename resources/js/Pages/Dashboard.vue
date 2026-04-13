@@ -170,7 +170,7 @@ onMounted(() => {
                     <button
                         type="button"
                         @click="toggleTheme()"
-                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors border border-white/10"
+                        class="hud-icon-btn"
                         :title="theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
                     >
                         <i :class="theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
@@ -179,7 +179,7 @@ onMounted(() => {
                     <Link
                         v-if="isAdmin"
                         :href="route('admin.index')"
-                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors border border-white/10"
+                        class="hud-icon-btn"
                         title="Panel admin"
                     >
                         <i class="fa-solid fa-shield-halved"></i>
@@ -187,7 +187,7 @@ onMounted(() => {
 
                     <Link
                         :href="route('profile.edit')"
-                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors border border-white/10"
+                        class="hud-icon-btn"
                         title="Perfil"
                     >
                         <i class="fa-solid fa-user-gear"></i>
@@ -209,7 +209,7 @@ onMounted(() => {
                     </div>
                     <Link
                         :href="route('review.index')"
-                        class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                        class="hud-icon-btn"
                         title="Repetición espaciada"
                     >
                         <i class="fa-solid fa-bell"></i>
@@ -376,16 +376,19 @@ onMounted(() => {
                     <!-- Side HUD: Rankings & Mastery -->
                     <div class="lg:col-span-4 space-y-10 hud-element">
                         <!-- Stats Mini HUD -->
-                        <div class="glass-morphism-dark p-8 rounded-[3rem] border border-white/5 space-y-8">
-                            <div class="flex items-center justify-between border-b border-white/5 pb-4">
-                                <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Puntaje Global</h3>
-                                <i class="fa-solid fa-chart-simple text-orange-500"></i>
+                        <div class="dashboard-panel p-7 rounded-[2.2rem] space-y-6">
+                            <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                                <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.22em]">Puntaje Global</h3>
+                                <span class="w-9 h-9 rounded-xl bg-orange-500/15 border border-orange-400/25 text-orange-300 flex items-center justify-center">
+                                    <i class="fa-solid fa-chart-simple"></i>
+                                </span>
                             </div>
-                            <div class="flex justify-between items-center">
-                                <div class="text-center grow">
-                                    <p class="text-5xl font-black text-white glow-text">{{ stats.accuracy }}%</p>
+                            <div class="rounded-3xl border border-white/10 bg-white/3 px-5 py-6">
+                                <div class="text-center">
+                                    <p class="text-5xl font-black text-white glow-text leading-none">{{ stats.accuracy }}%</p>
+                                    <p class="text-[10px] mt-2 font-black text-gray-500 uppercase tracking-[0.2em]">Precisión semanal</p>
                                     <p
-                                        class="text-[9px] font-black uppercase mt-2 tracking-widest"
+                                        class="text-[10px] font-black uppercase mt-4 tracking-[0.16em]"
                                         :class="efficiencyDirection === 'up' ? 'text-green-400' : efficiencyDirection === 'down' ? 'text-red-400' : 'text-gray-400'"
                                     >
                                         <i :class="efficiencyDirection === 'up' ? 'fa-solid fa-arrow-up' : efficiencyDirection === 'down' ? 'fa-solid fa-arrow-down' : 'fa-solid fa-minus'"></i>
@@ -393,36 +396,47 @@ onMounted(() => {
                                     </p>
                                 </div>
                             </div>
+
+                            <div class="grid grid-cols-2 gap-3 text-center">
+                                <div class="rounded-2xl border border-white/10 bg-white/3 py-3 px-2">
+                                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.16em]">Exámenes</p>
+                                    <p class="mt-1 text-lg font-black text-white">{{ stats.total_exams }}</p>
+                                </div>
+                                <div class="rounded-2xl border border-white/10 bg-white/3 py-3 px-2">
+                                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.16em]">Racha</p>
+                                    <p class="mt-1 text-lg font-black text-orange-300">{{ stats.streak }} días</p>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Mastery Levels -->
-                        <div class="glass-morphism-dark p-8 rounded-[3rem] border border-white/5">
-                            <h3 class="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-8 border-l-4 border-orange-500 pl-4">Zonas de Dominio</h3>
-                            <div class="space-y-6">
-                                <div v-for="item in subject_mastery.slice(0, 5)" :key="item.subject" class="space-y-2 group cursor-pointer">
+                        <div class="dashboard-panel p-7 rounded-[2.2rem]">
+                            <h3 class="text-[10px] font-black text-orange-300 uppercase tracking-[0.22em] mb-6">Zonas de Dominio</h3>
+                            <div class="space-y-3">
+                                <div v-for="item in subject_mastery.slice(0, 5)" :key="item.subject" class="rounded-2xl border border-white/10 bg-white/3 p-4 group cursor-pointer transition-colors hover:bg-white/5">
                                     <div class="flex justify-between items-end">
                                         <span class="text-xs font-black text-gray-300 group-hover:text-white transition-colors uppercase italic">{{ item.subject }}</span>
-                                        <span class="text-[10px] font-black text-orange-500">{{ Math.round(item.mastery_score * 10) }}%</span>
+                                        <span class="text-[11px] font-black text-orange-300">{{ Math.round(item.mastery_score * 10) }}%</span>
                                     </div>
-                                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                                        <div class="bg-orange-500 h-full group-hover:shadow-orange-glow transition-all duration-1000" :style="{ width: (item.mastery_score * 10) + '%' }"></div>
+                                    <div class="h-2 mt-2.5 bg-black/25 rounded-full overflow-hidden border border-white/10">
+                                        <div class="bg-linear-to-r from-orange-500 to-red-500 h-full group-hover:shadow-orange-glow transition-all duration-1000" :style="{ width: (item.mastery_score * 10) + '%' }"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Quick Profile Info -->
-                        <div class="bg-linear-to-br from-orange-600 to-orange-900 p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-                           <div class="relative z-10 flex items-center gap-6">
-                               <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-3xl font-black backdrop-blur-md border border-white/20">
+                        <div class="dashboard-panel p-7 rounded-[2.2rem] relative overflow-hidden">
+                           <div class="absolute -right-14 -bottom-14 w-44 h-44 bg-orange-500/10 rounded-full blur-3xl"></div>
+                           <div class="relative z-10 flex items-center gap-5">
+                               <div class="w-16 h-16 rounded-2xl border border-orange-400/30 bg-orange-500/10 text-orange-300 flex items-center justify-center text-3xl font-black">
                                    {{ $page.props.auth.gamification?.current || 1 }}
                                </div>
                                <div>
-                                   <p class="text-[10px] font-black text-orange-200 uppercase tracking-widest">Rango Actual</p>
-                                   <p class="text-xl font-black italic uppercase tracking-tighter">{{ $page.props.auth.gamification?.rank || 'Novato' }}</p>
+                                   <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Rango Actual</p>
+                                   <p class="text-2xl font-black italic uppercase tracking-tighter text-white mt-1">{{ $page.props.auth.gamification?.rank || 'Novato' }}</p>
                                </div>
                            </div>
-                           <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-colors"></div>
                         </div>
                     </div>
 
@@ -433,13 +447,13 @@ onMounted(() => {
 
         <!-- Notification Feed (Floating) -->
         <div class="fixed bottom-10 right-10 z-40 space-y-4 max-w-xs hidden xl:block">
-            <div class="glass-morphism p-5 rounded-2xl border border-white/5 animate-float shadow-2xl flex items-start gap-4">
-                <div class="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center text-green-500">
+            <div class="dashboard-panel p-5 rounded-2xl animate-float shadow-2xl flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/20 flex items-center justify-center text-emerald-300">
                     <i class="fa-solid fa-trophy"></i>
                 </div>
                 <div>
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Logro Desbloqueado</p>
-                    <p class="text-xs font-bold">{{ floatingMessage }}</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.16em] mb-1">Logro Desbloqueado</p>
+                    <p class="text-xs font-bold text-gray-200">{{ floatingMessage }}</p>
                 </div>
             </div>
         </div>
@@ -448,6 +462,31 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.dashboard-panel {
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: linear-gradient(160deg, rgba(12, 18, 30, 0.94), rgba(8, 12, 22, 0.9));
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+}
+
+.hud-icon-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(156 163 175 / 1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    transition: all 180ms ease;
+}
+
+.hud-icon-btn:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.08);
+}
+
 .italic-glow {
     text-shadow: 0 0 30px rgba(255, 107, 0, 0.2);
 }
