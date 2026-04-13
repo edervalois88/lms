@@ -11,6 +11,38 @@ echo "📝 Aplicando defaults de entorno en memoria..."
 : "${QUEUE_CONNECTION:=database}"
 export LOG_CHANNEL SESSION_DRIVER CACHE_STORE QUEUE_CONNECTION
 
+# Railway puede proveer MYSQLHOST/MYSQLUSER/etc. o DATABASE_URL en lugar de DB_HOST.
+# Mapear a las variables que Laravel espera (DB_HOST, DB_USERNAME, etc.)
+if [ -z "${DB_HOST:-}" ]; then
+  if [ -n "${MYSQLHOST:-}" ]; then
+    export DB_HOST="$MYSQLHOST"
+    export DB_PORT="${MYSQLPORT:-3306}"
+    export DB_DATABASE="${MYSQLDATABASE:-railway}"
+    export DB_USERNAME="${MYSQLUSER:-root}"
+    export DB_PASSWORD="${MYSQLPASSWORD:-}"
+    echo "🔍 Mapeado MYSQLHOST → DB_HOST=${DB_HOST}"
+  elif [ -n "${DATABASE_URL:-}" ]; then
+    # Formato: mysql://user:password@host:port/dbname
+    _url="${DATABASE_URL#*://}"
+    _userinfo="${_url%@*}"
+    _hostinfo="${_url##*@}"
+    _hostport="${_hostinfo%%/*}"
+    _dbname="${_hostinfo#*/}"
+    _dbname="${_dbname%%\?*}"
+    export DB_HOST="${_hostport%%:*}"
+    _port="${_hostport##*:}"
+    if [ "$_port" = "$DB_HOST" ]; then
+      export DB_PORT="3306"
+    else
+      export DB_PORT="$_port"
+    fi
+    export DB_USERNAME="${_userinfo%%:*}"
+    export DB_PASSWORD="${_userinfo#*:}"
+    export DB_DATABASE="${_dbname:-railway}"
+    echo "🔍 Parseado DATABASE_URL → DB_HOST=${DB_HOST} DB_PORT=${DB_PORT} DB_DATABASE=${DB_DATABASE}"
+  fi
+fi
+
 # 2. Creación EXPLÍCITA de carpetas (Sin usar llaves {} para compatibilidad con Alpine sh)
 echo "📂 Asegurando directorios de sistema..."
 mkdir -p storage/logs
@@ -35,34 +67,8 @@ wait_for_db() {
   DB_USER_VALUE="${DB_USERNAME:-}"
   DB_PASS_VALUE="${DB_PASSWORD:-}"
 
-  # Railway proporciona DATABASE_URL en lugar de variables separadas.
-  # Parsear DATABASE_URL si DB_HOST no está definido.
-  if [ -z "$DB_HOST_VALUE" ] && [ -n "${DATABASE_URL:-}" ]; then
-    # Formato: mysql://user:password@host:port/dbname
-    _url="${DATABASE_URL}"
-    # Remover esquema (mysql:// o mysql2://)
-    _url="${_url#*://}"
-    # Extraer userinfo (antes del @)
-    _userinfo="${_url%@*}"
-    # Extraer hostinfo (después del @)
-    _hostinfo="${_url##*@}"
-    # Extraer host y puerto (antes del /)
-    _hostport="${_hostinfo%%/*}"
-    DB_HOST_VALUE="${_hostport%%:*}"
-    _port="${_hostport##*:}"
-    # Si el puerto es igual al host (no había :), usar 3306
-    if [ "$_port" = "$DB_HOST_VALUE" ]; then
-      DB_PORT_VALUE="3306"
-    else
-      DB_PORT_VALUE="$_port"
-    fi
-    DB_USER_VALUE="${_userinfo%%:*}"
-    DB_PASS_VALUE="${_userinfo#*:}"
-    echo "🔍 Parseado DATABASE_URL: host=${DB_HOST_VALUE} port=${DB_PORT_VALUE} user=${DB_USER_VALUE}"
-  fi
-
   if [ -z "$DB_HOST_VALUE" ]; then
-    echo "⏭️ DB_HOST y DATABASE_URL no definidos, se omite espera de base de datos."
+    echo "⏭️ DB_HOST no definido, se omite espera de base de datos."
     return 0
   fi
 
