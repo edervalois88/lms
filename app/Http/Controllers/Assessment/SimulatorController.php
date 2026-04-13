@@ -13,8 +13,8 @@ use App\Models\ExamAnswer;
 use App\Models\Question;
 use App\Models\Subject;
 use App\Models\Topic;
+use App\Services\AI\GroqService;
 use App\Services\FreemiumLimitService;
-use App\Services\GroqService;
 use App\Services\Learning\GamificationService;
 use App\Services\Learning\StudyStreakService;
 use Carbon\Carbon;
@@ -261,6 +261,74 @@ class SimulatorController extends Controller
 
         $aiService = app(\App\Services\AI\GroqService::class);
         $suggestions = [];
+        $aiOpportunities = [
+            'critical_areas' => [],
+            'strengths' => [],
+            'study_plan' => null,
+            'motivational_message' => null,
+        ];
+
+        $opportunitySubjects = $subjectBreakdown
+            ->filter(fn (array $row) => ($row['status'] ?? 'opportunity') === 'opportunity')
+            ->sortBy('accuracy')
+            ->values();
+
+        $fallbackCriticalAreas = $opportunitySubjects
+            ->pluck('subject')
+            ->take(4)
+            ->values()
+            ->all();
+
+        $fallbackStrengths = $subjectBreakdown
+            ->filter(fn (array $row) => ($row['status'] ?? '') === 'mastered')
+            ->sortByDesc('accuracy')
+            ->pluck('subject')
+            ->take(3)
+            ->values()
+            ->all();
+
+        $aiProfile = $aiService->analyzeProfile([
+            'exam_id' => (int) $exam->id,
+            'exam_type' => (string) $exam->type->value,
+            'goal_major' => $user->major?->name,
+            'goal_min_score' => $user->major?->min_score,
+            'score' => (int) $correct,
+            'total' => (int) $total,
+            'percentage' => (int) $percentage,
+            'incorrect_answers_count' => (int) $incorrectAnswersCount,
+            'subject_breakdown' => $subjectBreakdown->toArray(),
+            'priority_subjects' => $fallbackCriticalAreas,
+        ]);
+
+        if (is_array($aiProfile)) {
+            $aiOpportunities['critical_areas'] = collect((array) ($aiProfile['critical_areas'] ?? []))
+                ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+                ->map(fn ($value) => trim($value))
+                ->take(4)
+                ->values()
+                ->all();
+
+            $aiOpportunities['strengths'] = collect((array) ($aiProfile['strengths'] ?? []))
+                ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+                ->map(fn ($value) => trim($value))
+                ->take(3)
+                ->values()
+                ->all();
+
+            $studyPlan = $aiProfile['study_plan'] ?? null;
+            $motivation = $aiProfile['motivational_message'] ?? null;
+
+            $aiOpportunities['study_plan'] = is_string($studyPlan) && trim($studyPlan) !== '' ? trim($studyPlan) : null;
+            $aiOpportunities['motivational_message'] = is_string($motivation) && trim($motivation) !== '' ? trim($motivation) : null;
+        }
+
+        if (empty($aiOpportunities['critical_areas'])) {
+            $aiOpportunities['critical_areas'] = $fallbackCriticalAreas;
+        }
+
+        if (empty($aiOpportunities['strengths'])) {
+            $aiOpportunities['strengths'] = $fallbackStrengths;
+        }
         
         if ($user->major && $correct < $user->major->min_score) {
             $suggestions = $aiService->suggestAlternatives($user->major->name, $user->major->min_score, $correct);
@@ -288,6 +356,7 @@ class SimulatorController extends Controller
             'message'    => $message,
             'goal'       => $user->major,
             'ai_suggestions' => $suggestions,
+            'ai_opportunities' => $aiOpportunities,
             'xp_awarded' => $xpAwarded,
             'subject_breakdown' => $subjectBreakdown,
             'incorrect_answers_count' => $incorrectAnswersCount,

@@ -16,6 +16,15 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    ai_opportunities: {
+        type: Object,
+        default: () => ({
+            critical_areas: [],
+            strengths: [],
+            study_plan: null,
+            motivational_message: null,
+        }),
+    },
     xp_awarded: {
         type: Number,
         default: 0,
@@ -49,6 +58,15 @@ const tacticalLabel = (row) => row.status === 'mastered' ? 'Dominada' : 'Área d
 const tacticalClass = (row) => row.status === 'mastered'
     ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-100'
     : 'border-orange-400/50 bg-orange-500/10 text-orange-100';
+
+const hasAiOpportunityInsights = computed(() => {
+    const critical = props.ai_opportunities?.critical_areas?.length || 0;
+    const strengths = props.ai_opportunities?.strengths?.length || 0;
+    const studyPlan = typeof props.ai_opportunities?.study_plan === 'string' && props.ai_opportunities.study_plan.length > 0;
+    const motivation = typeof props.ai_opportunities?.motivational_message === 'string' && props.ai_opportunities.motivational_message.length > 0;
+
+    return critical > 0 || strengths > 0 || studyPlan || motivation;
+});
 
 onMounted(() => {
     showHero.value = true;
@@ -161,6 +179,37 @@ onMounted(() => {
                         </div>
                     </div>
                 </div>
+            </Card>
+
+            <Card v-if="hasAiOpportunityInsights" glow="orange" class="metric-card">
+                <p class="text-xs uppercase tracking-[0.22em] font-black text-orange-300">Diagnóstico IA de áreas de oportunidad</p>
+
+                <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="rounded-2xl border border-orange-400/30 bg-orange-500/10 p-4">
+                        <p class="text-sm font-black uppercase tracking-wider text-orange-200">Prioridad de refuerzo</p>
+                        <ul class="mt-3 space-y-2 text-sm text-gray-200">
+                            <li v-for="area in ai_opportunities.critical_areas" :key="area">• {{ area }}</li>
+                            <li v-if="!ai_opportunities.critical_areas?.length" class="text-gray-400">Sin áreas críticas detectadas.</li>
+                        </ul>
+                    </div>
+
+                    <div class="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
+                        <p class="text-sm font-black uppercase tracking-wider text-emerald-200">Fortalezas actuales</p>
+                        <ul class="mt-3 space-y-2 text-sm text-gray-200">
+                            <li v-for="strength in ai_opportunities.strengths" :key="strength">• {{ strength }}</li>
+                            <li v-if="!ai_opportunities.strengths?.length" class="text-gray-400">Aún no hay fortalezas consistentes.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div v-if="ai_opportunities.study_plan" class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p class="text-xs uppercase tracking-[0.2em] font-black text-cyan-300">Plan sugerido</p>
+                    <p class="mt-2 text-sm text-gray-200">{{ ai_opportunities.study_plan }}</p>
+                </div>
+
+                <p v-if="ai_opportunities.motivational_message" class="mt-4 text-sm font-semibold text-gray-200">
+                    {{ ai_opportunities.motivational_message }}
+                </p>
             </Card>
 
             <Card v-if="ai_suggestions.length > 0" glow="red" class="metric-card">
