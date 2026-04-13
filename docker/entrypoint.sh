@@ -124,6 +124,16 @@ if [ "${DB_CONNECTION:-mysql}" != "sqlite" ]; then
 fi
 
 echo "📂 Preparando Estructura de Datos..."
+
+# Diagnóstico: mostrar qué variables de BD están disponibles
+echo "🔍 Variables de BD detectadas:"
+echo "   DB_CONNECTION=${DB_CONNECTION:-[no definido]}"
+echo "   DB_HOST=${DB_HOST:-[no definido]}"
+echo "   MYSQLHOST=${MYSQLHOST:-[no definido]}"
+echo "   MYSQL_HOST=${MYSQL_HOST:-[no definido]}"
+echo "   DATABASE_URL=$([ -n "${DATABASE_URL:-}" ] && echo '[definido]' || echo '[no definido]')"
+echo "   MYSQL_URL=$([ -n "${MYSQL_URL:-}" ] && echo '[definido]' || echo '[no definido]')"
+
 php artisan config:clear
 
 AUTO_RUN_MIGRATIONS="${AUTO_RUN_MIGRATIONS:-true}"
