@@ -213,10 +213,11 @@ class SimulatorController extends Controller
     public function results(Exam $exam): Response
     {
         abort_if($exam->user_id !== auth()->id(), 403);
+        abort_if($exam->status !== ExamStatus::Completed, 403, 'Este simulacro aún no está completado.');
 
         $user = auth()->user()->load('major');
         $total      = $exam->total_questions;
-        $correct    = $exam->score;
+        $correct    = (int) $exam->score;
         $percentage = $total > 0 ? round(($correct / $total) * 100) : 0;
 
         $questions = $exam->questions()->with('topic.subject')->get()->keyBy('id');
