@@ -58,7 +58,7 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
 <template>
     <Head title="Mi Progreso - NexusEdu" />
 
-    <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="progress-page app-shell min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-7xl mx-auto">
             
             <header class="mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
@@ -227,5 +227,37 @@ const confidenceLabel = computed(() => props.projection?.confidence || 'Baja');
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+:global(.progress-page) {
+    color: var(--app-text);
+}
+
+:global(.progress-page .bg-gray-50) {
+    background-color: color-mix(in srgb, var(--app-bg) 88%, white 12%) !important;
+}
+
+:global(.progress-page .bg-white) {
+    background: var(--app-card) !important;
+    border-color: var(--app-card-border) !important;
+}
+
+:global(.progress-page .text-gray-900) {
+    color: var(--app-text-strong) !important;
+}
+
+:global(.progress-page .text-gray-600),
+:global(.progress-page .text-gray-500),
+:global(.progress-page .text-gray-400) {
+    color: var(--app-text-muted) !important;
+}
+
+:global(.progress-page .bg-gray-100) {
+    background-color: color-mix(in srgb, var(--app-text-muted) 18%, transparent 82%) !important;
+}
+
+:global(.progress-page .border-gray-100),
+:global(.progress-page .border-gray-50) {
+    border-color: var(--app-card-border) !important;
 }
 </style>

@@ -137,10 +137,10 @@ onMounted(() => {
 <template>
     <Head title="Command Center - NexusEdu" />
 
-    <div class="min-h-screen bg-midnight text-white font-sans selection:bg-orange-500/30">
+    <div class="app-shell min-h-screen bg-midnight text-white font-sans selection:bg-orange-500/30">
         
         <!-- Top Immersive Status Bar -->
-        <div class="bg-cyber-gray/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
+        <div class="app-nav bg-cyber-gray/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-black shadow-orange-glow text-white" :style="{ background: `linear-gradient(135deg, ${themePalette.primary}, ${themePalette.secondary})` }">

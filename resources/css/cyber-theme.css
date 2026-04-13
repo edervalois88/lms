@@ -9,23 +9,53 @@
 }
 
 :root {
-    --app-bg: #050505;
-    --app-text: #ffffff;
-    --app-card: rgba(255, 255, 255, 0.03);
-    --app-card-border: rgba(255, 255, 255, 0.08);
-    --app-muted: #94a3b8;
+    /* Core palette (dark):
+       - Blue-gray base: focus, trust, cognitive clarity
+       - Orange accent: action, motivation, urgency for CTAs
+       - Cyan support: guidance and informational highlights
+    */
+    --app-bg: #0a101a;
+    --app-bg-elevated: #101a27;
+    --app-nav-bg: rgba(10, 16, 26, 0.86);
+    --app-text: #e7eef8;
+    --app-text-strong: #f8fbff;
+    --app-text-muted: #9fb0c6;
+    --app-card: rgba(17, 27, 41, 0.74);
+    --app-card-border: rgba(159, 176, 198, 0.2);
+    --app-border-strong: rgba(159, 176, 198, 0.34);
+    --app-accent: #ff6b00;
+    --app-accent-soft: rgba(255, 107, 0, 0.2);
+    --app-info: #18b8ff;
+    --app-success: #1ec98f;
+    --app-danger: #ff5f6d;
+    --app-focus-ring: rgba(24, 184, 255, 0.35);
 }
 
 .theme-light {
-    --color-midnight: #edf2f7;
-    --color-cyber-gray: #ffffff;
-    --color-cyber-orange: #f97316;
-    --color-cyber-blue: #0284c7;
-    --app-bg: #edf2f7;
-    --app-text: #0b1220;
-    --app-card: rgba(255, 255, 255, 0.95);
-    --app-card-border: rgba(15, 23, 42, 0.18);
-    --app-muted: #334155;
+    /* Core palette (light):
+       - Soft warm-neutral background: calm + readability
+       - Deep navy text: confidence and legibility
+       - Orange keeps motivational energy without aggression
+    */
+    --color-midnight: #f7f4ef;
+    --color-cyber-gray: #fffdfa;
+    --color-cyber-orange: #e86914;
+    --color-cyber-blue: #0b76b7;
+    --app-bg: #f7f4ef;
+    --app-bg-elevated: #fffdfa;
+    --app-nav-bg: rgba(255, 253, 250, 0.9);
+    --app-text: #132235;
+    --app-text-strong: #0d1a2b;
+    --app-text-muted: #4c5f76;
+    --app-card: rgba(255, 253, 250, 0.88);
+    --app-card-border: rgba(19, 34, 53, 0.16);
+    --app-border-strong: rgba(19, 34, 53, 0.26);
+    --app-accent: #df5f10;
+    --app-accent-soft: rgba(223, 95, 16, 0.16);
+    --app-info: #0b76b7;
+    --app-success: #1a9f72;
+    --app-danger: #d84a5a;
+    --app-focus-ring: rgba(11, 118, 183, 0.25);
 }
 
 .glass-morphism {
@@ -35,9 +65,44 @@
 }
 
 .glass-morphism-dark {
-    background: color-mix(in srgb, var(--app-bg) 85%, #000 15%);
+    background: color-mix(in srgb, var(--app-bg-elevated) 88%, #000 12%);
     backdrop-filter: blur(20px);
     border: 1px solid var(--app-card-border);
+}
+
+.app-shell {
+    background:
+        radial-gradient(circle at 85% 12%, color-mix(in srgb, var(--app-accent) 9%, transparent 91%) 0%, transparent 32%),
+        radial-gradient(circle at 18% 84%, color-mix(in srgb, var(--app-info) 10%, transparent 90%) 0%, transparent 28%),
+        var(--app-bg);
+    color: var(--app-text);
+}
+
+.app-nav {
+    background: var(--app-nav-bg);
+    border-color: var(--app-card-border);
+}
+
+.app-footer {
+    background: color-mix(in srgb, var(--app-bg-elevated) 84%, transparent 16%);
+    border-color: var(--app-card-border);
+}
+
+.app-muted-text {
+    color: var(--app-text-muted);
+}
+
+.app-strong-text {
+    color: var(--app-text-strong);
+}
+
+.app-interactive {
+    outline: none;
+    transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.app-interactive:focus-visible {
+    box-shadow: 0 0 0 3px var(--app-focus-ring);
 }
 
 @keyframes float {
@@ -51,7 +116,7 @@
 }
 
 .glow-text {
-    text-shadow: 0 0 10px rgba(255, 107, 0, 0.4);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--app-accent) 40%, transparent 60%);
 }
 
 /* Custom scrollbar for cyber look */
@@ -59,48 +124,48 @@
     width: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: var(--app-bg);
+    background: color-mix(in srgb, var(--app-bg) 92%, #000 8%);
 }
 ::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--app-text) 20%, transparent 80%);
+    background: color-mix(in srgb, var(--app-text-muted) 55%, transparent 45%);
     border-radius: 10px;
-    border: 2px solid var(--app-bg);
+    border: 2px solid color-mix(in srgb, var(--app-bg) 88%, #000 12%);
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #ff6b00;
+    background: var(--app-accent);
 }
 
 .theme-light .text-white {
-    color: #0b1220 !important;
+    color: var(--app-text-strong) !important;
 }
 
 .theme-light .text-gray-500 {
-    color: #334155 !important;
+    color: var(--app-text-muted) !important;
 }
 
 .theme-light .text-gray-400 {
-    color: #334155 !important;
+    color: #667b92 !important;
 }
 
 .theme-light .text-gray-300 {
-    color: #1e293b !important;
+    color: #455b73 !important;
 }
 
 .theme-light .text-gray-600 {
-    color: #475569 !important;
+    color: #3a4f66 !important;
 }
 
 .theme-light .bg-white\/5 {
-    background-color: rgba(15, 23, 42, 0.08) !important;
+    background-color: rgba(19, 34, 53, 0.07) !important;
 }
 
 .theme-light .bg-white\/10 {
-    background-color: rgba(15, 23, 42, 0.12) !important;
+    background-color: rgba(19, 34, 53, 0.12) !important;
 }
 
 .theme-light .border-white\/5,
 .theme-light .border-white\/10 {
-    border-color: rgba(15, 23, 42, 0.2) !important;
+    border-color: rgba(19, 34, 53, 0.18) !important;
 }
 
 .theme-light .bg-midnight {
@@ -108,9 +173,21 @@
 }
 
 .theme-light .bg-cyber-gray\/80 {
-    background-color: rgba(255, 255, 255, 0.94) !important;
+    background-color: var(--app-nav-bg) !important;
+}
+
+.theme-light .bg-cyber-gray\/95 {
+    background-color: color-mix(in srgb, var(--app-nav-bg) 96%, white 4%) !important;
+}
+
+.theme-light .bg-cyber-gray\/50 {
+    background-color: color-mix(in srgb, var(--app-nav-bg) 62%, white 38%) !important;
+}
+
+.theme-light .bg-cyber-gray {
+    background-color: var(--app-bg-elevated) !important;
 }
 
 .theme-light .glow-text {
-    text-shadow: none !important;
+    text-shadow: 0 0 9px rgba(223, 95, 16, 0.22) !important;
 }

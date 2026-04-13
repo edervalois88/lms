@@ -2,10 +2,23 @@
 @import "./cyber-theme.css";
 
 @layer base {
+    :root {
+        color-scheme: dark;
+    }
+
+    .theme-light {
+        color-scheme: light;
+    }
+
     body {
         @apply font-sans antialiased;
         background: var(--app-bg);
         color: var(--app-text);
+    }
+
+    a,
+    button {
+        transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
     }
     
     h1, h2, h3, h4, h5, h6 {
