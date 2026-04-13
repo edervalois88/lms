@@ -29,9 +29,6 @@ const levelModalData = ref({ level: 1, badges: [] });
 const showUpgradeModal = ref(false);
 const blockedFeature = ref('ai_tutor');
 
-const csrfToken = () =>
-    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-
 const fetchQuestion = async (topic) => {
     loading.value = true;
     activeTopic.value = topic;
@@ -42,7 +39,6 @@ const fetchQuestion = async (topic) => {
             topic_id: topic.id,
         }, {
             headers: {
-                'X-CSRF-TOKEN': csrfToken(),
                 'Accept': 'application/json',
             },
         });
@@ -75,7 +71,6 @@ const submitEvaluation = async (answerIndex) => {
             skip_adaptation: false,
         }, {
             headers: {
-                'X-CSRF-TOKEN': csrfToken(),
                 'Accept': 'application/json',
             },
         });
@@ -141,7 +136,6 @@ const handleTutorAsk = async (message) => {
             texto_duda: message,
         }, {
             headers: {
-                'X-CSRF-TOKEN': csrfToken(),
                 'Accept': 'application/json',
             },
         });

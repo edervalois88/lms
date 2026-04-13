@@ -17,7 +17,7 @@ const isCorrect = ref(false);
 const submitting = ref(false);
 const apiError = ref('');
 
-const csrfToken = () =>
+// CSRF token configurado globalmente en axios
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 
 const handleAnswer = async (selectedIndex) => {
@@ -35,7 +35,7 @@ const handleAnswer = async (selectedIndex) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken(),
+                
                 'Accept': 'application/json',
             },
             body: JSON.stringify({ quality, source: 'review' }),

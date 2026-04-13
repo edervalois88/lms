@@ -26,9 +26,6 @@ const blockedFeature = ref('ai_tutor');
 const current = computed(() => props.incorrect_questions[index.value] || null);
 const total = computed(() => props.incorrect_questions.length);
 
-const csrfToken = () =>
-    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-
 const askTutor = async () => {
     if (!current.value || tutorLoading.value) {
         return;
@@ -43,7 +40,6 @@ const askTutor = async () => {
             texto_duda: tutorMessage.value.trim(),
         }, {
             headers: {
-                'X-CSRF-TOKEN': csrfToken(),
                 Accept: 'application/json',
             },
         });

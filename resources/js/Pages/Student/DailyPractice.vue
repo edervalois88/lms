@@ -24,7 +24,7 @@ const progress = computed(() =>
     props.total > 0 ? Math.round((currentIndex.value / props.total) * 100) : 0
 );
 
-const csrfToken = () =>
+// CSRF token configurado globalmente en axios
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 
 const handleAnswer = async (selectedIndex) => {
@@ -41,7 +41,7 @@ const handleAnswer = async (selectedIndex) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken(),
+                
                 'Accept': 'application/json',
             },
             body: JSON.stringify({ quality, source: 'daily' }),

@@ -24,7 +24,7 @@ const requestError = ref('')
 const showUpgradeModal = ref(false)
 const blockedFeature = ref('simulation')
 
-const csrfToken = () =>
+// CSRF token configurado globalmente en axios
     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
 
 const submit = async () => {
@@ -38,7 +38,7 @@ const submit = async () => {
             type: form.type,
         }, {
             headers: {
-                'X-CSRF-TOKEN': csrfToken(),
+                
                 Accept: 'application/json',
             },
         })
