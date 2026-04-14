@@ -110,7 +110,7 @@ class AdminDashboardController extends Controller
 
         $cache = AiTutorCache::query()
             ->where('question_id', $question->id)
-            ->orderByRaw("CASE WHEN respuesta_incorrecta = '" . self::CURATED_SENTINEL . "' THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE WHEN respuesta_incorrecta = ? THEN 0 ELSE 1 END", [self::CURATED_SENTINEL])
             ->orderByDesc('hit_count')
             ->first();
 

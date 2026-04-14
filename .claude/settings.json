@@ -11,7 +11,22 @@
       "Bash(find resources/js -name \"*.vue\" -exec grep -l \"axios\" {} \\\\;)",
       "Bash(grep \"use.*GroqService\" app/Http/Controllers/Assessment/*.php)",
       "Bash(git add:*)",
-      "Bash(git commit -m ':*)"
+      "Bash(git commit -m ':*)",
+      "Bash(grep -l \"AuthenticatedLayout\" c:/Users/EderV/nexusedu/resources/js/Pages/**/*.vue c:/Users/EderV/nexusedu/resources/js/Pages/*.vue)",
+      "Read(//var/www/**)",
+      "Bash(grep -E \"\\\\.\\(php|ts|vue\\)$\")",
+      "Bash(grep -n \"QuestionFactory\\\\|Question::factory\" /c/Users/EderV/nexusedu/database/seeders/*.php)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(php /tmp/count_questions.php)",
+      "Bash(ls config/*.php)",
+      "Bash(grep -r \"rate\\\\|throttle\\\\|limit\" routes/*.php)",
+      "Bash(grep -r \"hash\\\\|Hash\" app/Http/Controllers/Auth/*.php)",
+      "Bash(find app/Http -name \"*.php\" -exec grep -l \"abort\\\\|authorize\\\\|gate\" {} \\\\;)",
+      "Bash(find routes:*)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }

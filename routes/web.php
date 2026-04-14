@@ -32,13 +32,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Onboarding
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');
-    Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
-    Route::post('/onboarding/vocational', [OnboardingController::class, 'submitVocationalTest'])->name('onboarding.vocational.submit');
+    Route::post('/onboarding', [OnboardingController::class, 'store'])->middleware('throttle:10,1')->name('onboarding.store');
+    Route::post('/onboarding/vocational', [OnboardingController::class, 'submitVocationalTest'])->middleware('throttle:10,1')->name('onboarding.vocational.submit');
     Route::get('/onboarding/diagnostic', [QuizController::class, 'onboardingDiagnostic'])->name('onboarding.diagnostic');
-    Route::post('/onboarding/diagnostic/start', [QuizController::class, 'startOnboardingDiagnostic'])->name('onboarding.diagnostic.start');
+    Route::post('/onboarding/diagnostic/start', [QuizController::class, 'startOnboardingDiagnostic'])->middleware('throttle:10,1')->name('onboarding.diagnostic.start');
 
     // Checkout (Stripe)
-    Route::post('/checkout', [CheckoutController::class, 'createSession'])->name('checkout.create');
+    Route::post('/checkout', [CheckoutController::class, 'createSession'])->middleware('throttle:10,1')->name('checkout.create');
     Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
 
@@ -52,20 +52,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Quiz
         Route::get('/quiz', [QuizController::class, 'index'])->name('quiz.index');
-        Route::post('/quiz/bootcamp/start', [QuizController::class, 'startBootcamp'])->name('quiz.bootcamp.start');
+        Route::post('/quiz/bootcamp/start', [QuizController::class, 'startBootcamp'])->middleware('throttle:20,1')->name('quiz.bootcamp.start');
         Route::get('/quiz/{subject:slug}', [QuizController::class, 'show'])->name('quiz.show');
-        Route::post('/quiz/{subject:slug}/question', [QuizController::class, 'question'])->name('quiz.question');
-        Route::post('/quiz/{subject:slug}/evaluate', [QuizController::class, 'evaluate'])->name('quiz.evaluate');
-        Route::post('/quiz/{subject:slug}/tutor', [QuizController::class, 'tutor'])->name('quiz.tutor');
+        Route::post('/quiz/{subject:slug}/question', [QuizController::class, 'question'])->middleware('throttle:50,1')->name('quiz.question');
+        Route::post('/quiz/{subject:slug}/evaluate', [QuizController::class, 'evaluate'])->middleware('throttle:50,1')->name('quiz.evaluate');
+        Route::post('/quiz/{subject:slug}/tutor', [QuizController::class, 'tutor'])->middleware('throttle:20,1')->name('quiz.tutor');
 
         // Simulator
         Route::get('/simulator', [SimulatorController::class, 'index'])->name('simulator.index');
-        Route::post('/simulator', [SimulatorController::class, 'store'])->name('simulator.store');
+        Route::post('/simulator', [SimulatorController::class, 'store'])->middleware('throttle:10,1')->name('simulator.store');
         Route::get('/simulator/{exam}', [SimulatorController::class, 'show'])->name('simulator.show');
-        Route::post('/simulator/{exam}/submit', [SimulatorController::class, 'submit'])->name('simulator.submit');
+        Route::post('/simulator/{exam}/submit', [SimulatorController::class, 'submit'])->middleware('throttle:10,1')->name('simulator.submit');
         Route::get('/simulator/{exam}/results', [SimulatorController::class, 'results'])->name('simulator.results');
         Route::get('/simulator/{exam}/review', [SimulatorController::class, 'review'])->name('simulator.review');
-        Route::post('/simulator/{exam}/review/tutor', [SimulatorController::class, 'reviewTutor'])->name('simulator.review.tutor');
+        Route::post('/simulator/{exam}/review/tutor', [SimulatorController::class, 'reviewTutor'])->middleware('throttle:20,1')->name('simulator.review.tutor');
 
         // Progress & Review
         Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
@@ -81,8 +81,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Rewards / Cosmetics
     Route::get('/rewards/catalog', [RewardStoreController::class, 'catalog'])->name('rewards.catalog');
     Route::get('/rewards/inventory', [RewardStoreController::class, 'inventory'])->name('rewards.inventory');
-    Route::post('/rewards/purchase', [RewardStoreController::class, 'purchase'])->name('rewards.purchase');
-    Route::post('/rewards/equip', [RewardStoreController::class, 'equip'])->name('rewards.equip');
+    Route::post('/rewards/purchase', [RewardStoreController::class, 'purchase'])->middleware('throttle:10,1')->name('rewards.purchase');
+    Route::post('/rewards/equip', [RewardStoreController::class, 'equip'])->middleware('throttle:10,1')->name('rewards.equip');
 });
 
 // Admin Panel
