@@ -87,12 +87,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Admin Panel
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('/', [AdminController::class, 'index'])->name('admin.index');
+    // Main Dashboard
+    Route::get('/', function () {
+        return redirect(route('admin.dashboard'));
+    })->name('admin.index');
+
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/ai-metrics', AiMetricsController::class)->name('admin.ai-metrics');
+
+    // Users Management
+    Route::get('/users', [AdminController::class, 'usersIndex'])->name('admin.users.index');
+    Route::get('/users/{user}', [AdminController::class, 'usersShow'])->name('admin.users.show');
+    Route::put('/users/{user}', [AdminController::class, 'usersUpdate'])->name('admin.users.update');
+
+    // Questions Management
+    Route::get('/questions', [AdminController::class, 'questionsIndex'])->name('admin.questions.index');
+    Route::get('/questions/{question}', [AdminController::class, 'questionsShow'])->name('admin.questions.show');
+    Route::put('/questions/{question}', [AdminController::class, 'questionsUpdate'])->name('admin.questions.update');
+
+    // Curation Panel
     Route::get('/curation', [AdminDashboardController::class, 'curationIndex'])->name('admin.curation.index');
     Route::get('/curation/search', [AdminDashboardController::class, 'searchQuestion'])->name('admin.curation.search');
     Route::put('/curation/questions/{id}', [AdminDashboardController::class, 'updateQuestionAndCache'])->name('admin.curation.update');
+
+    // Analytics
+    Route::get('/analytics', [AdminController::class, 'analytics'])->name('admin.analytics');
+
+    // Settings
+    Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
 });
 
 // Stripe Webhook (public)

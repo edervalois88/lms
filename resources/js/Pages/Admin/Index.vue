@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
     stats: {
@@ -32,28 +32,12 @@ const onSearch = (event) => {
 <template>
     <Head title="Panel de Administración" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-            <section class="glass-morphism rounded-3xl border border-white/10 p-6 md:p-8">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                    <div>
-                        <p class="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em]">Administración</p>
-                        <h1 class="text-3xl md:text-4xl font-black tracking-tight uppercase italic">Control de Usuarios</h1>
-                        <p class="text-sm text-gray-500 mt-2">Consulta elección de carrera, correo, rol, GPA, actividad y fechas clave.</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 w-full lg:w-auto">
-                        <Link :href="route('dashboard')" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-center text-gray-400 hover:text-white">
-                            NODO
-                        </Link>
-                        <Link :href="route('profile.edit')" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-center text-gray-400 hover:text-white">
-                            PERFIL
-                        </Link>
-                        <Link :href="route('logout')" method="post" as="button" class="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-black uppercase tracking-widest text-red-400 text-center">
-                            SALIR
-                        </Link>
-                    </div>
-                </div>
+            <!-- Header -->
+            <section class="space-y-2">
+                <h1 class="text-3xl md:text-4xl font-black uppercase tracking-tight">👥 Bienvenido al Panel Admin</h1>
+                <p class="text-sm text-gray-400">Gestiona usuarios, preguntas, analíticas y la seguridad del sistema.</p>
             </section>
 
             <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -137,5 +121,5 @@ const onSearch = (event) => {
                 </nav>
             </section>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

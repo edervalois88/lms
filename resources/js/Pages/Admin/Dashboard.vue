@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -21,23 +21,12 @@ const formattedHits = computed(() => Number(props.metrics?.estimated_cache_hits 
 <template>
     <Head title="Admin IA Dashboard" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <div class="flex items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-2xl font-black text-white uppercase tracking-tight">Dashboard Administrativo IA</h2>
-                    <p class="text-sm text-gray-400 mt-1">Monitoreo de ahorro de tokens y rendimiento pedagógico del tutor.</p>
-                </div>
-                <Link
-                    :href="route('admin.index')"
-                    class="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-wider text-gray-200 hover:bg-white/10"
-                >
-                    Volver a Admin
-                </Link>
-            </div>
-        </template>
-
+    <AdminLayout>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <section class="space-y-2">
+                <h1 class="text-3xl md:text-4xl font-black uppercase tracking-tight">Dashboard Administrativo</h1>
+                <p class="text-sm text-gray-400">Monitoreo de ahorro de tokens y rendimiento pedagógico del tutor.</p>
+            </section>
             <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <article class="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5">
                     <p class="text-[11px] text-cyan-300 uppercase tracking-widest font-black">Explicaciones en Caché</p>
@@ -92,5 +81,5 @@ const formattedHits = computed(() => Number(props.metrics?.estimated_cache_hits 
                 </div>
             </section>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
