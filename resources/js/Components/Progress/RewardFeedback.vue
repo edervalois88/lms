@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { animate } from 'motion';
 
 const props = defineProps({
@@ -22,6 +22,7 @@ const emit = defineEmits(['complete']);
 const container = ref(null);
 const xpText = ref(null);
 const confetti = ref([]);
+const timeoutId = ref(null);
 
 onMounted(() => {
   if (!props.show) return;
@@ -52,9 +53,13 @@ onMounted(() => {
   );
 
   // Complete callback
-  setTimeout(() => {
+  timeoutId.value = setTimeout(() => {
     emit('complete');
   }, props.duration);
+});
+
+onUnmounted(() => {
+  if (timeoutId.value) clearTimeout(timeoutId.value);
 });
 </script>
 

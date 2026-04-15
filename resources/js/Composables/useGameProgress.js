@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue';
+import { computed, ref, onUnmounted } from 'vue';
 
 export function useGameProgress(userProps, statsProps) {
   // Reactive refs
@@ -8,6 +8,7 @@ export function useGameProgress(userProps, statsProps) {
   const gpaActual = ref(userProps.value?.gpa ?? 0);
   const rank = ref(userProps.value?.gamification?.rank ?? 'Novato');
   const hasLeveledUp = ref(false);
+  const levelUpTimeoutId = ref(null);
 
   // Constants
   const XP_PER_LEVEL = 500; // XP needed per level
@@ -61,7 +62,9 @@ export function useGameProgress(userProps, statsProps) {
     if (currentXP.value >= nextThreshold) {
       currentLevel.value += 1;
       hasLeveledUp.value = true;
-      setTimeout(() => { hasLeveledUp.value = false; }, LEVELUP_FEEDBACK_DURATION);
+      // Clear any previous timeout
+      if (levelUpTimeoutId.value) clearTimeout(levelUpTimeoutId.value);
+      levelUpTimeoutId.value = setTimeout(() => { hasLeveledUp.value = false; }, LEVELUP_FEEDBACK_DURATION);
     }
   };
 
@@ -72,6 +75,11 @@ export function useGameProgress(userProps, statsProps) {
     if (gapStatus.value.text === 'META PRÓXIMA') return '¡Casi ahí! 💪';
     return '¡Tú puedes! 🚀';
   };
+
+  // Cleanup on unmount
+  onUnmounted(() => {
+    if (levelUpTimeoutId.value) clearTimeout(levelUpTimeoutId.value);
+  });
 
   return {
     currentXP,

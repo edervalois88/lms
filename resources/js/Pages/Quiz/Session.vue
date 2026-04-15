@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onBeforeUnmount } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import QuestionCard from '@/Components/Quiz/QuestionCard.vue';
@@ -17,10 +17,10 @@ import { useRewardFeedback } from '@/Composables/useRewardFeedback';
 const page = usePage();
 
 const props = defineProps({
-    subject: Object,
-    topics: Array,
-    quiz: Object,
-    user: Object,
+    subject: { type: Object, required: true },
+    topics: { type: Array, required: true },
+    quiz: { type: Object, required: true },
+    user: { type: Object, required: true },
 });
 
 const activeTopic = ref(null);
@@ -35,10 +35,12 @@ const selectedIndex = ref(null);
 const adaptiveFeedback = ref(null);
 const tutorLoading = ref(false);
 const xpToast = ref('');
+const xpToastTimer = ref(null);
 const showLevelModal = ref(false);
 const levelModalData = ref({ level: 1, badges: [] });
 const showUpgradeModal = ref(false);
 const blockedFeature = ref('ai_tutor');
+const isSubmitting = ref(false);
 
 // Gamification state
 const currentQuestionIndex = ref(0);
@@ -88,6 +90,15 @@ const fetchQuestion = async (topic) => {
     }
 };
 
+const showXpToast = (amount) => {
+    xpToast.value = `+${amount} XP`;
+    // Clear any previous timer
+    if (xpToastTimer.value) clearTimeout(xpToastTimer.value);
+    xpToastTimer.value = setTimeout(() => {
+        xpToast.value = '';
+    }, 1800);
+};
+
 const handleAnswer = (selectedIndex) => {
     submitEvaluation(selectedIndex);
 };
@@ -97,8 +108,9 @@ const selectAnswer = (answerIndex) => {
 };
 
 const submitEvaluation = async (answerIndex) => {
-    if (!currentQuestion.value) return;
+    if (isSubmitting.value || !currentQuestion.value) return;
 
+    isSubmitting.value = true;
     requestError.value = '';
 
     try {
@@ -118,10 +130,7 @@ const submitEvaluation = async (answerIndex) => {
 
         const gamification = payload?.gamification || {};
         if (Number(gamification.xp_earned || 0) > 0) {
-            xpToast.value = `+${gamification.xp_earned} XP`;
-            setTimeout(() => {
-                xpToast.value = '';
-            }, 1800);
+            showXpToast(gamification.xp_earned);
         }
 
         if (Boolean(gamification.level_up)) {
@@ -152,8 +161,14 @@ const submitEvaluation = async (answerIndex) => {
         showFeedback.value = true;
     } catch (_error) {
         requestError.value = 'No se pudo procesar el feedback adaptativo. Intenta nuevamente.';
+    } finally {
+        isSubmitting.value = false;
     }
 };
+
+onBeforeUnmount(() => {
+    if (xpToastTimer.value) clearTimeout(xpToastTimer.value);
+});
 
 const onRewardFeedbackComplete = () => {
     showRewardFeedback.value = false;
@@ -390,7 +405,7 @@ const handleTutorAsk = async (message) => {
                                 <QuestionCard
                                     :question="currentQuestion"
                                     :time-limit="60"
-                                    :disabled="showFeedback || showRewardFeedback"
+                                    :disabled="showFeedback || showRewardFeedback || isSubmitting"
                                     @answered="handleAnswer"
                                 />
 
