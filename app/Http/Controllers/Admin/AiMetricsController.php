@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AiMetricsController extends Controller
 {
-    public function __invoke(): JsonResponse
+    public function __invoke(): Response
     {
         $day = now()->format('Ymd');
         $minute = now()->format('YmdHi');
@@ -26,7 +27,7 @@ class AiMetricsController extends Controller
             ? round(($cacheHits / ($cacheHits + $cacheMisses)) * 100, 2)
             : 0.0;
 
-        return response()->json([
+        return Inertia::render('Admin/AiMetrics', [
             'date' => now()->toDateString(),
             'window' => [
                 'current_minute' => now()->format('Y-m-d H:i'),

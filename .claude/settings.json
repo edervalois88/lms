@@ -23,7 +23,9 @@
       "Bash(grep -r \"rate\\\\|throttle\\\\|limit\" routes/*.php)",
       "Bash(grep -r \"hash\\\\|Hash\" app/Http/Controllers/Auth/*.php)",
       "Bash(find app/Http -name \"*.php\" -exec grep -l \"abort\\\\|authorize\\\\|gate\" {} \\\\;)",
-      "Bash(find routes:*)"
+      "Bash(find routes:*)",
+      "Bash(grep -r \"admin\\\\|Admin\" database/seeders/*.php)",
+      "Bash(git commit -m 'fix\\(admin\\): fix AI metrics to return Inertia response instead of JSON:*)"
     ],
     "additionalDirectories": [
       "\\tmp"
