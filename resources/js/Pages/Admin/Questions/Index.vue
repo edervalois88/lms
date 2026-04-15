@@ -150,7 +150,7 @@ const getDifficultyLabel = (difficulty) => {
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <Link
-                                        :href="route('admin.questions.edit', question.id)"
+                                        :href="route('admin.questions.show', question.id)"
                                         class="text-orange-400 hover:text-orange-300 font-semibold text-sm mr-2"
                                     >
                                         Editar

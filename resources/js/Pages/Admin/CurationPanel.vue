@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import axios from 'axios';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
     subjects: {
@@ -118,9 +118,9 @@ const saveChanges = async () => {
 <template>
     <Head title="Panel de Curación de Contenido" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <div class="flex items-center justify-between gap-3">
+    <AdminLayout>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <section class="flex items-center justify-between gap-3">
                 <div>
                     <h2 class="text-2xl font-black text-white uppercase tracking-tight">Panel de Curación de Contenido</h2>
                     <p class="text-sm text-gray-400">Edita preguntas y sobrescribe explicaciones del Tutor IA.</p>
@@ -131,10 +131,7 @@ const saveChanges = async () => {
                 >
                     Volver
                 </Link>
-            </div>
-        </template>
-
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            </section>
             <section class="rounded-2xl border border-white/10 bg-slate-900/85 p-5 md:p-6">
                 <p class="text-[11px] font-black uppercase tracking-[0.25em] text-cyan-300">Buscador</p>
                 <div class="mt-4 grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -235,5 +232,5 @@ const saveChanges = async () => {
         <div v-if="toastMessage" class="fixed top-6 right-6 z-50 rounded-xl border border-emerald-400/40 bg-emerald-500/20 px-4 py-3 text-sm font-black text-emerald-100 shadow-[0_0_16px_rgba(16,185,129,0.35)]">
             {{ toastMessage }}
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
