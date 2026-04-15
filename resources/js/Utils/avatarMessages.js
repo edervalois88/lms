@@ -36,6 +36,33 @@ export const avatarMessages = {
       'La próxima seguro',
     ],
   },
+  simulator: {
+    motivation: [
+      '¡Vamos, estás en fuego! 🔥',
+      '¡Casi ahí! 💪',
+      'Tú puedes 🚀',
+    ],
+    correct: [
+      '¡Excelente! 🎉',
+      'Correcto 👏',
+      'Muy bien 🔥',
+    ],
+    incorrect: [
+      'Casi lo tienes',
+      'Intenta de nuevo 💪',
+      'La próxima seguro',
+    ],
+    concern: [
+      'No te desanimes 💪',
+      'Sigue adelante 🚀',
+      'Tú puedes 😊',
+    ],
+    success: [
+      '¡Lo lograste! 🎉',
+      'Excelente trabajo 👏',
+      'Impresionante 🌟',
+    ],
+  },
 };
 
 export function getContextualMessage(context, sentiment) {

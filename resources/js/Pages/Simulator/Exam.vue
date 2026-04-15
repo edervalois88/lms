@@ -12,9 +12,18 @@ import { useRewardFeedback } from '@/Composables/useRewardFeedback';
 const page = usePage();
 
 const props = defineProps({
-    exam: Object,
-    questions: Array,
-    user: Object,
+    exam: {
+        type: Object,
+        required: true
+    },
+    questions: {
+        type: Array,
+        required: true
+    },
+    user: {
+        type: Object,
+        required: true
+    }
 });
 
 // Exam state
@@ -38,7 +47,7 @@ const xpToastTimer = ref(null);
 const isSubmitting = ref(false);
 
 // Initialize composables
-const gameProgress = useGameProgress(page.props.user);
+const gameProgress = useGameProgress({ value: page.props.user }, { value: {} });
 const { showReward, playSound, getRewardMessage } = useRewardFeedback();
 
 const currentQuestion = computed(() => props.questions?.[currentQuestionIndex.value]);
@@ -109,6 +118,9 @@ const onRewardFeedbackComplete = () => {
 };
 
 const finishExam = () => {
+    if (hasSubmitted.value) return;  // Prevent double-finish
+    hasSubmitted.value = true;
+
     if (timerInterval.value) clearInterval(timerInterval.value);
     if (xpToastTimer.value) clearTimeout(xpToastTimer.value);
 

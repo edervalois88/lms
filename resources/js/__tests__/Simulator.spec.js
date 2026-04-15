@@ -99,31 +99,33 @@ describe('Simulator/Exam.vue integration', () => {
   });
 
   const createWrapper = (props = {}) => {
+    const questions = [
+      {
+        id: 1,
+        question: '¿Cuál es la capital de Francia?',
+        options: ['Londres', 'París', 'Berlín', 'Ámsterdam'],
+        correct_answer: 'París',
+      },
+      {
+        id: 2,
+        question: '¿Cuántos continentes hay?',
+        options: ['5', '6', '7', '8'],
+        correct_answer: '7',
+      },
+      {
+        id: 3,
+        question: '¿Cuál es el planeta más grande?',
+        options: ['Tierra', 'Marte', 'Júpiter', 'Saturno'],
+        correct_answer: 'Júpiter',
+      },
+    ];
+
     const defaultProps = {
       exam: {
         id: 1,
         duration: 60, // 60 seconds for testing
-        questions: [
-          {
-            id: 1,
-            question: '¿Cuál es la capital de Francia?',
-            options: ['Londres', 'París', 'Berlín', 'Ámsterdam'],
-            correct_answer: 'París',
-          },
-          {
-            id: 2,
-            question: '¿Cuántos continentes hay?',
-            options: ['5', '6', '7', '8'],
-            correct_answer: '7',
-          },
-          {
-            id: 3,
-            question: '¿Cuál es el planeta más grande?',
-            options: ['Tierra', 'Marte', 'Júpiter', 'Saturno'],
-            correct_answer: 'Júpiter',
-          },
-        ],
       },
+      questions,
       user: {
         id: 1,
         name: 'Test User',
@@ -199,15 +201,15 @@ describe('Simulator/Exam.vue integration', () => {
       exam: {
         id: 1,
         time_limit_minutes: 120, // 120 minutes
-        questions: [
-          {
-            id: 1,
-            question: 'Q1?',
-            options: ['A', 'B'],
-            correct_answer: 'A',
-          },
-        ],
       },
+      questions: [
+        {
+          id: 1,
+          question: 'Q1?',
+          options: ['A', 'B'],
+          correct_answer: 'A',
+        },
+      ],
     });
 
     expect(wrapper.vm.timeRemaining).toBe(120 * 60); // 120 minutes = 7200 seconds
@@ -305,15 +307,15 @@ describe('Simulator/Exam.vue integration', () => {
       exam: {
         id: 1,
         time_limit_minutes: 1, // 1 minute = 60 seconds
-        questions: [
-          {
-            id: 1,
-            question: 'Q1?',
-            options: ['A', 'B'],
-            correct_answer: 'A',
-          },
-        ],
       },
+      questions: [
+        {
+          id: 1,
+          question: 'Q1?',
+          options: ['A', 'B'],
+          correct_answer: 'A',
+        },
+      ],
     });
 
     // Initially 1 minute = 60 seconds = 00:01:00
@@ -333,15 +335,15 @@ describe('Simulator/Exam.vue integration', () => {
         id: 1,
         time_limit_minutes: 120, // Use time_limit_minutes prop
         duration: 120, // fallback for duration
-        questions: [
-          {
-            id: 1,
-            question: 'Q1?',
-            options: ['A', 'B'],
-            correct_answer: 'A',
-          },
-        ],
       },
+      questions: [
+        {
+          id: 1,
+          question: 'Q1?',
+          options: ['A', 'B'],
+          correct_answer: 'A',
+        },
+      ],
     });
 
     // 120 minutes = 7200 seconds = 02:00:00
@@ -355,8 +357,8 @@ describe('Simulator/Exam.vue integration', () => {
     // Verify initial state
     expect(wrapper.vm.currentQuestionIndex).toBe(0);
 
-    // Get the first question from the questions array
-    const firstQuestion = wrapper.props('exam')?.questions?.[0];
+    // Get the first question from the questions prop
+    const firstQuestion = wrapper.props('questions')?.[0];
     expect(firstQuestion).toBeDefined();
     expect(firstQuestion?.question).toBe('¿Cuál es la capital de Francia?');
   });
@@ -375,5 +377,54 @@ describe('Simulator/Exam.vue integration', () => {
     await wrapper.vm.$nextTick();
 
     expect(wrapper.vm.correctAnswers).toBe(1);
+  });
+
+  it('increments correctAnswers when selecting correct answer', async () => {
+    const wrapper = createWrapper();
+    expect(wrapper.vm.correctAnswers).toBe(0);
+
+    wrapper.vm.selectAnswer('París');
+    // Wait for async completion
+    await vi.waitFor(() => wrapper.vm.isSubmitting === false);
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.correctAnswers).toBe(1);
+  });
+
+  it('sets avatarState to celebrating on correct answer', async () => {
+    const wrapper = createWrapper();
+    expect(wrapper.vm.avatarState).toBe('idle');
+
+    wrapper.vm.selectAnswer('París');
+    // Wait for async completion
+    await vi.waitFor(() => wrapper.vm.isSubmitting === false);
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.avatarState).toBe('celebrating');
+  });
+
+  it('sets avatarState to thinking on incorrect answer', async () => {
+    const wrapper = createWrapper();
+    expect(wrapper.vm.avatarState).toBe('idle');
+
+    // Select wrong answer
+    wrapper.vm.selectAnswer('London');
+    // Wait for async completion
+    await vi.waitFor(() => wrapper.vm.isSubmitting === false);
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.avatarState).toBe('thinking');
+  });
+
+  it('prevents double-submit with isSubmitting guard', async () => {
+    const wrapper = createWrapper();
+    wrapper.vm.isSubmitting = true;
+    const initialCorrectAnswers = wrapper.vm.correctAnswers;
+
+    // This should return early due to isSubmitting guard
+    const result = wrapper.vm.selectAnswer('París');
+
+    // Should not have changed
+    expect(wrapper.vm.correctAnswers).toBe(initialCorrectAnswers);
   });
 });
