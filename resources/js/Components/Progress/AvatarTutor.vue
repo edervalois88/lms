@@ -21,10 +21,15 @@ const props = defineProps({
 
 const emit = defineEmits(['interaction']);
 
+// Magic number constants
+const MESSAGE_AUTO_HIDE_MS = 3000;
+const ELLIPSIS_DELAY_BASE_MS = 100;
+
 const avatarRef = ref(null);
 const showMessage = ref(false);
 const helpMessage = ref('');
 const animationControls = ref([]);
+const messageTimeoutId = ref(null);
 
 const sizeClasses = {
   sm: 'w-16 h-16',
@@ -124,10 +129,16 @@ const handleClick = () => {
     message: helpMessage.value,
   });
 
-  // Auto-hide message after 3s
-  setTimeout(() => {
+  // Clear any previous timeout
+  if (messageTimeoutId.value) {
+    clearTimeout(messageTimeoutId.value);
+  }
+
+  // Auto-hide message after MESSAGE_AUTO_HIDE_MS
+  messageTimeoutId.value = setTimeout(() => {
     showMessage.value = false;
-  }, 3000);
+    messageTimeoutId.value = null;
+  }, MESSAGE_AUTO_HIDE_MS);
 };
 
 onMounted(() => {
@@ -136,6 +147,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopAnimations();
+  if (messageTimeoutId.value) {
+    clearTimeout(messageTimeoutId.value);
+  }
 });
 </script>
 
@@ -146,7 +160,6 @@ onUnmounted(() => {
       ref="avatarRef"
       class="avatar-tutor cursor-pointer flex items-center justify-center rounded-full transition-all duration-300"
       :class="[sizeClass, `state-${state}`, `size-${size}`, 'bg-gradient-to-br from-indigo-600 to-purple-700 ring-4']"
-      :style="{ '--tw-ring-color': stateGlows[state].replace('ring-', 'rgb(').replace('/30', ', 0.3)') || 'rgba(59, 130, 246, 0.3)' }"
       @click="handleClick"
     >
       <!-- Avatar Emoji -->

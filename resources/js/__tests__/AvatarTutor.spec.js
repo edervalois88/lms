@@ -83,4 +83,18 @@ describe('AvatarTutor.vue', () => {
     });
     expect(wrapper.find('.size-lg').exists()).toBe(true);
   });
+
+  it('hides help message after 3 seconds', async () => {
+    const wrapper = mount(AvatarTutor, {
+      props: { state: 'idle' }
+    });
+
+    await wrapper.find('.avatar-tutor').trigger('click');
+    expect(wrapper.find('.help-bubble').exists()).toBe(true);
+
+    vi.advanceTimersByTime(3000);
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find('.help-bubble').exists()).toBe(false);
+  });
 });
