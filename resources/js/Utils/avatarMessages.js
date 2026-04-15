@@ -63,6 +63,23 @@ export const avatarMessages = {
       'Impresionante 🌟',
     ],
   },
+  progress: {
+    motivation: [
+      '¡Mira cuánto has avanzado! 📈',
+      '¡Sigue así, vas muy bien! 🚀',
+      'Tu esfuerzo se nota 💪',
+    ],
+    success: [
+      '¡Felicidades por tu racha! 🔥',
+      '¡Dominaste esa materia! 📚',
+      '¡Subiste de nivel! ⭐',
+    ],
+    concern: [
+      '¿Qué materia quieres reforzar hoy?',
+      'Cada sesión cuenta 💡',
+      'Pequeños pasos, grandes resultados',
+    ],
+  },
 };
 
 export function getContextualMessage(context, sentiment) {
