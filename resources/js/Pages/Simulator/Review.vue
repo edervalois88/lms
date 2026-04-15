@@ -40,7 +40,8 @@ const askTutor = async () => {
             texto_duda: tutorMessage.value.trim(),
         }, {
             headers: {
-                Accept: 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
             },
         });
 

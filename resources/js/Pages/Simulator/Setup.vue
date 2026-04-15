@@ -38,8 +38,8 @@ const submit = async () => {
             type: form.type,
         }, {
             headers: {
-                
-                Accept: 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
             },
         })
 

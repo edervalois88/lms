@@ -108,6 +108,10 @@ const buyReward = async (rewardItemId) => {
     try {
         const response = await axios.post(route('rewards.purchase'), {
             reward_item_id: rewardItemId,
+        }, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+            },
         });
 
         rewardNotice.value = response.data?.message || 'Recompensa desbloqueada.';
@@ -126,6 +130,10 @@ const equipReward = async (userRewardItemId) => {
     try {
         const response = await axios.post(route('rewards.equip'), {
             user_reward_item_id: userRewardItemId,
+        }, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+            },
         });
 
         rewardNotice.value = response.data?.message || 'Recompensa equipada.';

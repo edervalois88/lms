@@ -38,7 +38,10 @@ const startCheckout = async () => {
 
     try {
         const response = await axios.post(route('checkout.create'), {}, {
-            headers: { Accept: 'application/json' },
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+            },
         });
 
         const checkoutUrl = response?.data?.url;

@@ -75,6 +75,7 @@ const fetchQuestion = async (topic) => {
         }, {
             headers: {
                 'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
             },
         });
 
@@ -121,6 +122,7 @@ const submitEvaluation = async (answerIndex) => {
         }, {
             headers: {
                 'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
             },
         });
 
@@ -231,6 +233,7 @@ const handleTutorAsk = async (message) => {
         }, {
             headers: {
                 'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
             },
         });
 
