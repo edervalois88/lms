@@ -13,6 +13,7 @@ export function useGameProgress(userProps, statsProps) {
   const XP_PER_LEVEL = 500; // XP needed per level
   const LEVELS = ['Novato', 'Aprendiz', 'Adept', 'Experto', 'Maestro'];
   const LEVEL_THRESHOLDS = [0, 500, 1500, 3500, 7000]; // Cumulative thresholds
+  const LEVELUP_FEEDBACK_DURATION = 2000; // Duration for level-up visual feedback
 
   // Computed: Progress Percentage
   const progressPercentage = computed(() => {
@@ -60,7 +61,7 @@ export function useGameProgress(userProps, statsProps) {
     if (currentXP.value >= nextThreshold) {
       currentLevel.value += 1;
       hasLeveledUp.value = true;
-      setTimeout(() => { hasLeveledUp.value = false; }, 2000);
+      setTimeout(() => { hasLeveledUp.value = false; }, LEVELUP_FEEDBACK_DURATION);
     }
   };
 
