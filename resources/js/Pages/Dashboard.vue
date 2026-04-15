@@ -1,10 +1,16 @@
 <script setup>
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { animate, spring, stagger } from 'motion';
 import { playSound } from '@/Utils/SoundService';
 import { useTheme } from '@/Composables/useTheme';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ProgressBar from '@/Components/Progress/ProgressBar.vue';
+import ProgressJourney from '@/Components/Progress/ProgressJourney.vue';
+import StatCard from '@/Components/Progress/StatCard.vue';
+import AvatarCompanion from '@/Components/Progress/AvatarCompanion.vue';
+import { useGameProgress } from '@/Composables/useGameProgress';
+import { useProgressAnimation } from '@/Composables/useProgressAnimation';
 
 const props = defineProps({
     major: Object,
@@ -122,6 +128,30 @@ const floatingMessage = computed(() => {
     return 'Inicia práctica diaria para construir tu primera racha.';
 });
 
+// Initialize game progress composable
+const gameProgress = useGameProgress(
+  ref({
+    gamification: page.props.auth?.gamification || {},
+    gpa: page.props.user_gpa,
+  }),
+  ref({
+    projection: page.props.stats?.projection || {},
+    subject_mastery: page.props.stats?.subject_mastery || [],
+  })
+);
+
+const { animateLevelUp } = useProgressAnimation();
+
+// Computed for subject cards
+const subjectCards = computed(() => {
+  return (page.props.stats?.subject_mastery || []).map((subject) => ({
+    name: subject.name || subject.subject,
+    progress: subject.mastery_score ? Math.round(subject.mastery_score * 10) : 0,
+    gap: subject.gap || 0,
+    trend: subject.recent_change > 0 ? 'up' : subject.recent_change < 0 ? 'down' : 'stable',
+  }));
+});
+
 onMounted(() => {
     initializeTheme();
 
@@ -164,7 +194,64 @@ onMounted(() => {
 
             <div class="py-12 px-6">
             <div class="max-w-7xl mx-auto space-y-12">
-                
+
+                <!-- Header Welcome Section -->
+                <section class="space-y-2 hud-element">
+                    <h1 class="text-4xl font-black uppercase tracking-tight">¡Bienvenido, {{ page.props.auth.user.name }}!</h1>
+                    <p class="text-sm text-gray-400">Tu camino hacia la excelencia académica empieza aquí.</p>
+                </section>
+
+                <!-- Avatar + Level Stats (side-by-side) -->
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-6 hud-element">
+                    <div class="flex justify-center md:col-span-1">
+                        <AvatarCompanion
+                            :icon="page.props.equipped_cosmetics?.avatar?.icon_class || '👤'"
+                            :streak="page.props.auth?.gamification?.streak_days || 0"
+                            context="dashboard"
+                            @interaction="(e) => console.log('Avatar interaction:', e)"
+                        />
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="md:col-span-2 space-y-4">
+                        <div class="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5">
+                            <p class="text-[11px] text-cyan-300 uppercase tracking-widest font-black">Nivel Actual</p>
+                            <p class="mt-3 text-4xl font-black text-white">{{ page.props.auth?.gamification?.current_level || page.props.auth?.gamification?.current || 1 }}</p>
+                            <p class="mt-2 text-xs text-gray-300">{{ gameProgress.journeyStage.value }}</p>
+                        </div>
+
+                        <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+                            <p class="text-[11px] text-emerald-300 uppercase tracking-widest font-black">XP Para Siguiente Nivel</p>
+                            <p class="mt-3 text-2xl font-black text-white">{{ gameProgress.nextLevelXp.value }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Progress Journey -->
+                <section class="rounded-2xl border border-white/10 bg-white/3 p-6 space-y-4 hud-element">
+                    <h2 class="text-lg font-black uppercase tracking-wider text-white">Tu Camino</h2>
+                    <ProgressJourney
+                        :currentLevel="page.props.auth?.gamification?.current_level || page.props.auth?.gamification?.current || 1"
+                        :currentStage="gameProgress.journeyStage.value"
+                        :levelsToNextStage="Math.ceil((gameProgress.nextLevelXp.value || 0) / 500)"
+                    />
+                </section>
+
+                <!-- Subject Cards Grid -->
+                <section class="space-y-4 hud-element">
+                    <h2 class="text-lg font-black uppercase tracking-wider text-white">Progreso por Materia</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <StatCard
+                            v-for="subject in subjectCards"
+                            :key="subject.name"
+                            :name="subject.name"
+                            :progress="subject.progress"
+                            :gap="subject.gap"
+                            :trend="subject.trend"
+                        />
+                    </div>
+                </section>
+
                 <!-- Main HUD Wrap -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
                     
@@ -385,6 +472,21 @@ onMounted(() => {
                     </div>
 
                 </div>
+
+                <!-- Additional Action Buttons -->
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-4 hud-element">
+                    <Link href="/quiz"
+                        class="rounded-2xl border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 p-6 text-center transition-all">
+                        <p class="text-lg font-black text-orange-400">Iniciar Quiz</p>
+                        <p class="text-xs text-gray-400 mt-2">Practica preguntas aleatorias</p>
+                    </Link>
+
+                    <Link href="/simulator"
+                        class="rounded-2xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 p-6 text-center transition-all">
+                        <p class="text-lg font-black text-purple-400">Simulador</p>
+                        <p class="text-xs text-gray-400 mt-2">Examen completo cronometrado</p>
+                    </Link>
+                </section>
 
             </div>
         </div>
