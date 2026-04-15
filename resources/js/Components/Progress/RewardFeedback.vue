@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { animate } from 'motion';
 
 const props = defineProps({
@@ -24,7 +24,7 @@ const xpText = ref(null);
 const confetti = ref([]);
 const timeoutId = ref(null);
 
-onMounted(() => {
+onMounted(async () => {
   if (!props.show) return;
 
   // XP Float Animation
@@ -45,12 +45,18 @@ onMounted(() => {
     confetti.value.push({ id: i, x, y });
   }
 
-  // Animate confetti
-  animate(
-    '.confetti',
-    { y: [0, 200], opacity: [1, 0] },
-    { duration: props.duration / 1000, easing: 'ease-out' }
-  );
+  // Wait for Vue to render confetti elements before animating
+  await nextTick();
+
+  // Animate confetti via container-scoped query (not global selector)
+  const confettiElements = container.value?.querySelectorAll('.confetti-item');
+  if (confettiElements?.length) {
+    animate(
+      confettiElements,
+      { y: [0, 200], opacity: [1, 0] },
+      { duration: props.duration / 1000, easing: 'ease-out' }
+    );
+  }
 
   // Complete callback
   timeoutId.value = setTimeout(() => {
@@ -74,7 +80,7 @@ onUnmounted(() => {
 
       <!-- Confetti -->
       <div v-for="item in confetti" :key="item.id"
-        class="confetti absolute w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
+        class="confetti-item absolute w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
         :style="{ left: '50%', top: '50%', transform: `translate(${item.x}px, ${item.y}px)` }" />
 
       <!-- Glow Effect -->

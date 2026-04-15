@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import { useProgressAnimation } from '@/Composables/useProgressAnimation';
+import { getContextualMessage } from '@/Utils/avatarMessages';
 import AvatarAnimated from './AvatarAnimated.vue';
 
 const props = defineProps({
@@ -18,7 +19,7 @@ const props = defineProps({
   },
   context: {
     type: String,
-    enum: ['dashboard', 'quiz', 'simulator', 'default'],
+    enum: ['dashboard', 'quiz', 'simulator', 'progress', 'default'],
     default: 'default',
   },
 });
@@ -30,29 +31,28 @@ const avatar = ref(null);
 const showMessage = ref(false);
 const message = ref('');
 const clickCount = ref(0);
+const messageTimeoutId = ref(null);
+
+const MESSAGE_AUTO_HIDE_MS = 3000;
 
 const avatarState = computed(() => {
   if (clickCount.value > 3) return 'tired';
   return 'idle';
 });
 
-const messages = {
-  dashboard: [
-    '¡Vamos, estás en fuego! 🔥',
-    'Te echo de menos... 😢',
-    '¡Casi ahí! 💪',
-    'Tú puedes 🚀',
-  ],
-  quiz: [
-    'Confía en ti 💪',
-    '¡Excelente! 🎉',
-    'Eres un crack 🌟',
-  ],
-  default: [
-    '¿Qué tal el día?',
-    'Estoy aquí para ayudarte',
-    'Vamos a aprender juntos',
-  ],
+// Fallback messages for contexts not in avatarMessages
+const fallbackMessages = [
+  '¿Qué tal el día?',
+  'Estoy aquí para ayudarte',
+  'Vamos a aprender juntos',
+];
+
+const getMessage = () => {
+  const knownContexts = ['dashboard', 'quiz', 'simulator', 'progress'];
+  if (knownContexts.includes(props.context)) {
+    return getContextualMessage(props.context, 'motivation');
+  }
+  return fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)];
 };
 
 const handleClick = () => {
@@ -61,16 +61,20 @@ const handleClick = () => {
     animateAvatarWave(avatar.value, 0.6);
   }
 
-  const contextMessages = messages[props.context] || messages.default;
-  message.value = contextMessages[Math.floor(Math.random() * contextMessages.length)];
+  message.value = getMessage();
   showMessage.value = true;
 
-  setTimeout(() => {
+  if (messageTimeoutId.value) clearTimeout(messageTimeoutId.value);
+  messageTimeoutId.value = setTimeout(() => {
     showMessage.value = false;
-  }, 3000);
+  }, MESSAGE_AUTO_HIDE_MS);
 
   emit('interaction', { clickCount: clickCount.value, message: message.value });
 };
+
+onUnmounted(() => {
+  if (messageTimeoutId.value) clearTimeout(messageTimeoutId.value);
+});
 </script>
 
 <template>
