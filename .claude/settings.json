@@ -30,5 +30,11 @@
     "additionalDirectories": [
       "\\tmp"
     ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "laravel-boost@claude-plugins-official": true
   }
 }
