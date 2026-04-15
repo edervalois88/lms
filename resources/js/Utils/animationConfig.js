@@ -30,4 +30,9 @@ export const animationConfigs = {
     duration: 1.5,
     stagger: 0.05,
   },
+  rotatingBg: {
+    duration: 8,
+    repeat: Infinity,
+    easing: 'linear',
+  },
 };
