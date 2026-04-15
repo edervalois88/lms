@@ -100,4 +100,36 @@ describe('ProgressRadial.vue', () => {
     });
     expect(wrapper.vm.gpaStrokeColor).toBe('#ef4444');
   });
+
+  it('shows amber gpa ring when score is 50–79% of goal', () => {
+    const wrapper = mount(ProgressRadial, {
+      props: {
+        gpaActual: 10,
+        gpaMeta: 20,
+        strongSubjects: 2,
+        totalSubjects: 5,
+        streakDays: 5,
+        level: 2,
+        rank: 'Aprendiz',
+      }
+    });
+    // 10/20 = 50% → amber
+    expect(wrapper.vm.gpaStrokeColor).toBe('#f59e0b');
+  });
+
+  it('streakPercent is 0 when streakDays is 0', () => {
+    const wrapper = mount(ProgressRadial, {
+      props: {
+        gpaActual: 8,
+        gpaMeta: 20,
+        strongSubjects: 1,
+        totalSubjects: 3,
+        streakDays: 0,
+        streakGoal: 30,
+        level: 1,
+        rank: 'Novato',
+      }
+    });
+    expect(wrapper.vm.streakPercent).toBe(0);
+  });
 });

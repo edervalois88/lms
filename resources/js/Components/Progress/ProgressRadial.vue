@@ -55,6 +55,8 @@ const RINGS = [
   { r: 40, strokeWidth: 12 }, // Interior: Streak
 ];
 
+const RING_ANIMATION_DELAY_STEP = 0.2;
+
 const svgSize = computed(() => props.size === 'lg' ? 260 : 200);
 
 const circumference = (r) => 2 * Math.PI * r;
@@ -105,7 +107,7 @@ onMounted(() => {
     animate(
       materiasRingRef.value,
       { strokeDashoffset: c1 * (1 - materiasPercent.value) },
-      { duration: animationConfigs.radialArc.duration, delay: 0.2, easing: animationConfigs.radialArc.easing }
+      { duration: animationConfigs.radialArc.duration, delay: RING_ANIMATION_DELAY_STEP, easing: animationConfigs.radialArc.easing }
     );
   }
 
@@ -115,7 +117,7 @@ onMounted(() => {
     animate(
       streakRingRef.value,
       { strokeDashoffset: c2 * (1 - streakPercent.value) },
-      { duration: animationConfigs.radialArc.duration, delay: 0.4, easing: animationConfigs.radialArc.easing }
+      { duration: animationConfigs.radialArc.duration, delay: RING_ANIMATION_DELAY_STEP * 2, easing: animationConfigs.radialArc.easing }
     );
   }
 });
@@ -147,7 +149,7 @@ onMounted(() => {
         :stroke="gpaStrokeColor"
         fill="none"
         stroke-linecap="round"
-        transform="rotate(-90 100 100)"
+        :transform="`rotate(-90 ${CX} ${CY})`"
       />
 
       <!-- Materias Ring (Medio) -->
@@ -158,7 +160,7 @@ onMounted(() => {
         stroke="#3b82f6"
         fill="none"
         stroke-linecap="round"
-        transform="rotate(-90 100 100)"
+        :transform="`rotate(-90 ${CX} ${CY})`"
       />
 
       <!-- Streak Ring (Interior) -->
@@ -169,7 +171,7 @@ onMounted(() => {
         stroke="#10b981"
         fill="none"
         stroke-linecap="round"
-        transform="rotate(-90 100 100)"
+        :transform="`rotate(-90 ${CX} ${CY})`"
       />
 
       <!-- Center: Level + Rank text -->
