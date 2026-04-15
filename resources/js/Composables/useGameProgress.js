@@ -12,13 +12,14 @@ export function useGameProgress(userProps, statsProps) {
   // Constants
   const XP_PER_LEVEL = 500; // XP needed per level
   const LEVELS = ['Novato', 'Aprendiz', 'Adept', 'Experto', 'Maestro'];
-  const LEVEL_THRESHOLDS = [0, 500, 1000, 1500, 2000, 2500]; // Cumulative thresholds
+  const LEVEL_THRESHOLDS = [0, 500, 1500, 3500, 7000]; // Cumulative thresholds
 
   // Computed: Progress Percentage
   const progressPercentage = computed(() => {
+    const gap = statsProps.value?.projection?.gap_to_goal ?? 0;
     const projected = statsProps.value?.projection?.projected_score ?? 0;
-    if (projected >= 100) return 100;
-    return Math.round(projected);
+    if (gap <= 0) return 100;
+    return Math.min(100, Math.round((projected / (projected + gap)) * 100));
   });
 
   // Computed: Gap Status
@@ -38,7 +39,12 @@ export function useGameProgress(userProps, statsProps) {
 
   // Computed: Journey Stage
   const journeyStage = computed(() => {
-    return rank.value;
+    const level = currentLevel.value;
+    if (level < 2) return 'Novato';
+    if (level < 4) return 'Aprendiz';
+    if (level < 6) return 'Adept';
+    if (level < 8) return 'Experto';
+    return 'Maestro';
   });
 
   // Computed: Next Level XP Required
@@ -50,10 +56,9 @@ export function useGameProgress(userProps, statsProps) {
   // Method: Add XP
   const addXP = (amount) => {
     currentXP.value += amount;
-    // Check if we've exceeded the XP threshold for the current level
-    if (currentXP.value >= XP_PER_LEVEL) {
+    const nextThreshold = LEVEL_THRESHOLDS[currentLevel.value];
+    if (currentXP.value >= nextThreshold) {
       currentLevel.value += 1;
-      currentXP.value = 0; // Reset XP for next level
       hasLeveledUp.value = true;
       setTimeout(() => { hasLeveledUp.value = false; }, 2000);
     }
