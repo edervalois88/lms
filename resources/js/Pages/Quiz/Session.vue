@@ -1,16 +1,26 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import QuestionCard from '@/Components/Quiz/QuestionCard.vue';
 import FeedbackPanel from '@/Components/Quiz/FeedbackPanel.vue';
 import TutorChat from '@/Components/Quiz/TutorChat.vue';
 import UpgradeModal from '@/Components/UI/UpgradeModal.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AvatarTutor from '@/Components/Progress/AvatarTutor.vue';
+import AvatarDialog from '@/Components/Progress/AvatarDialog.vue';
+import ProgressBar from '@/Components/Progress/ProgressBar.vue';
+import RewardFeedback from '@/Components/Progress/RewardFeedback.vue';
+import { useGameProgress } from '@/Composables/useGameProgress';
+import { useRewardFeedback } from '@/Composables/useRewardFeedback';
+
+const page = usePage();
 
 const props = defineProps({
     subject: Object,
     topics: Array,
+    quiz: Object,
+    user: Object,
 });
 
 const activeTopic = ref(null);
@@ -29,6 +39,28 @@ const showLevelModal = ref(false);
 const levelModalData = ref({ level: 1, badges: [] });
 const showUpgradeModal = ref(false);
 const blockedFeature = ref('ai_tutor');
+
+// Gamification state
+const currentQuestionIndex = ref(0);
+const showAvatarDialog = ref(false);
+const avatarState = ref('idle');
+const showRewardFeedback = ref(false);
+const rewardXP = ref(25);
+
+// Initialize gamification composables
+const gameProgress = useGameProgress({ value: props.user }, { value: {} });
+const rewardFeedback = useRewardFeedback();
+
+// Computed properties for progress tracking
+const progressPercentage = computed(() => {
+    if (!props.quiz || !props.quiz.questions) return 0;
+    return Math.round((currentQuestionIndex.value / props.quiz.questions.length) * 100);
+});
+
+const questionsProgress = computed(() => {
+    if (!props.quiz || !props.quiz.questions) return '0/0';
+    return `${currentQuestionIndex.value + 1}/${props.quiz.questions.length}`;
+});
 
 const fetchQuestion = async (topic) => {
     loading.value = true;
@@ -58,6 +90,10 @@ const fetchQuestion = async (topic) => {
 
 const handleAnswer = (selectedIndex) => {
     submitEvaluation(selectedIndex);
+};
+
+const selectAnswer = (answerIndex) => {
+    submitEvaluation(answerIndex);
 };
 
 const submitEvaluation = async (answerIndex) => {
@@ -102,6 +138,16 @@ const submitEvaluation = async (answerIndex) => {
         totalAnswered.value++;
         if (isCorrect) {
             score.value++;
+            // Update avatar state and show reward
+            avatarState.value = 'celebrating';
+            rewardXP.value = 25;
+            gameProgress.addXP(25);
+            rewardFeedback.showReward(25, 'correct');
+            rewardFeedback.playSound('correct');
+            showRewardFeedback.value = true;
+        } else {
+            avatarState.value = 'thinking';
+            rewardFeedback.playSound('incorrect');
         }
         showFeedback.value = true;
     } catch (_error) {
@@ -109,11 +155,43 @@ const submitEvaluation = async (answerIndex) => {
     }
 };
 
+const onRewardFeedbackComplete = () => {
+    showRewardFeedback.value = false;
+    nextQuestion();
+};
+
+const onAvatarClick = () => {
+    showAvatarDialog.value = true;
+    avatarState.value = 'encouraging';
+};
+
+const onAvatarDialogAction = (action) => {
+    showAvatarDialog.value = false;
+    // Handle dialog actions (tip, explain, roadmap, joke)
+    console.log('Avatar dialog action:', action);
+};
+
+const onAvatarDialogClose = () => {
+    showAvatarDialog.value = false;
+    avatarState.value = 'idle';
+};
+
 const nextQuestion = () => {
     showFeedback.value = false;
     adaptiveFeedback.value = null;
     selectedIndex.value = null;
-    fetchQuestion(activeTopic.value);
+
+    if (currentQuestionIndex.value < (props.quiz?.questions?.length || 0) - 1) {
+        currentQuestionIndex.value++;
+        avatarState.value = 'idle';
+    } else {
+        finishQuiz();
+    }
+};
+
+const finishQuiz = () => {
+    // Route to quiz results page
+    window.location.href = route('quiz.results', { quiz: props.quiz?.id });
 };
 
 const exitQuiz = () => {
@@ -173,10 +251,26 @@ const handleTutorAsk = async (message) => {
 </script>
 
 <template>
-    <Head :title="`Quiz: ${subject.name}`" />
+    <Head :title="`Quiz: ${subject?.name || 'Quiz'}`" />
 
     <AuthenticatedLayout>
         <UpgradeModal :show="showUpgradeModal" :feature="blockedFeature" @close="showUpgradeModal = false" />
+
+        <!-- Reward Feedback Overlay -->
+        <RewardFeedback
+            v-if="showRewardFeedback && lastAnswerCorrect"
+            :xp="rewardXP"
+            :show="showRewardFeedback"
+            @complete="onRewardFeedbackComplete"
+        />
+
+        <!-- Avatar Dialog -->
+        <AvatarDialog
+            :open="showAvatarDialog"
+            context="quiz"
+            @action="onAvatarDialogAction"
+            @close="onAvatarDialogClose"
+        />
 
         <div class="flex flex-col">
 
@@ -273,31 +367,52 @@ const handleTutorAsk = async (message) => {
                         <p class="text-lg font-medium text-gray-600">Nuestra IA está diseñando tu pregunta...</p>
                     </div>
 
-                    <div v-else-if="currentQuestion" class="animate-slide-up">
-                        <QuestionCard 
-                            :question="currentQuestion" 
-                            :time-limit="60"
-                            :disabled="showFeedback"
-                            @answered="handleAnswer"
+                    <div v-else-if="currentQuestion && props.quiz" class="animate-slide-up">
+                        <!-- Progress Bar -->
+                        <ProgressBar
+                            :percentage="progressPercentage"
+                            :label="`Pregunta ${questionsProgress}`"
                         />
-                        
-                        <div v-if="showFeedback" class="mt-6 animate-fade-in">
-                            <FeedbackPanel
-                                :feedback="adaptiveFeedback"
-                                @next="nextQuestion"
-                            />
 
-                            <div class="mt-4">
-                                <TutorChat
-                                    :enabled="showFeedback"
-                                    :loading="tutorLoading"
-                                    :response="adaptiveFeedback?.chat?.respuesta_directa || ''"
-                                    :blocked="Boolean(adaptiveFeedback?.chat?.es_fuera_de_contexto)"
-                                    :from-cache="Boolean(adaptiveFeedback?.chat?.from_cache)"
-                                    :tokens-saved="Number(adaptiveFeedback?.chat?.tokens_saved || 0)"
-                                    :current-xp="Number(adaptiveFeedback?.gamification?.current_xp || 0)"
-                                    @ask="handleTutorAsk"
+                        <!-- Quiz Layout with Avatar -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+                            <!-- Left: Avatar Tutor -->
+                            <div class="md:col-span-1 flex justify-center md:justify-start">
+                                <AvatarTutor
+                                    :state="avatarState"
+                                    size="lg"
+                                    @interaction="onAvatarClick"
                                 />
+                            </div>
+
+                            <!-- Right: Question Card (3 cols) -->
+                            <div class="md:col-span-3">
+                                <QuestionCard
+                                    :question="currentQuestion"
+                                    :time-limit="60"
+                                    :disabled="showFeedback || showRewardFeedback"
+                                    @answered="handleAnswer"
+                                />
+
+                                <div v-if="showFeedback && !showRewardFeedback" class="mt-6 animate-fade-in">
+                                    <FeedbackPanel
+                                        :feedback="adaptiveFeedback"
+                                        @next="nextQuestion"
+                                    />
+
+                                    <div class="mt-4">
+                                        <TutorChat
+                                            :enabled="showFeedback"
+                                            :loading="tutorLoading"
+                                            :response="adaptiveFeedback?.chat?.respuesta_directa || ''"
+                                            :blocked="Boolean(adaptiveFeedback?.chat?.es_fuera_de_contexto)"
+                                            :from-cache="Boolean(adaptiveFeedback?.chat?.from_cache)"
+                                            :tokens-saved="Number(adaptiveFeedback?.chat?.tokens_saved || 0)"
+                                            :current-xp="Number(adaptiveFeedback?.gamification?.current_xp || 0)"
+                                            @ask="handleTutorAsk"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
