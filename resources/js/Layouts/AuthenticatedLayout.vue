@@ -5,6 +5,7 @@ import { playSound } from '@/Utils/SoundService';
 import { useTheme } from '@/Composables/useTheme';
 import CurrencyDisplay from '@/Components/Gamification/Currency/CurrencyDisplay.vue';
 import { useCurrencyStore } from '@/Stores/gamification/currencyStore';
+import AchievementUnlock from '@/Components/Gamification/Achievements/AchievementUnlock.vue';
 
 const { theme, initializeTheme, toggleTheme } = useTheme();
 const page = usePage();
@@ -342,6 +343,8 @@ const mobileQuickNav = computed(() => {
 
         <!-- Background Grid Decoration -->
         <div class="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+
+        <AchievementUnlock />
     </div>
 </template>
 

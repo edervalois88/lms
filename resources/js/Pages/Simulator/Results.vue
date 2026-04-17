@@ -5,6 +5,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { animate, spring, stagger } from 'motion';
 import Card from '@/Components/UI/Card.vue';
 import { playSound } from '@/Utils/SoundService';
+import { processRewards } from '@/Utils/processRewards';
 
 const props = defineProps({
     exam: Object,
@@ -37,6 +38,10 @@ const props = defineProps({
     incorrect_answers_count: {
         type: Number,
         default: 0,
+    },
+    achievements_unlocked: {
+        type: Array,
+        default: () => [],
     },
 });
 
@@ -72,6 +77,12 @@ const hasAiOpportunityInsights = computed(() => {
 onMounted(() => {
     showHero.value = true;
     playSound(props.percentage >= 60 ? 'success' : 'pop');
+
+    processRewards({
+        xp_earned: props.xp_awarded ?? 0,
+        gold_earned: 0,
+        achievements_unlocked: props.achievements_unlocked ?? [],
+    });
 
     animate('.end-screen-fade', { opacity: [0, 1], y: [20, 0] }, { duration: 0.55, easing: spring() });
     animate('.metric-card', { opacity: [0, 1], y: [18, 0] }, { delay: stagger(0.08), duration: 0.45, easing: spring() });

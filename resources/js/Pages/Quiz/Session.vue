@@ -13,6 +13,7 @@ import ProgressBar from '@/Components/Progress/ProgressBar.vue';
 import RewardFeedback from '@/Components/Progress/RewardFeedback.vue';
 import { useGameProgress } from '@/Composables/useGameProgress';
 import { useRewardFeedback } from '@/Composables/useRewardFeedback';
+import { processRewards } from '@/Utils/processRewards';
 
 const page = usePage();
 
@@ -127,6 +128,7 @@ const submitEvaluation = async (answerIndex) => {
         });
 
         const payload = response.data;
+        processRewards(payload);
         adaptiveFeedback.value = payload;
         selectedIndex.value = answerIndex;
 
