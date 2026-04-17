@@ -7,6 +7,10 @@ const props = defineProps({
     type: Number,
     default: 50,
   },
+  gold: {
+    type: Number,
+    default: 0,
+  },
   show: {
     type: Boolean,
     default: true,
@@ -74,8 +78,9 @@ onUnmounted(() => {
     <div v-if="show" ref="container"
       class="fixed inset-0 pointer-events-none flex items-center justify-center">
       <!-- XP Text -->
-      <div ref="xpText" class="text-6xl font-black text-yellow-400 drop-shadow-lg">
-        +{{ xp }} XP
+      <div ref="xpText" class="flex flex-col items-center gap-2">
+        <div class="text-6xl font-black text-yellow-400 drop-shadow-lg">+{{ xp }} XP</div>
+        <div v-if="gold > 0" class="text-3xl font-black text-yellow-300 drop-shadow-lg">+{{ gold }} 🪙</div>
       </div>
 
       <!-- Confetti -->
