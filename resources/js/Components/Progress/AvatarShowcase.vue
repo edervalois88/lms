@@ -75,13 +75,16 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- Rewards Link -->
-    <a
-      v-if="rewardsRoute"
-      :href="rewardsRoute"
-      class="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-600 text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-    >
-      Ir a Rewards
-    </a>
+    <!-- Rewards Links -->
+    <div class="flex gap-3">
+      <a v-if="rewardsRoute" :href="rewardsRoute"
+        class="px-5 py-2 bg-gradient-to-r from-purple-500 to-blue-600 text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity">
+        Tienda
+      </a>
+      <a href="/rewards/avatar"
+        class="px-5 py-2 bg-white/10 border border-white/20 text-white rounded-xl font-semibold text-sm hover:bg-white/20 transition-colors">
+        Personalizar
+      </a>
+    </div>
   </div>
 </template>

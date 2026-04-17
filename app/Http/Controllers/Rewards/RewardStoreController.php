@@ -88,6 +88,11 @@ class RewardStoreController extends Controller
         return \Inertia\Inertia::render('Gamification/Shop');
     }
 
+    public function avatarPage(): \Inertia\Response
+    {
+        return \Inertia\Inertia::render('Gamification/Avatar');
+    }
+
     private function rewardTablesReady(): bool
     {
         return Schema::hasTable('reward_items')
