@@ -23,9 +23,10 @@ export const useAchievementsStore = defineStore('achievements', () => {
   };
 
   const hydrateFromServer = (achievementIds) => {
+    if (!Array.isArray(achievementIds)) return;
     achievementIds.forEach((id) => {
-      if (!isCompleted.value(id)) {
-        completed.value.push({ id });
+      if (id && !isCompleted.value(id)) {
+        completed.value.push({ id, unlockedAt: null });
       }
     });
   };

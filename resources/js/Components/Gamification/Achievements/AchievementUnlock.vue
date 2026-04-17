@@ -1,13 +1,17 @@
 <script setup>
-import { watch } from 'vue';
+import { watch, ref } from 'vue';
 import { useAchievementsStore } from '@/Stores/gamification/achievementsStore';
 import { storeToRefs } from 'pinia';
 
 const achievements = useAchievementsStore();
 const { pendingToast } = storeToRefs(achievements);
+const toastTimeout = ref(null);
 
 watch(pendingToast, (val) => {
-  if (val) setTimeout(() => achievements.clearToast(), 5000);
+  if (toastTimeout.value) clearTimeout(toastTimeout.value);
+  if (val) {
+    toastTimeout.value = setTimeout(() => achievements.clearToast(), 5000);
+  }
 });
 </script>
 
