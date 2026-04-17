@@ -93,6 +93,33 @@ class User extends Authenticatable
         return $this->hasMany(RewardPurchase::class);
     }
 
+    public function achievements(): HasMany
+    {
+        return $this->hasMany(UserAchievement::class);
+    }
+
+    public function getGamificationStateAttribute(): array
+    {
+        $xpLedger = $this->xpLedgers()
+            ->selectRaw('SUM(amount) as total_xp')
+            ->first();
+
+        $currentXp = max(0, (int) ($xpLedger->total_xp ?? 0));
+
+        // Calculate level and progress based on progressCalculations.js logic
+        // For now, simple: level = floor(xp / 1000) + 1
+        $currentLevel = (int) floor($currentXp / 1000) + 1;
+
+        return [
+            'gold' => max(0, $currentXp), // Frontend treats XP as Gold for purchases
+            'xp' => $currentXp,
+            'current_level' => $currentLevel,
+            'achievements_unlocked' => $this->achievements()
+                ->pluck('achievement_id')
+                ->all(),
+        ];
+    }
+
     public function isPremium(): bool
     {
         return (bool) $this->is_premium;
