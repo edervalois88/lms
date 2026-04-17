@@ -13,7 +13,7 @@ const { equipped } = storeToRefs(avatar);
 const slots = [
   { slot: 'color', label: 'Color base' },
   { slot: 'outfit', label: 'Ropa' },
-  { slot: 'accessory', label: 'Accesorios' },
+  { slot: 'accessories', label: 'Accesorios' },
   { slot: 'pet', label: 'Mascota' },
   { slot: 'background', label: 'Fondo' },
 ];
