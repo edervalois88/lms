@@ -3,9 +3,12 @@ import { computed, onMounted, ref } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { playSound } from '@/Utils/SoundService';
 import { useTheme } from '@/Composables/useTheme';
+import CurrencyDisplay from '@/Components/Gamification/Currency/CurrencyDisplay.vue';
+import { useCurrencyStore } from '@/Stores/gamification/currencyStore';
 
 const { theme, initializeTheme, toggleTheme } = useTheme();
 const page = usePage();
+const currencyStore = useCurrencyStore();
 const sidebarCollapsed = ref(false);
 const mobileSidebarOpen = ref(false);
 
@@ -15,6 +18,14 @@ onMounted(() => {
     if (typeof window !== 'undefined') {
         sidebarCollapsed.value = window.localStorage.getItem('nexus.sidebar.collapsed') === 'true';
     }
+
+    // Hydrate currency store from user gamification data
+    const gamification = page.props?.auth?.user?.gamification ?? {};
+    currencyStore.hydrate({
+        gold: gamification.gold ?? 0,
+        xp: gamification.xp ?? 0,
+        current_level: gamification.current_level ?? 1,
+    });
 });
 
 const toggleSidebarCollapse = () => {
@@ -103,8 +114,9 @@ const mobileQuickNav = computed(() => {
                     <!-- Spacer (Desktop) -->
                     <div class="hidden md:block flex-1"></div>
 
-                    <!-- Desktop Theme Toggle -->
-                    <div class="hidden md:block">
+                    <!-- Desktop Currency Display + Theme Toggle -->
+                    <div class="hidden md:flex items-center gap-6">
+                        <CurrencyDisplay />
                         <button
                             type="button"
                             @click="toggleTheme()"
