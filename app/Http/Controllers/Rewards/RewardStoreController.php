@@ -83,6 +83,11 @@ class RewardStoreController extends Controller
         return response()->json($result);
     }
 
+    public function shopPage(): \Inertia\Response
+    {
+        return \Inertia\Inertia::render('Gamification/Shop');
+    }
+
     private function rewardTablesReady(): bool
     {
         return Schema::hasTable('reward_items')

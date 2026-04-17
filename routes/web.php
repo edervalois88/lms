@@ -83,6 +83,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/rewards/inventory', [RewardStoreController::class, 'inventory'])->name('rewards.inventory');
     Route::post('/rewards/purchase', [RewardStoreController::class, 'purchase'])->middleware('throttle:10,1')->name('rewards.purchase');
     Route::post('/rewards/equip', [RewardStoreController::class, 'equip'])->middleware('throttle:10,1')->name('rewards.equip');
+    Route::get('/rewards/shop', [RewardStoreController::class, 'shopPage'])->name('rewards.shop');
 });
 
 // Admin Panel
