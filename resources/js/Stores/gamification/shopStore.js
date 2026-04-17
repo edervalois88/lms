@@ -67,8 +67,9 @@ export const useShopStore = defineStore('shop', () => {
       const response = await axios.post('/rewards/equip', {
         user_reward_item_id: userRewardItemId,
       });
-      // Actualizar equipped con la respuesta del servidor si es necesario
-      // Por ahora simplemente retornamos la respuesta
+      if (response.data?.ok) {
+        equipped.value = response.data.equipped ?? equipped.value;
+      }
       return response.data;
     } finally {
       loading.value = false;

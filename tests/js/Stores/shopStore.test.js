@@ -135,7 +135,14 @@ describe('shopStore', () => {
   });
 
   it('equip sends POST request and updates equipped on success', async () => {
-    const mockEquipResponse = { data: { equipped_slot: 'outfit' } };
+    const mockEquipResponse = {
+      data: {
+        ok: true,
+        equipped: {
+          outfit: { code: 'outfit_warrior', name: 'Warrior Outfit' },
+        },
+      },
+    };
     axios.post.mockResolvedValueOnce(mockEquipResponse);
 
     const store = useShopStore();
@@ -147,6 +154,7 @@ describe('shopStore', () => {
       user_reward_item_id: 99,
     });
     expect(result).toEqual(mockEquipResponse.data);
+    expect(store.equipped).toEqual(mockEquipResponse.data.equipped);
   });
 
   it('loading state is managed during async operations', async () => {
