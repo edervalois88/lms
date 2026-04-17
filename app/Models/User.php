@@ -98,8 +98,14 @@ class User extends Authenticatable
         return $this->hasMany(UserAchievement::class);
     }
 
+    private ?array $gamificationStateCache = null;
+
     public function getGamificationStateAttribute(): array
     {
+        if ($this->gamificationStateCache !== null) {
+            return $this->gamificationStateCache;
+        }
+
         $xpLedger = $this->xpLedgers()
             ->selectRaw('SUM(amount) as total_xp')
             ->first();
@@ -110,14 +116,16 @@ class User extends Authenticatable
         // For now, simple: level = floor(xp / 1000) + 1
         $currentLevel = (int) floor($currentXp / 1000) + 1;
 
-        return [
-            'gold' => max(0, $currentXp), // Frontend treats XP as Gold for purchases
+        $state = [
+            'gold' => $currentXp,  // Removed redundant max(0, ...) — already clamped above
             'xp' => $currentXp,
             'current_level' => $currentLevel,
             'achievements_unlocked' => $this->achievements()
                 ->pluck('achievement_id')
                 ->all(),
         ];
+
+        return $this->gamificationStateCache = $state;
     }
 
     public function isPremium(): bool
