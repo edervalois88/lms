@@ -17,9 +17,18 @@ class GamificationService
     public const XP_SIMULATION_COMPLETE = 150;
     public const XP_BOOTCAMP_ADAPTIVE = 30;
 
+    public function getCurrentGold(User $user): int
+    {
+        $ledger = $user->xpLedgers()
+            ->selectRaw('SUM(amount) as total_xp')
+            ->first();
+
+        return max(0, (int) ($ledger->total_xp ?? 0));
+    }
+
     public function getCurrentXp(User $user): int
     {
-        return (int) ($user->preferences['xp'] ?? 0);
+        return $this->getCurrentGold($user);
     }
 
     /**
