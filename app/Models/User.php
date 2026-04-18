@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Role;
+use Illuminate\Database\Eloquent\Attributes\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -99,6 +100,18 @@ class User extends Authenticatable
     }
 
     private ?array $gamificationStateCache = null;
+
+    /**
+     * Gamification state as a computed attribute.
+     * Returns gold, xp, current_level, and achievements_unlocked.
+     * This is computed on-demand and never persisted to the database.
+     */
+    protected function gamification(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->getGamificationStateAttribute(),
+        );
+    }
 
     public function getGamificationStateAttribute(): array
     {

@@ -17,13 +17,9 @@ class HydrateUserGamification
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()) {
-            // Hydrate user with gamification state
-            // This includes: gold, xp, current_level, achievements_unlocked
-            $user = $request->user();
-            $user->gamification = $user->getGamificationStateAttribute();
-        }
-
+        // Middleware just passes through. Gamification is now computed on-demand
+        // via the User model's gamification accessor to prevent issues with
+        // Eloquent trying to persist non-existent columns during save().
         return $next($request);
     }
 }
