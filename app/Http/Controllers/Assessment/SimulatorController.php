@@ -376,6 +376,7 @@ class SimulatorController extends Controller
             'simulator_complete',
             [
                 'score' => $percentage,
+                'questions_answered' => $exam->total_questions ?? 0,
             ]
         );
 
