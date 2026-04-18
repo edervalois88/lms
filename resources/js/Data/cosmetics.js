@@ -2,22 +2,22 @@ export const COSMETIC_DEFINITIONS = {
   colors: {
     purple: {
       name: 'Púrpura Claro',
-      skinTone: '#d4a574',
+      color: '#d4a574',
       code: 'purple',
     },
     golden: {
       name: 'Dorado',
-      skinTone: '#f4d03f',
+      color: '#f4d03f',
       code: 'golden',
     },
     fair: {
       name: 'Piel Clara',
-      skinTone: '#f5deb3',
+      color: '#f5deb3',
       code: 'fair',
     },
     tan: {
       name: 'Bronceado',
-      skinTone: '#d2b48c',
+      color: '#d2b48c',
       code: 'tan',
     },
   },
@@ -29,16 +29,20 @@ export const COSMETIC_DEFINITIONS = {
       color: '#9333ea',
       details: {
         hasStripes: false,
+        hasStars: false,
+        glowEffect: false,
         emblem: 'book',
       },
     },
     wizard_robes: {
-      name: 'Robes Mágico',
+      name: 'Túnica Mágica',
       code: 'wizard_robes',
       color: '#3b82f6',
       details: {
+        hasStripes: false,
         hasStars: true,
         glowEffect: true,
+        emblem: null,
       },
     },
     casual_shirt: {
@@ -47,6 +51,8 @@ export const COSMETIC_DEFINITIONS = {
       color: '#ef4444',
       details: {
         hasStripes: true,
+        hasStars: false,
+        glowEffect: false,
         emblem: null,
       },
     },
@@ -56,6 +62,8 @@ export const COSMETIC_DEFINITIONS = {
       color: '#ffffff',
       details: {
         hasStripes: false,
+        hasStars: false,
+        glowEffect: false,
         emblem: 'flask',
       },
     },
