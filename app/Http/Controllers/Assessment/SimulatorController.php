@@ -388,7 +388,7 @@ class SimulatorController extends Controller
             'goal'       => $user->major,
             'ai_suggestions' => $suggestions,
             'ai_opportunities' => $aiOpportunities,
-            'xp_awarded' => $xpAwarded,
+            'xp_earned' => $xpAwarded,
             'gold_earned' => $xpAwarded,
             'achievements_unlocked' => $achievementsUnlocked,
             'subject_breakdown' => $subjectBreakdown,
