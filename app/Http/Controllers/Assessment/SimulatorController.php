@@ -15,6 +15,7 @@ use App\Models\Subject;
 use App\Models\Topic;
 use App\Services\GroqService;
 use App\Services\FreemiumLimitService;
+use App\Services\Learning\AchievementService;
 use App\Services\Learning\GamificationService;
 use App\Services\Learning\StudyStreakService;
 use Carbon\Carbon;
@@ -33,6 +34,7 @@ class SimulatorController extends Controller
     public function __construct(
         protected StudyStreakService $streakService,
         protected GamificationService $gamification,
+        protected AchievementService $achievementService,
         protected GroqService $groq,
         protected FreemiumLimitService $freemium,
     ) {}
@@ -203,6 +205,20 @@ class SimulatorController extends Controller
 
             $this->streakService->recordStudyActivity($lockedExam->user);
 
+            // Calculate score percentage for achievement evaluation
+            $scorePercentage = $lockedExam->total_questions > 0
+                ? (int) (($correctCount / $lockedExam->total_questions) * 100)
+                : 0;
+
+            // Evaluate achievements based on exam completion
+            $achievementsUnlocked = $this->achievementService->evaluateAchievements(
+                $lockedExam->user,
+                'simulator_complete',
+                [
+                    'score' => $scorePercentage,
+                ]
+            );
+
             if ($lockedExam->type === ExamType::Simulation) {
                 $this->gamification->awardSimulationCompletion($lockedExam->user, (int) $lockedExam->id);
             } elseif ($lockedExam->type === ExamType::Practice && (int) $lockedExam->exam_area === 0) {
@@ -353,6 +369,15 @@ class SimulatorController extends Controller
             $xpAwarded = GamificationService::XP_BOOTCAMP_ADAPTIVE;
         }
 
+        // Evaluate achievements based on exam results
+        $achievementsUnlocked = $this->achievementService->evaluateAchievements(
+            $user,
+            'simulator_complete',
+            [
+                'score' => $percentage,
+            ]
+        );
+
         return Inertia::render('Simulator/Results', [
             'exam'       => $exam,
             'correct'    => $correct,
@@ -363,6 +388,8 @@ class SimulatorController extends Controller
             'ai_suggestions' => $suggestions,
             'ai_opportunities' => $aiOpportunities,
             'xp_awarded' => $xpAwarded,
+            'gold_earned' => $xpAwarded,
+            'achievements_unlocked' => $achievementsUnlocked,
             'subject_breakdown' => $subjectBreakdown,
             'incorrect_answers_count' => $incorrectAnswersCount,
         ]);

@@ -13,6 +13,7 @@ use App\Services\GroqService;
 use App\Services\AI\QuestionGeneratorService;
 use App\Services\Learning\AdaptiveExamPipelineService;
 use App\Services\Learning\AdaptiveDifficultyService;
+use App\Services\Learning\AchievementService;
 use App\Services\Learning\GamificationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -31,6 +32,7 @@ class QuizController extends Controller
         protected AdaptiveExamPipelineService $adaptivePipeline,
         protected GroqService $groq,
         protected GamificationService $gamification,
+        protected AchievementService $achievementService,
         protected FreemiumLimitService $freemium,
     ) {}
 
@@ -208,6 +210,28 @@ class QuizController extends Controller
         data_set($payload, 'evaluacion.resultado', $isCorrect ? 'ACIERTO' : 'ERROR');
         data_set($payload, 'metadatos.racha_aciertos', $streak);
         data_set($payload, 'gamification', $gamificationPayload);
+
+        // Evaluate achievements when question counter reaches a milestone (every 10 questions)
+        $achievementsUnlocked = [];
+        if (! $skip) {
+            $questionCounterKey = sprintf('quiz.practice.counter.%d.%d', (int) $user->id, (int) $subject->id);
+            $questionCounter = (int) $request->session()->get($questionCounterKey, 0);
+
+            if ($questionCounter % 10 === 0) {
+                $achievementsUnlocked = $this->achievementService->evaluateAchievements(
+                    $user,
+                    'quiz_complete',
+                    [
+                        'score' => 100, // Quiz per-question score is binary (correct/incorrect)
+                        'questions_answered' => $questionCounter,
+                    ]
+                );
+            }
+        }
+
+        data_set($payload, 'gold_earned', (int) ($gamificationPayload['xp_earned'] ?? 0));
+        data_set($payload, 'xp_earned', (int) ($gamificationPayload['xp_earned'] ?? 0));
+        data_set($payload, 'achievements_unlocked', $achievementsUnlocked);
 
         return response()->json($payload);
     }
