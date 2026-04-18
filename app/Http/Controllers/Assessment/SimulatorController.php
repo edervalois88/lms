@@ -216,6 +216,7 @@ class SimulatorController extends Controller
                 'simulator_complete',
                 [
                     'score' => $scorePercentage,
+                    'questions_answered' => count($submittedAnswers),
                 ]
             );
 
