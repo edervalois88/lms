@@ -93,6 +93,24 @@ class RewardStoreController extends Controller
         return \Inertia\Inertia::render('Gamification/Avatar');
     }
 
+    public function state(Request $request): JsonResponse
+    {
+        if (! $this->rewardTablesReady()) {
+            return response()->json(['message' => 'Reward system not ready'], 503);
+        }
+
+        $user = $request->user();
+
+        return response()->json([
+            'gold' => $user->gamification['gold'] ?? 0,
+            'xp' => $user->gamification['xp'] ?? 0,
+            'current_level' => $user->gamification['current_level'] ?? 1,
+            'achievements_unlocked' => $user->gamification['achievements_unlocked'] ?? [],
+            'inventory' => $this->rewards->getInventoryForUser($user),
+            'equipped' => $this->rewards->getEquippedForUser($user),
+        ]);
+    }
+
     private function rewardTablesReady(): bool
     {
         return Schema::hasTable('reward_items')
