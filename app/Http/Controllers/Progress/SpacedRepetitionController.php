@@ -65,7 +65,7 @@ class SpacedRepetitionController extends Controller
             $this->gamification->addXP($user, $xpAwarded);
         }
 
-        $totalXp = (int) (($user->fresh()->preferences['xp'] ?? 0));
+        $totalXp = $this->gamification->getCurrentXp($user);
 
         return response()->json([
             'status' => 'ok',
