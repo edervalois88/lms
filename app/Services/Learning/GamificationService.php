@@ -17,6 +17,13 @@ class GamificationService
     public const XP_SIMULATION_COMPLETE = 150;
     public const XP_BOOTCAMP_ADAPTIVE = 30;
 
+    /**
+     * Get the total gold earned by the user from the ledger.
+     * In this system, gold and XP are equivalent for cosmetic purchases.
+     *
+     * @param User $user
+     * @return int The total amount (0 if no ledger exists)
+     */
     public function getCurrentGold(User $user): int
     {
         $ledger = $user->xpLedgers()
@@ -26,6 +33,13 @@ class GamificationService
         return max(0, (int) ($ledger->total_xp ?? 0));
     }
 
+    /**
+     * Get the total XP earned by the user from the ledger.
+     * In this system, gold and XP are equivalent for cosmetic purchases.
+     *
+     * @param User $user
+     * @return int The total amount (0 if no ledger exists)
+     */
     public function getCurrentXp(User $user): int
     {
         return $this->getCurrentGold($user);
