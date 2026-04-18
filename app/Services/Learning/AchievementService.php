@@ -2,6 +2,7 @@
 
 namespace App\Services\Learning;
 
+use App\Enums\AchievementId;
 use App\Models\User;
 use App\Models\UserAchievement;
 use Illuminate\Support\Facades\DB;
@@ -40,9 +41,9 @@ class AchievementService
         $newlyUnlocked = [];
 
         // first_quiz: Unlock on first quiz completion ever
-        if (! $this->isAlreadyUnlocked($user, 'first_quiz')) {
-            $newlyUnlocked[] = 'first_quiz';
-            $this->unlock($user, 'first_quiz', 'accessory_badge');
+        if (! $this->isAlreadyUnlocked($user, AchievementId::FIRST_QUIZ)) {
+            $newlyUnlocked[] = AchievementId::FIRST_QUIZ;
+            $this->unlock($user, AchievementId::FIRST_QUIZ, 'accessory_badge');
         }
 
         return $newlyUnlocked;
@@ -54,11 +55,11 @@ class AchievementService
 
         // simulator_perfect: Unlock if score is 100
         if (
-            ! $this->isAlreadyUnlocked($user, 'simulator_perfect')
+            ! $this->isAlreadyUnlocked($user, AchievementId::SIMULATOR_PERFECT)
             && ($context['score'] ?? 0) === 100
         ) {
-            $newlyUnlocked[] = 'simulator_perfect';
-            $this->unlock($user, 'simulator_perfect', 'accessory_crown');
+            $newlyUnlocked[] = AchievementId::SIMULATOR_PERFECT;
+            $this->unlock($user, AchievementId::SIMULATOR_PERFECT, 'accessory_crown');
         }
 
         return $newlyUnlocked;
@@ -71,20 +72,20 @@ class AchievementService
 
         // streak_7_days: Unlock at 7-day streak
         if (
-            ! $this->isAlreadyUnlocked($user, 'streak_7_days')
+            ! $this->isAlreadyUnlocked($user, AchievementId::STREAK_7_DAYS)
             && $streakDays >= 7
         ) {
-            $newlyUnlocked[] = 'streak_7_days';
-            $this->unlock($user, 'streak_7_days', 'accessory_blue_flame');
+            $newlyUnlocked[] = AchievementId::STREAK_7_DAYS;
+            $this->unlock($user, AchievementId::STREAK_7_DAYS, 'accessory_blue_flame');
         }
 
         // streak_30_days: Unlock at 30-day streak
         if (
-            ! $this->isAlreadyUnlocked($user, 'streak_30_days')
+            ! $this->isAlreadyUnlocked($user, AchievementId::STREAK_30_DAYS)
             && $streakDays >= 30
         ) {
-            $newlyUnlocked[] = 'streak_30_days';
-            $this->unlock($user, 'streak_30_days', 'pet_golden_dragon');
+            $newlyUnlocked[] = AchievementId::STREAK_30_DAYS;
+            $this->unlock($user, AchievementId::STREAK_30_DAYS, 'pet_golden_dragon');
         }
 
         return $newlyUnlocked;
