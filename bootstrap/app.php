@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
-        
+
         $middleware->alias([
             'onboarded' => \App\Http\Middleware\EnsureOnboarded::class,
             'streak' => \App\Http\Middleware\TrackStudyStreak::class,
@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->web(append: [
+            \App\Http\Middleware\HydrateUserGamification::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
