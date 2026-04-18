@@ -18,8 +18,8 @@ it('earns xp and achievement when completing 10 quiz questions', function () {
     $topic = Topic::factory()->create(['subject_id' => $subject->id]);
     $questions = Question::factory()->count(10)->create([
         'topic_id' => $topic->id,
-        'options' => ['Correcto', 'Opción B', 'Opción C', 'Opción D'],
-        'correct_answer' => 'Correcto',
+        'options' => ['Correct', 'Option B', 'Option C', 'Option D'],
+        'correct_answer' => 'Correct',
     ]);
 
     // Answer 10 questions (should trigger achievement and XP awards)
@@ -41,7 +41,7 @@ it('earns xp and achievement when completing 10 quiz questions', function () {
     $user->refresh();
 
     // User should have XP in gamification state
-    expect($user->gamification['xp'] ?? 0)->toBeGreaterThanOrEqual(0);
+    expect($user->gamification['xp'] ?? 0)->toBeGreaterThan(0);
 
     // User should have unlocked 'first_quiz' achievement
     expect($user->achievements()->where('achievement_id', AchievementId::FIRST_QUIZ)->exists())->toBeTrue();
@@ -105,6 +105,8 @@ it('user hydration includes gamification state on dashboard', function () {
     $response = $this->actingAs($user)->get('/dashboard');
 
     expect($response->status())->toBe(200);
+    $response->assertInertiaHas('user');
+    // Can't easily assert nested gamification via Inertia, so at least verify user exists
     expect(auth()->user()->id)->toBe($user->id);
 });
 
@@ -124,8 +126,6 @@ it('quiz evaluate with 10 questions triggers achievement unlocking', function ()
         'correct_answer' => 'Correct',
     ]);
 
-    $achievementsUnlocked = [];
-
     // Answer 10 questions to trigger achievements
     foreach ($questions as $question) {
         $response = $this->postJson(
@@ -138,15 +138,11 @@ it('quiz evaluate with 10 questions triggers achievement unlocking', function ()
         );
 
         expect($response->status())->toBe(200);
-
-        // Collect achievements from responses
-        $unlocked = $response->json('achievements_unlocked', []);
-        $achievementsUnlocked = array_merge($achievementsUnlocked, $unlocked);
     }
 
     // First quiz completion should unlock an achievement
     $user->refresh();
-    expect($user->achievements()->count())->toBeGreaterThan(0);
+    expect($user->achievements()->where('achievement_id', AchievementId::FIRST_QUIZ)->exists())->toBeTrue();
 });
 
 // ---------------------------------------------------------------------------
