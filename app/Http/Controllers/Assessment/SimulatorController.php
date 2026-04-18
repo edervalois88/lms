@@ -27,7 +27,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Inertia\Response;
+use Inertia\Response as InertiaResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class SimulatorController extends Controller
 {
@@ -85,7 +86,7 @@ class SimulatorController extends Controller
         return redirect()->route('simulator.show', $exam);
     }
 
-    public function show(Exam $exam): Response
+    public function show(Exam $exam): InertiaResponse|RedirectResponse
     {
         abort_if($exam->user_id !== auth()->id(), 403);
 
