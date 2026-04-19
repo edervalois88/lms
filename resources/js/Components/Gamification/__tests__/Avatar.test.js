@@ -241,4 +241,60 @@ describe('Avatar.vue', () => {
     // Wizard robes have stars (hasStars detail)
     expect(stars.length).toBeGreaterThan(0);
   });
+
+  // Task 4 Animation Tests
+
+  // Test 13: Idle animation is applied
+  it('applies idle animation class and keyframes', () => {
+    const wrapper = mount(Avatar, {
+      props: { equipped: mockEquipped(), state: 'idle' }
+    });
+
+    const svg = wrapper.find('svg').element;
+    expect(svg.classList.contains('avatar-idle')).toBe(true);
+  });
+
+  // Test 14: Happy animation is applied
+  it('applies happy animation class with bounce effect', () => {
+    const wrapper = mount(Avatar, {
+      props: { equipped: mockEquipped(), state: 'happy' }
+    });
+
+    const svg = wrapper.find('svg').element;
+    expect(svg.classList.contains('avatar-happy')).toBe(true);
+  });
+
+  // Test 15: Tired state applies opacity and filter
+  it('applies tired state with opacity and grayscale filter', () => {
+    const wrapper = mount(Avatar, {
+      props: { equipped: mockEquipped(), state: 'tired' }
+    });
+
+    const svg = wrapper.find('svg').element;
+    expect(svg.classList.contains('avatar-tired')).toBe(true);
+  });
+
+  // Test 16: Thinking animation is applied
+  it('applies thinking animation class with sway effect', () => {
+    const wrapper = mount(Avatar, {
+      props: { equipped: mockEquipped(), state: 'thinking' }
+    });
+
+    const svg = wrapper.find('svg').element;
+    expect(svg.classList.contains('avatar-thinking')).toBe(true);
+  });
+
+  // Test 17: Animation classes change when state prop changes
+  it('updates animation class when state prop changes', async () => {
+    const wrapper = mount(Avatar, {
+      props: { equipped: mockEquipped(), state: 'idle' }
+    });
+
+    const svg = wrapper.find('svg').element;
+    expect(svg.classList.contains('avatar-idle')).toBe(true);
+
+    await wrapper.setProps({ state: 'happy' });
+    expect(svg.classList.contains('avatar-happy')).toBe(true);
+    expect(svg.classList.contains('avatar-idle')).toBe(false);
+  });
 });

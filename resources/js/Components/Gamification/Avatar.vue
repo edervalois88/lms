@@ -194,20 +194,71 @@ const petStyle = computed(() => {
 </script>
 
 <style scoped>
-/* Animation states - actual keyframes to be added in Task 4 */
+/* Base SVG styles */
+.avatar {
+  display: inline-block;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* State animation classes */
+
 .avatar-idle {
-  /* idle-float animation (Task 4) */
+  animation: idle-float 3s ease-in-out infinite;
 }
 
 .avatar-happy {
-  /* happy-bounce animation (Task 4) */
+  animation: happy-bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
 }
 
 .avatar-tired {
-  /* tired state styling (Task 4) */
+  opacity: 0.7;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3)) grayscale(0.2) brightness(0.95);
 }
 
 .avatar-thinking {
-  /* thinking-sway animation (Task 4) */
+  animation: thinking-sway 2s ease-in-out infinite;
+}
+
+/* Keyframe animations */
+
+@keyframes idle-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes happy-bounce {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  25% {
+    transform: scale(1.1) translateY(-12px);
+  }
+  50% {
+    transform: scale(1.15) translateY(-20px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes thinking-sway {
+  0%, 100% {
+    transform: rotateZ(-2deg);
+  }
+  25% {
+    transform: rotateZ(-2deg) translateX(-2px);
+  }
+  50% {
+    transform: rotateZ(2deg) translateX(2px);
+  }
+  75% {
+    transform: rotateZ(2deg) translateX(-2px);
+  }
 }
 </style>
