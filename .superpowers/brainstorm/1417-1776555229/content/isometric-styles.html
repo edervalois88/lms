@@ -1,0 +1,64 @@
+<h2>Estilos de Pixel Art Isométrico para Avatares</h2>
+<p class="subtitle">¿Cuál estilo prefieres para NexusEdu?</p>
+
+<div class="cards">
+  <div class="card" data-choice="classic" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; min-height: 180px;">
+      <div style="font-size: 64px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">🧑‍🎓</div>
+    </div>
+    <div class="card-body">
+      <h3>Clásico 32x32</h3>
+      <p>Estilo retro auténtico, muy detallado. Como viejos videojuegos RPG.</p>
+      <ul style="margin: 10px 0; font-size: 14px;">
+        <li>✓ Muy personalizable</li>
+        <li>✓ Nostálgico</li>
+        <li>✗ Requiere muchos assets</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" data-choice="modern" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; min-height: 180px;">
+      <div style="font-size: 48px; transform: perspective(500px) rotateX(15deg) rotateY(-15deg);">🎓</div>
+    </div>
+    <div class="card-body">
+      <h3>Moderno 64x64</h3>
+      <p>Más limpio, menos detalle. Mejor para interfaces limpias.</p>
+      <ul style="margin: 10px 0; font-size: 14px;">
+        <li>✓ Simple y limpio</li>
+        <li>✓ Carga rápida</li>
+        <li>✗ Menos expresión</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; min-height: 180px;">
+      <div style="font-size: 56px; animation: float 3s ease-in-out infinite;">👨‍🎓</div>
+      <style>@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }</style>
+    </div>
+    <div class="card-body">
+      <h3>Híbrido SVG</h3>
+      <p>Pixel art renderizado con SVG. Escalable y animable fácilmente.</p>
+      <ul style="margin: 10px 0; font-size: 14px;">
+        <li>✓ Escalable</li>
+        <li>✓ Animable</li>
+        <li>✓ Flexible con cosmetics</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+  <h3>Técnica de Composición (Todas las opciones)</h3>
+  <p>Independiente del estilo, los avatares se compondría en capas:</p>
+  <div style="background: #f9fafb; padding: 15px; border-radius: 6px; margin-top: 10px; font-family: monospace; font-size: 13px;">
+    🟫 Base (cuerpo isométrico)<br/>
+    + 🟪 Color (skin tone)<br/>
+    + 👕 Outfit (ropa)<br/>
+    + 🎒 Accessory 1 (mochila, hat, etc)<br/>
+    + ✨ Accessory 2 (gafas, etc)<br/>
+    + 🐉 Pet (mascota)<br/>
+    = 👨‍🎓 Avatar Final
+  </div>
+</div>

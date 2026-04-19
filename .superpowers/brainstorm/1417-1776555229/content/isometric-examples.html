@@ -1,0 +1,147 @@
+<h2>Ejemplos Reales de Avatares Isométricos</h2>
+<p class="subtitle">Pixel art isométrico 3D personalizable</p>
+
+<div class="cards">
+  <!-- Clásico 32x32 -->
+  <div class="card" data-choice="classic" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; gap: 10px;">
+      <!-- Avatar Clásico 32x32 isométrico -->
+      <svg width="120" height="140" viewBox="0 0 120 140" style="filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.4));">
+        <!-- Cabeza (8x8 isométrico) -->
+        <polygon points="60,20 75,30 75,50 60,60 45,50 45,30" fill="#f4a460" stroke="#2c1810" stroke-width="1"/>
+        <!-- Ojos -->
+        <circle cx="55" cy="40" r="2" fill="#2c1810"/>
+        <circle cx="65" cy="40" r="2" fill="#2c1810"/>
+        <!-- Sonrisa simple -->
+        <path d="M 55 45 Q 60 48 65 45" stroke="#2c1810" stroke-width="1" fill="none"/>
+        <!-- Cuerpo (12x12 isométrico) -->
+        <polygon points="45,60 60,70 75,60 75,80 60,90 45,80" fill="#1e40af" stroke="#0f172a" stroke-width="1"/>
+        <!-- Brazos -->
+        <rect x="25" y="70" width="20" height="8" fill="#f4a460" stroke="#2c1810" stroke-width="1"/>
+        <rect x="75" y="70" width="20" height="8" fill="#f4a460" stroke="#2c1810" stroke-width="1"/>
+        <!-- Piernas -->
+        <polygon points="45,80 55,85 55,105 45,100" fill="#2c1810" stroke="#000000" stroke-width="1"/>
+        <polygon points="60,90 70,95 70,115 60,110" fill="#2c1810" stroke="#000000" stroke-width="1"/>
+      </svg>
+      <p style="font-size: 12px; color: #fff; text-align: center; margin: 0;">Con outfit, mascota y accesorios</p>
+    </div>
+    <div class="card-body">
+      <h3>Clásico 32x32</h3>
+      <p>Estilo retro auténtico, muy detallado. Cada cosmetic añade capas visibles.</p>
+      <ul style="margin: 10px 0; font-size: 14px;">
+        <li>✓ Muy personalizable (muchas combinaciones)</li>
+        <li>✓ Nostálgico y único</li>
+        <li>✓ Excelente para mecánicas de gamification</li>
+        <li>✗ Requiere muchos assets (~200+ sprites)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Moderno 64x64 -->
+  <div class="card" data-choice="modern" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; gap: 10px;">
+      <!-- Avatar Moderno 64x64 isométrico (más grande, más limpio) -->
+      <svg width="140" height="160" viewBox="0 0 140 160" style="filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.4));">
+        <!-- Cabeza -->
+        <polygon points="70,15 95,32 95,65 70,82 45,65 45,32" fill="#d4a574" stroke="#5a3d2a" stroke-width="1.5"/>
+        <!-- Ojos grandes (moderno) -->
+        <circle cx="60" cy="45" r="4" fill="#2c1810"/>
+        <circle cx="80" cy="45" r="4" fill="#2c1810"/>
+        <circle cx="62" cy="43" r="1.5" fill="#ffffff"/>
+        <circle cx="82" cy="43" r="1.5" fill="#ffffff"/>
+        <!-- Boca -->
+        <path d="M 65 58 Q 70 62 75 58" stroke="#5a3d2a" stroke-width="1.5" fill="none"/>
+        <!-- Cuerpo (más grande) -->
+        <polygon points="45,82 70,100 95,82 95,115 70,133 45,115" fill="#2563eb" stroke="#1e3a8a" stroke-width="1.5"/>
+        <!-- Detalles de ropa (líneas simples) -->
+        <line x1="70" y1="100" x2="70" y2="115" stroke="#1e3a8a" stroke-width="1"/>
+        <!-- Brazos -->
+        <polygon points="20,95 45,108 45,125 20,112" fill="#d4a574" stroke="#5a3d2a" stroke-width="1.5"/>
+        <polygon points="95,108 120,95 120,112 95,125" fill="#d4a574" stroke="#5a3d2a" stroke-width="1.5"/>
+        <!-- Piernas -->
+        <polygon points="55,115 70,125 70,150 55,140" fill="#1a1a2e" stroke="#000000" stroke-width="1.5"/>
+        <polygon points="70,133 85,125 85,150 70,158" fill="#1a1a2e" stroke="#000000" stroke-width="1.5"/>
+      </svg>
+      <p style="font-size: 12px; color: #fff; text-align: center; margin: 0;">Limpio y minimalista</p>
+    </div>
+    <div class="card-body">
+      <h3>Moderno 64x64</h3>
+      <p>Más limpio y contemporáneo. Mejor para interfaces minimalistas.</p>
+      <ul style="margin: 10px 0; font-size: 14px;">
+        <li>✓ Simple de crear y mantener</li>
+        <li>✓ Carga muy rápido</li>
+        <li>✓ Se ve bien en cualquier tamaño</li>
+        <li>✗ Menos espacio para detalles</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Híbrido SVG -->
+  <div class="card" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; gap: 10px;">
+      <!-- Avatar Híbrido SVG (paramétrico) -->
+      <svg width="140" height="160" viewBox="0 0 140 160" style="filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">
+        <defs>
+          <style>
+            @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+            .avatar-bounce { animation: bounce 3s ease-in-out infinite; transform-origin: 70px 80px; }
+          </style>
+        </defs>
+        <g class="avatar-bounce">
+          <!-- Cabeza (paramétrica - color variable) -->
+          <polygon points="70,15 95,32 95,65 70,82 45,65 45,32" fill="#e8a87c" stroke="#6b4423" stroke-width="1"/>
+          <!-- Accesorios equipados (dinámicos) -->
+          <!-- Hat/Corona -->
+          <polygon points="45,20 70,5 95,20 85,28 60,18 45,28" fill="#ffd700" stroke="#daa520" stroke-width="1"/>
+          <!-- Ojos -->
+          <circle cx="58" cy="45" r="3.5" fill="#000000"/>
+          <circle cx="82" cy="45" r="3.5" fill="#000000"/>
+          <!-- Boca sonriente -->
+          <path d="M 62 55 Q 70 60 78 55" stroke="#6b4423" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <!-- Cuerpo (outfit: túnica mágica) -->
+          <polygon points="45,82 70,100 95,82 95,115 70,133 45,115" fill="#9333ea" stroke="#5b21b6" stroke-width="1"/>
+          <!-- Detalles de outfit (estrellas/magia) -->
+          <circle cx="65" cy="105" r="2" fill="#ffd700" opacity="0.8"/>
+          <circle cx="75" cy="105" r="2" fill="#ffd700" opacity="0.8"/>
+          <!-- Brazos -->
+          <polygon points="20,95 45,108 45,125 20,112" fill="#e8a87c" stroke="#6b4423" stroke-width="1"/>
+          <polygon points="95,108 120,95 120,112 95,125" fill="#e8a87c" stroke="#6b4423" stroke-width="1"/>
+          <!-- Mascota (pequeña, en hombro) -->
+          <circle cx="100" cy="85" r="8" fill="#ff6b6b" stroke="#c92a2a" stroke-width="1"/>
+          <circle cx="103" cy="82" r="3" fill="#000000"/>
+          <!-- Piernas -->
+          <polygon points="55,115 70,125 70,150 55,140" fill="#2d3748" stroke="#000000" stroke-width="1"/>
+          <polygon points="70,133 85,125 85,150 70,158" fill="#2d3748" stroke="#000000" stroke-width="1"/>
+        </g>
+      </svg>
+      <p style="font-size: 12px; color: #fff; text-align: center; margin: 0;">Con animación y cosmetics superpuestos</p>
+    </div>
+    <div class="card-body">
+      <h3>Híbrido SVG (Recomendado)</h3>
+      <p>Lo mejor de ambos mundos: pixel art + flexibilidad técnica.</p>
+      <ul style="margin: 10px 0; font-size: 14px;">
+        <li>✓ Completamente escalable</li>
+        <li>✓ Fácil de animar (Vue + SVG)</li>
+        <li>✓ Cosmetics como componentes Vue</li>
+        <li>✓ Reutilizable en cualquier tamaño</li>
+        <li>✓ Mejor para educación (clean &amp; profesional)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+  <h3>Composición de Capas (Ejemplo Híbrido SVG)</h3>
+  <p>Cada cosmetic es un elemento SVG que se superpone:</p>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px;">
+    <div style="background: #f9fafb; padding: 12px; border-radius: 6px; text-align: center; font-size: 12px;">
+      <strong style="color: #9333ea;">Base Body</strong><br/>(color de piel, torso)
+    </div>
+    <div style="background: #f9fafb; padding: 12px; border-radius: 6px; text-align: center; font-size: 12px;">
+      <strong style="color: #0ea5e9;">Outfit</strong><br/>(ropa, accesorios grandes)
+    </div>
+    <div style="background: #f9fafb; padding: 12px; border-radius: 6px; text-align: center; font-size: 12px;">
+      <strong style="color: #f59e0b;">Pet</strong><br/>(mascota en hombro)
+    </div>
+  </div>
+</div>
