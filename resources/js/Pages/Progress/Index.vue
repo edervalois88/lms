@@ -3,8 +3,9 @@
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import AvatarShowcase from '@/Components/Progress/AvatarShowcase.vue';
+import Avatar from '@/Components/Gamification/Avatar.vue';
 import ProgressRadial from '@/Components/Progress/ProgressRadial.vue';
+import { useAvatarStore } from '@/Stores/gamification/avatarStore.js';
 
 const props = defineProps({
   mastery: {
@@ -34,6 +35,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const avatarStore = useAvatarStore();
 
 // Gamification data from Inertia auth user
 const gamification = computed(() => page.props.auth?.user?.gamification ?? {});
@@ -136,12 +138,14 @@ const formatDate = (dateString) => {
           <p class="text-lg text-gray-500">Visualiza tu evolución y prepárate para el éxito.</p>
         </header>
 
-        <!-- Gamification Hero: AvatarShowcase + ProgressRadial -->
+        <!-- Gamification Hero: Avatar + ProgressRadial -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          <div class="nx-panel p-8 rounded-3xl flex items-center justify-center">
-            <AvatarShowcase
-              :icon="userIcon"
-              :cosmetics="{ ropa: 'Básica', accesorios: 'Ninguno', color: 'Morado' }"
+          <div class="nx-panel p-8 rounded-3xl flex flex-col items-center justify-center">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">Tu Avatar</p>
+            <Avatar
+              :equipped="avatarStore.equipped"
+              state="idle"
+              size="lg"
             />
           </div>
           <div class="nx-panel p-8 rounded-3xl flex items-center justify-center">
