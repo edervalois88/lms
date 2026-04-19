@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import { getDefaultCosmetic } from '@/Data/cosmetics.js';
 
 export const useAvatarStore = defineStore('avatar', () => {
+  // Initialize with default cosmetics
   const equipped = ref({
-    color: 'purple',
-    outfit: 'student_robes',
+    color: getDefaultCosmetic('color'),
+    outfit: getDefaultCosmetic('outfit'),
     accessories: [],
-    pet: 'dragon_purple',
-    background: 'library',
+    pet: getDefaultCosmetic('pet'),
+    background: getDefaultCosmetic('background'),
   });
 
   /**
@@ -28,8 +30,8 @@ export const useAvatarStore = defineStore('avatar', () => {
 
   /**
    * Hydrate equipped from server response.
-   * Server format: { color: { code }, outfit: { code }, pet: { code }, background: { code } }
-   * Null/undefined safe: skips missing or null slots.
+   * Server format: { color: { code }, outfit: { code }, pet: { code }, background: { code }, accessories: [{ code }] }
+   * Null/undefined safe: skips missing or null slots, uses defaults.
    */
   function hydrateFromEquipped(serverEquipped) {
     if (!serverEquipped) return;
@@ -40,6 +42,14 @@ export const useAvatarStore = defineStore('avatar', () => {
       if (entry && entry.code != null) {
         equipped.value[slot] = entry.code;
       }
+    }
+
+    // Handle accessories array
+    if (serverEquipped.accessories && Array.isArray(serverEquipped.accessories)) {
+      equipped.value.accessories = serverEquipped.accessories
+        .map((item) => item?.code)
+        .filter((code) => code != null)
+        .slice(0, 2); // Max 2 accessories
     }
   }
 
