@@ -87,6 +87,34 @@ describe('Avatar.vue', () => {
     expect(svg.getAttribute('data-pet')).toBe('owl_brown');
   });
 
+  it('renders SVG with data-accessories attribute correctly', () => {
+    const equipped = {
+      color: 'blue',
+      outfit: 'casual',
+      accessories: ['scarf', 'hat', 'gloves'],
+      pet: 'cat_white'
+    };
+    const wrapper = mount(Avatar, {
+      props: { equipped, size: 'md' }
+    });
+    const svg = wrapper.find('svg').element;
+    expect(svg.getAttribute('data-accessories')).toBe('scarf,hat,gloves');
+  });
+
+  it('renders SVG with empty data-accessories when no accessories', () => {
+    const equipped = {
+      color: 'red',
+      outfit: 'formal',
+      accessories: [],
+      pet: 'phoenix_red'
+    };
+    const wrapper = mount(Avatar, {
+      props: { equipped, size: 'md' }
+    });
+    const svg = wrapper.find('svg').element;
+    expect(svg.getAttribute('data-accessories')).toBe('');
+  });
+
   it('renders SVG with proper viewBox and structure', () => {
     const wrapper = mount(Avatar, {
       props: { equipped: mockEquipped(), size: 'md' }

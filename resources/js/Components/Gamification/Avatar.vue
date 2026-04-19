@@ -6,6 +6,7 @@
     xmlns="http://www.w3.org/2000/svg"
     :data-color="equipped.color"
     :data-outfit="equipped.outfit"
+    :data-accessories="equipped.accessories.join(',')"
     :data-pet="equipped.pet"
   >
     <!-- SVG rendering to be implemented in Task 3 -->
