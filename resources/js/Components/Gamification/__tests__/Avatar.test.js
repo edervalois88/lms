@@ -124,4 +124,121 @@ describe('Avatar.vue', () => {
     expect(svg.getAttribute('viewBox')).toBe('0 0 140 160');
     expect(svg.querySelector('g')).toBeTruthy();
   });
+
+  // Test 7: Renders SVG with cosmetic colors
+  it('renders SVG with cosmetic color style', () => {
+    const wrapper = mount(Avatar, {
+      props: {
+        equipped: {
+          color: 'golden',
+          outfit: 'wizard_robes',
+          accessories: [],
+          pet: 'dragon_purple'
+        }
+      }
+    });
+
+    const headPolygon = wrapper.element.querySelector('polygon[points="70,15 95,32 95,65 70,82 45,65 45,32"]');
+    expect(headPolygon).toBeTruthy();
+    expect(headPolygon.getAttribute('fill')).toBe('#f4d03f'); // golden color
+  });
+
+  // Test 8: Renders outfit overlay when equipped
+  it('renders outfit layer with correct color', () => {
+    const wrapper = mount(Avatar, {
+      props: {
+        equipped: {
+          color: 'purple',
+          outfit: 'wizard_robes',
+          accessories: [],
+          pet: 'dragon_purple'
+        }
+      }
+    });
+
+    const outfitGroup = wrapper.element.querySelector('#avatar-outfit');
+    expect(outfitGroup).toBeTruthy();
+
+    const outfitPolygon = outfitGroup.querySelector('polygon');
+    expect(outfitPolygon.getAttribute('fill')).toBe('#3b82f6'); // wizard_robes color
+  });
+
+  // Test 9: Renders accessories conditionally
+  it('renders accessories based on equipped list', () => {
+    const wrapper = mount(Avatar, {
+      props: {
+        equipped: {
+          color: 'purple',
+          outfit: 'student_robes',
+          accessories: ['glasses', 'crown'],
+          pet: 'dragon_purple'
+        }
+      }
+    });
+
+    const accessories = wrapper.element.querySelectorAll('#avatar-accessory');
+    expect(accessories.length).toBe(2);
+  });
+
+  // Test 10: Renders pet at shoulder
+  it('renders pet circle at shoulder position', () => {
+    const wrapper = mount(Avatar, {
+      props: {
+        equipped: {
+          color: 'purple',
+          outfit: 'student_robes',
+          accessories: [],
+          pet: 'owl_brown'
+        }
+      }
+    });
+
+    const petGroup = wrapper.element.querySelector('#avatar-pet');
+    expect(petGroup).toBeTruthy();
+
+    const petCircle = petGroup.querySelector('circle');
+    expect(petCircle.getAttribute('cx')).toBe('100');
+    expect(petCircle.getAttribute('cy')).toBe('85');
+  });
+
+  // Test 11: Falls back to default cosmetics for missing codes
+  it('renders with default cosmetics when codes are invalid', () => {
+    const wrapper = mount(Avatar, {
+      props: {
+        equipped: {
+          color: 'invalid_code',
+          outfit: 'nonexistent',
+          accessories: [],
+          pet: 'fake_pet'
+        }
+      }
+    });
+
+    const svg = wrapper.find('svg').element;
+    expect(svg).toBeTruthy();
+
+    // Should render with default purple color
+    const headPolygon = svg.querySelector('polygon[points="70,15 95,32 95,65 70,82 45,65 45,32"]');
+    expect(headPolygon.getAttribute('fill')).toBe('#d4a574'); // default purple color
+  });
+
+  // Test 12: Renders outfit details (stars, emblem)
+  it('renders outfit details based on outfit type', () => {
+    const wrapper = mount(Avatar, {
+      props: {
+        equipped: {
+          color: 'purple',
+          outfit: 'wizard_robes',
+          accessories: [],
+          pet: 'dragon_purple'
+        }
+      }
+    });
+
+    const outfitGroup = wrapper.element.querySelector('#avatar-outfit');
+    const stars = outfitGroup.querySelectorAll('circle[fill="#ffd700"]');
+
+    // Wizard robes have stars (hasStars detail)
+    expect(stars.length).toBeGreaterThan(0);
+  });
 });
